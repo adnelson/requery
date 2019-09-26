@@ -10,7 +10,7 @@ module Column = {
     name: string,
   };
 
-  let make = (~table=?, name: string): t => {table, name};
+  let make = (~t=?, name: string): t => {table: t, name};
 
   let render: t => string =
     ({table, name}) =>
@@ -23,7 +23,7 @@ module Column = {
 module Aliased = {
   type t('a) = ('a, option(string));
   let bare: 'a => t('a) = x => (x, None);
-  let make = (~as_=?, x) => (x, as_);
+  let make = (~a=?, x) => (x, a);
   let as_: ('a, string) => t('a) = (x, alias) => (x, Some(alias));
   let render: ('a => string, t('a)) => string =
     renderInner =>
@@ -40,7 +40,7 @@ module Expression = {
     | And(t, t)
     | Or(t, t);
 
-  let col = (~table=?, col) => Column(Column.make(~table?, col));
+  let col = (~t=?, col) => Column(Column.make(~t?, col));
 
   let rec render: t => string =
     fun
@@ -79,7 +79,7 @@ module Selection = {
   let allFrom: tableName => t = name => All(Some(name));
   let expr: Expression.t => t = e => Expression(e);
   //  let col: string => t = colName => Expression(Expression.Column(Column.make(colName)));
-  let col = (~table=?, col) => Expression(Expression.Column(Column.make(~table?, col)));
+  let col = (~t=?, col) => Expression(Expression.Column(Column.make(~t?, col)));
 
   let rec render: t => string =
     fun
@@ -112,8 +112,8 @@ module Query = {
     groupBy: O.getWithDefault(groupBy, [||]),
   };
 
-  let select = (~as_=?, sel): (Selection.t, option(string)) => Aliased.make(~as_?, sel);
-  let table = (~as_=?, tableName) => TableName(Aliased.make(tableName, ~as_?));
+  let select = (~a=?, sel): (Selection.t, option(string)) => Aliased.make(~a?, sel);
+  let table = (~a=?, tableName) => TableName(Aliased.make(tableName, ~a?));
   let innerJoin = (t1, t2, cond) => Join(Join.Inner(cond), t1, t2);
   let leftJoin = (t1, t2, cond) => Join(Join.Left(cond), t1, t2);
 
@@ -147,7 +147,6 @@ let renderQuery = Query.renderQuery;
 
 module C = Column;
 module E = Expression;
-module Al = Aliased;
 module S = Selection;
 module J = Join;
 module Q = Query;
@@ -175,19 +174,19 @@ let countsQuery: Query.t =
 let outerQuery: Query.t =
   Query.(
     make(
-      A.map([|S.col("id", ~table="q"), S.col("label", ~table="ro"), S.col("count")|], select),
+      A.map([|S.col("id", ~t="q"), S.col("label", ~t="ro"), S.col("count")|], select),
       ~from=
         leftJoin(
           innerJoin(
-            table("question", ~as_="q"),
-            table("response_option", ~as_="ro"),
-            E.(Eq(col(~table="q", "option_set_id"), col(~table="ro", "option_set_id"))),
+            table("question", ~a="q"),
+            table("response_option", ~a="ro"),
+            E.(Eq(col(~t="q", "option_set_id"), col(~t="ro", "option_set_id"))),
           ),
           SubQuery(countsQuery, "counts"),
           E.(
             And(
-              Eq(col(~table="counts", "question_id"), col(~table="q", "id")),
-              Eq(col(~table="counts", "response_option_id"), col(~table="ro", "id")),
+              Eq(col(~t="counts", "question_id"), col(~t="q", "id")),
+              Eq(col(~t="counts", "response_option_id"), col(~t="ro", "id")),
             )
           ),
         ),
