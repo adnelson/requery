@@ -1,32 +1,44 @@
 type target;
-type expression;
+type expr;
+type aliasedExpr;
 type query;
 
-let int: int => expression;
-let col: string => expression;
-let eq: (expression, expression) => expression;
-let neq: (expression, expression) => expression;
-let and_: (expression, expression) => expression;
-let or_: (expression, expression) => expression;
-let count: expression => expression;
-let distinct: expression => expression;
-let max: expression => expression;
-let sum: expression => expression;
-let avg: expression => expression;
-let coalesce: (expression, expression) => expression;
+// Creating expressions
+let int: int => expr;
+let bigint: int => expr;
+let float: float => expr;
+let string: string => expr;
+let bool: bool => expr;
 
-let innerJoin: (target, expression, target) => target;
-let leftJoin: (target, expression, target) => target;
-let rightJoin: (target, expression, target) => target;
+let typed: (expr, string) => expr;
+let col: string => expr;
+let all: expr;
+let allFrom: string => expr;
+let eq: (expr, expr) => expr;
+let neq: (expr, expr) => expr;
+let and_: (expr, expr) => expr;
+let or_: (expr, expr) => expr;
+let count: expr => expr;
+let distinct: expr => expr;
+let max: expr => expr;
+let sum: expr => expr;
+let avg: expr => expr;
+let coalesce: (expr, expr) => expr;
+
+// Aliased expressions
+let e: (expr, ~a: option(string) = ?) => aliasedExpr;
+
+// Creating targets
+let table: (string, ~a: option(string) = ?) => target;
+let innerJoin: (target, expr, target) => target;
+let leftJoin: (target, expr, target) => target;
+let rightJoin: (target, expr, target) => target;
 let crossJoin: (target, target) => target;
 let subQuery: (query, string) => target;
 
-let selectOnly: list(expression) => query;
-let selectFrom: (list(expression), target) => query;
-
 let select: (
-  list(expression),
+  list(aliasedExpr),
   ~from: option(target) = ?,
   ~groupBy: list(string) = [],
-  ~where: option(expression) = ?
+  ~where: option(expr) = ?
 ) => query;

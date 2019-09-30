@@ -49,43 +49,45 @@ let mainQuery: Query.t =
 
 /*
 
-Would be best to have a ppx!
+// Would be best to have a ppx!
 
-let questionResponses = ReQuery.(
-  select([col("q.id", ~a="question_id"), col("ro.label")])
-  |> from(
-    table("question", ~a="q")
-    |> innerJoin(table("response_option", ~a="ro"), eq("q.response_option_id", "ro.id"))
+let questionResponses = QueryBuilder.(
+  select(
+    [e(col("q.id"), ~a="question_id"), e(col("ro.label"))],
+    ~from = table("question", ~a="q")
+      |> innerJoin(table("response_option", ~a="ro"), eq("q.response_option_id", "ro.id"))
   )
 );
 
-let questionCounts = tbl => ReQuery.(
-  select([col("question"), col("response_option_id"), countAll])
-  |> from(tbl)
-  |> groupBy(["question", "response_option_id"])
+let questionCounts = tbl => QueryBuilder.(
+  select(
+    [e(col("question")), e(col("response_option_id")), e(count(all))])
+    ~from=tbl,
+    ~groupBy=["question", "response_option_id"]
 );
 
-let questionHistogram = (id, tbl) => ReQuery.(
-  select([
-    col("r.question_id"),
-    col("ro.label"),
-    fn2("COALESCE", "count", "0::BigInt", ~a="count")
-  ])
-  |> from(
-    subQuery(questionResponses, "r")
-    |> leftJoin(
-      subQuery(questionCounts(tbl), "counts"),
-      and(eq(col("r.question_id", "counts.question_id"),
-          eq(col("r.response_option_id", "counts.response_option_id"))))
-    )
+let questionHistogram = (id, tbl) => QueryBuilder.(
+  select(
+    [
+      e(col("r.question_id")),
+      e(col("ro.label")),
+      e(coalesce(col("count"), bigint(0)), ~a="count")
+    ],
+    ~from =
+      subQuery(questionResponses, "r")
+      |> leftJoin(
+        subQuery(questionCounts(tbl), "counts"),
+        and(eq(col("r.question_id", "counts.question_id"),
+            eq(col("r.response_option_id", "counts.response_option_id"))))
+      ),
+    ~where = eq(col("question_id", int(id)))
   )
-  |> where(eq(col("question_id", int(id))))
-)
+);
 
 let main = () => {
   getConnection()
   |> then_(conn => {
-   execute(questionHistogram(123, ReQuery.table("single_choice_response"))))
+   execute(conn, questionHistogram(123, QueryBuilder.table("single_choice_response")))
    |> then_(decode(decodeHistogram))
    |> then_(histogram => Js.log(histogram))
    |> then_(_ => close(conn))
