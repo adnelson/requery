@@ -1,4 +1,5 @@
-const { renderQuery, outerQuery } = require('./src/SqlQuery.bs')
-console.log(renderQuery(outerQuery))
+const { renderQuery } = require('./src/SqlQuery.bs')
+const { mainQuery } = require('./src/Examples.bs')
+console.log(renderQuery(mainQuery))
 
 process.exit()
