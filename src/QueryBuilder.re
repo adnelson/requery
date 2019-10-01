@@ -40,10 +40,10 @@ let call = (name, args) => E.Call(name, L.toArray(args));
 let e = (~a=?, expr): aliasedExpr => Aliased.make(expr, ~a?);
 
 let table = (~a=?, name) => Query.TableName(Aliased.make(name, ~a?));
-let innerJoin = (t1, on, t2) => Query.Join(Join.Inner(on), t1, t2);
-let leftJoin = (t1, on, t2) => Query.Join(Join.Left(on), t1, t2);
-let rightJoin = (t1, on, t2) => Query.Join(Join.Right(on), t1, t2);
-let crossJoin = (t1, t2) => Query.Join(Join.Cross, t1, t2);
+let innerJoin = (t1, on, t2) => Query.Join(Join.Inner(on), t2, t1);
+let leftJoin = (t1, on, t2) => Query.Join(Join.Left(on), t2, t1);
+let rightJoin = (t1, on, t2) => Query.Join(Join.Right(on), t2, t1);
+let crossJoin = (t1, t2) => Query.Join(Join.Cross, t2, t1);
 let subQuery = (query, alias) => Query.SubQuery(query, alias);
 
 let select = (~from=?, ~groupBy=[], ~limit=?, ~where=?, selections) =>

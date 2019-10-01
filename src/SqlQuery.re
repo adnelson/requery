@@ -122,7 +122,7 @@ module Query = {
       }
 
   and renderQuery: t => string =
-    ({selections, from, groupBy, limit}) => {
+    ({selections, from, groupBy, limit, where}) => {
       let groupByString =
         switch (groupBy) {
         | [||] => ""
@@ -132,7 +132,8 @@ module Query = {
       let selectionsString =
         Js.Array.joinWith(", ", A.map(selections, Aliased.render(Expression.render)));
       let fromString = O.mapWithDefault(from, "", t => " FROM " ++ renderTarget(t));
-      "SELECT " ++ selectionsString ++ fromString ++ groupByString ++ limitString;
+      let whereString = O.mapWithDefault(where, "", e => " WHERE " ++ Expression.render(e));
+      "SELECT " ++ selectionsString ++ fromString ++ groupByString ++ whereString ++ limitString;
     };
 };
 

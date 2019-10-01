@@ -18,39 +18,39 @@ module Q = Query;
 
 let questionResponses = QueryBuilder.(
    select(
-     [e(col("q.id"), ~a="question_id"), e(col("ro.label"))],
+     [e(col("q.id"), ~a="question_id"), e(col("ro.id"), ~a="response_option_id"), e(col("ro.label"))],
      ~from = table("question", ~a="q")
        |> innerJoin(table("response_option", ~a="ro"),
-                    eq(col("q.response_option_id"), col("ro.id")))
+                    eq(col("q.option_set_id"), col("ro.option_set_id")))
    )
  );
 
  let questionCounts = tbl => QueryBuilder.(
    select(
-     [e(col("question")), e(col("response_option_id")), e(count(all))],
+     [e(col("question_id")), e(col("response_option_id")), e(count(all))],
      ~from=tbl,
-     ~groupBy=["question", "response_option_id"]
+     ~groupBy=["question_id", "response_option_id"]
  ));
 
  let questionHistogram = (id, tbl) => QueryBuilder.(
    select(
      [
-       e(col("r.question_id")),
-       e(col("ro.label")),
+       e(col("responses.question_id")),
+       e(col("responses.label")),
        e(coalesce(col("count"), bigint(0)), ~a="count")
      ],
      ~from =
-       subQuery(questionResponses, "r")
+       subQuery(questionResponses, "responses")
        |> leftJoin(
          subQuery(questionCounts(tbl), "counts"),
-         and_(eq(col("r.question_id"), col("counts.question_id")),
-             eq(col("r.response_option_id"), col("counts.response_option_id")))),
-     ~where = eq(col("question_id"), int(id))
+         and_(eq(col("responses.question_id"), col("counts.question_id")),
+             eq(col("responses.response_option_id"), col("counts.response_option_id")))),
+     ~where = eq(col("responses.question_id"), int(id))
    )
  );
 
 let main = () => {
-  Js.log(Q.renderQuery(questionHistogram(123, QueryBuilder.table("single_choice_response"))));
+  Js.log(Q.renderQuery(questionHistogram(1, QueryBuilder.table("single_choice_response"))));
 };
 
 let _ = main();
