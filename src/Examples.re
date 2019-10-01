@@ -2,7 +2,7 @@ open SqlQuery;
 module C = Column;
 module E = Expression;
 module J = Join;
-module Q = Query;
+module S = Select;
 
 /*
  SELECT q.id AS question_id, ro.label, count FROM question AS q
@@ -40,9 +40,9 @@ let questionResponses = QueryBuilder.(
        e(coalesce(col("count"), bigint(0)), ~a="count")
      ],
      ~from =
-       subQuery(questionResponses, "responses")
+       sub(questionResponses, "responses")
        |> leftJoin(
-         subQuery(questionCounts(tbl), "counts"),
+         sub(questionCounts(tbl), "counts"),
          and_(eq(col("responses.question_id"), col("counts.question_id")),
              eq(col("responses.response_option_id"), col("counts.response_option_id")))),
      ~where = eq(col("responses.question_id"), int(id))
@@ -50,7 +50,7 @@ let questionResponses = QueryBuilder.(
  );
 
 let main = () => {
-  Js.log(Q.renderQuery(questionHistogram(1, QueryBuilder.table("single_choice_response"))));
+  Js.log(S.render(questionHistogram(1, QueryBuilder.table("single_choice_response"))) ++ ";");
 };
 
 let _ = main();

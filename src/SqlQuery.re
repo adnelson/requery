@@ -94,11 +94,11 @@ module Join = {
     | Cross => ("CROSS JOIN", None);
 };
 
-module Query = {
-  // What comes after the FROM of a query.
+module Select = {
+  // What comes after the FROM of a select.
   type target =
     | TableName(Aliased.t(tableName))
-    | SubQuery(t, string)
+    | SubSelect(t, string)
     | Join(Join.type_, target, target)
 
   // Renders into a SELECT query.
@@ -113,7 +113,7 @@ module Query = {
   let rec renderTarget: target => string =
     fun
     | TableName(tname) => Aliased.render(s => s, tname)
-    | SubQuery(q, alias) => "(" ++ renderQuery(q) ++ ") AS " ++ alias
+    | SubSelect(q, alias) => "(" ++ render(q) ++ ") AS " ++ alias
     | Join(join, t1, t2) =>
       switch (Join.renderType(join)) {
       | (keyword, None) => renderTarget(t1) ++ " " ++ keyword ++ " " ++ renderTarget(t2)
@@ -121,7 +121,7 @@ module Query = {
         renderTarget(t1) ++ " " ++ keyword ++ " " ++ renderTarget(t2) ++ " ON " ++ on
       }
 
-  and renderQuery: t => string =
+  and render: t => string =
     ({selections, from, groupBy, limit, where}) => {
       let groupByString =
         switch (groupBy) {
@@ -137,4 +137,4 @@ module Query = {
     };
 };
 
-let renderQuery = Query.renderQuery;
+let renderSelect = Select.render;

@@ -1,7 +1,7 @@
-type target = SqlQuery.Query.target;
+type target = SqlQuery.Select.target;
+type select = SqlQuery.Select.t;
 type expr = SqlQuery.Expression.t;
 type aliasedExpr = SqlQuery.Aliased.t(expr);
-type query = SqlQuery.Query.t;
 
 /***************************
 * Expressions
@@ -62,7 +62,7 @@ let rightJoin: (target, expr, target) => target;
 let crossJoin: (target, target) => target;
 
 // An inner SELECT query, with an alias
-let subQuery: (query, string) => target;
+let sub: (select, string) => target;
 
 /***************************
 * Queries
@@ -75,4 +75,4 @@ let select: (
   ~limit: int = ?,
   ~where: expr = ?,
   list(aliasedExpr),
-) => query;
+) => select;
