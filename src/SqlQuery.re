@@ -6,30 +6,26 @@ type tableName = string;
 module type ColumnType = {
   type t;
   let fromString: string => t;
-  let render: t => string;
-}
+  let toString: t => string;
+};
 
 module Column: ColumnType = {
   // e.g. 'foo' or 'mytable.foo'
   type t = string;
   external fromString: string => t = "%identity";
-  external render: t => string = "%identity";
+  external toString: t => string = "%identity";
 };
 
 module type AliasedType = {
   type t('a);
-  let make: (~a: string = ?, 'a) => t('a);
-  let render: ('a => string, t('a)) => string;
+  let make: (~a: string=?, 'a) => t('a);
+  let toTuple: t('a) => ('a, option(string));
 };
 
 module Aliased: AliasedType = {
   type t('a) = ('a, option(string));
+  external toTuple: t('a) => ('a, option(string)) = "%identity";
   let make = (~a=?, x) => (x, a);
-  let render: ('a => string, t('a)) => string =
-    renderInner =>
-      fun
-      | (x, None) => renderInner(x)
-      | (x, Some(alias)) => renderInner(x) ++ " AS " ++ alias;
 };
 
 module Expression = {
@@ -52,54 +48,20 @@ module Expression = {
     | Or(t, t)
     | Lt(t, t)
     | Call(string, array(t));
-
-  let renderAtom: atom => string =
-    fun
-    | Column(col) => Column.render(col)
-    | Int(i) => string_of_int(i)
-    | Float(f) => Js.Float.toString(f)
-    | String(s) => "'" ++ s ++ "'" // TODO escape quotes
-    | Bool(b) => b ? "TRUE" : "FALSE";
-
-  let rec render: t => string =
-    fun
-    | Atom(atom) => renderAtom(atom)
-    | Typed(e, t) => render(e) ++ "::" ++ t
-    | Eq(ex1, ex2) => render(ex1) ++ " = " ++ render(ex2)
-    | Neq(ex1, ex2) => render(ex1) ++ " <> " ++ render(ex2)
-    | Lt(ex1, ex2) => render(ex1) ++ " < " ++ render(ex2)
-    | Leq(ex1, ex2) => render(ex1) ++ " <= " ++ render(ex2)
-    | Gt(ex1, ex2) => render(ex1) ++ " > " ++ render(ex2)
-    | Geq(ex1, ex2) => render(ex1) ++ " >= " ++ render(ex2)
-    | And(ex1, ex2) => render(ex1) ++ " AND " ++ render(ex2)
-    | Or(ex1, ex2) => render(ex1) ++ " OR " ++ render(ex2)
-    | Call(fnName, args) =>
-      fnName ++ "(" ++ Js.Array.joinWith(", ", A.map(args, render)) ++ ")";
-};
-
-module Join = {
-  type condition = Expression.t;
-
-  type type_ =
-    | Inner(condition)
-    | Left(condition)
-    | Right(condition)
-    | Cross;
-
-  let renderType: type_ => (string, option(string)) =
-    fun
-    | Inner(on) => ("INNER JOIN", Some(Expression.render(on)))
-    | Left(on) => ("LEFT OUTER JOIN", Some(Expression.render(on)))
-    | Right(on) => ("RIGHT OUTER JOIN", Some(Expression.render(on)))
-    | Cross => ("CROSS JOIN", None);
 };
 
 module Select = {
+  type joinType =
+    | Inner(Expression.t)
+    | Left(Expression.t)
+    | Right(Expression.t)
+    | Cross;
+
   // What comes after the FROM of a select.
   type target =
     | TableName(Aliased.t(tableName))
     | SubSelect(t, string)
-    | Join(Join.type_, target, target)
+    | Join(joinType, target, target)
 
   // Renders into a SELECT query.
   and t = {
@@ -109,32 +71,6 @@ module Select = {
     limit: option(int),
     where: option(Expression.t),
   };
-
-  let rec renderTarget: target => string =
-    fun
-    | TableName(tname) => Aliased.render(s => s, tname)
-    | SubSelect(q, alias) => "(" ++ render(q) ++ ") AS " ++ alias
-    | Join(join, t1, t2) =>
-      switch (Join.renderType(join)) {
-      | (keyword, None) => renderTarget(t1) ++ " " ++ keyword ++ " " ++ renderTarget(t2)
-      | (keyword, Some(on)) =>
-        renderTarget(t1) ++ " " ++ keyword ++ " " ++ renderTarget(t2) ++ " ON " ++ on
-      }
-
-  and render: t => string =
-    ({selections, from, groupBy, limit, where}) => {
-      let groupByString =
-        switch (groupBy) {
-        | [||] => ""
-        | columns => " GROUP BY " ++ Js.Array.joinWith(", ", A.map(columns, Column.render))
-        };
-      let limitString = O.mapWithDefault(limit, "", n => " LIMIT " ++ string_of_int(n));
-      let selectionsString =
-        Js.Array.joinWith(", ", A.map(selections, Aliased.render(Expression.render)));
-      let fromString = O.mapWithDefault(from, "", t => " FROM " ++ renderTarget(t));
-      let whereString = O.mapWithDefault(where, "", e => " WHERE " ++ Expression.render(e));
-      "SELECT " ++ selectionsString ++ fromString ++ groupByString ++ whereString ++ limitString;
-    };
 };
 
-let renderSelect = Select.render;
+// let renderSelect = Select.render;

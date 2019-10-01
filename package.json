@@ -35,7 +35,7 @@
   "dependencies": {
     "@glennsl/bs-json": "^5.0.1",
     "bs-platform": "^5.0.6",
-    "bs-postgres": "git://github.com/adnelson/bs-postgres#top_level_module",
+    "bs-postgres": "^0.2.0",
     "knex": "^0.19.4",
     "pg": "^7.12.1"
   },

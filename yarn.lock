@@ -767,9 +767,10 @@ bs-platform@^5.0.6:
   resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-5.0.6.tgz#88c13041fb020479800de3d82c680bf971091425"
   integrity sha512-6Boa2VEcWJp2WJr38L7bp3J929nYha7gDarjxb070jWzgfPJ/WbzjipmSfnu2eqqk1MfjEIpBipbPz6n1NISwA==
 
-"bs-postgres@git://github.com/adnelson/bs-postgres#top_level_module":
+bs-postgres@^0.2.0:
   version "0.2.0"
-  resolved "git://github.com/adnelson/bs-postgres#700971cf38505709cd1360e6c6c5968c2553994b"
+  resolved "https://registry.yarnpkg.com/bs-postgres/-/bs-postgres-0.2.0.tgz#6c1cede1748d51c7d81e7f1b7e0deda5caba121f"
+  integrity sha512-OwMBSoCiHLCMgtvjm8ZOlUos5+PzBhLnS/XsJm5bUohY8Qxr9OfThSOMFV5GMka0TDz1nQ/PHJNyNHMNQ+1uhg==
   dependencies:
     pg "^7.4.1"
 

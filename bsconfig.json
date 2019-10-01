@@ -1,6 +1,7 @@
 {
   "bs-dependencies": [
-    "@glennsl/bs-json"
+    "@glennsl/bs-json",
+    "bs-postgres"
   ],
   "bs-dev-dependencies": ["@glennsl/bs-jest"],
   "name": "@knowledgehound/customer",
