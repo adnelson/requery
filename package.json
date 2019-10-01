@@ -35,6 +35,7 @@
   "dependencies": {
     "@glennsl/bs-json": "^5.0.1",
     "bs-platform": "^5.0.6",
+    "bs-postgres": "git://github.com/adnelson/bs-postgres#top_level_module",
     "knex": "^0.19.4",
     "pg": "^7.12.1"
   },
@@ -55,7 +56,7 @@
     "re:test": "yarn re:build && jest __tests__",
     "re:test:watch": "onchange -v -k -i -d 500 'src/**/*.bs.js' '__tests__/**/*.bs.js' -- sh -c 'clear && jest __tests__'",
     "re:buildandtest:watch": "onchange -v -k -i -d 500 'src/**/*.re' '__tests__/**/*.re' '__tests__/**/*.json' -- sh -c 'clear && bsb && jest __tests__'",
-    "re:format": "bsrefmt --in-place --print-width 100 src/*.re && bsrefmt --in-place --print-width 100 __tests__/*.re",
+    "re:format": "bsrefmt --in-place --print-width 100 src/*.re",
     "prepush": "lint-staged",
     "format": "prettier --write index.js \"src/**/*.{js,jsx,json,scss}\""
   }

@@ -5,19 +5,15 @@ type tableName = string;
 
 module Column = {
   // e.g. 'foo' or 'mytable.foo'
-  type t = {
-    table: option(tableName),
-    name: string,
-  };
+  type t = string;
+  external fromString: string => t = "%identity";
+  let make = (~t=?, name: string): t =>
+    switch (t) {
+    | None => name
+    | Some(table) => table ++ "." ++ name
+    };
 
-  let make = (~t=?, name: string): t => {table: t, name};
-
-  let render: t => string =
-    ({table, name}) =>
-      switch (table) {
-      | Some(t) => t ++ "." ++ name
-      | None => name
-      };
+  let render: t => string = s => s;
 };
 
 module Aliased = {
@@ -33,22 +29,50 @@ module Aliased = {
 };
 
 module Expression = {
-  type t =
+  type atom =
     | Column(Column.t)
+    | Int(int)
+    | Float(float)
+    | String(string)
+    | Bool(bool);
+
+  type t =
+    | Atom(atom)
+    | Typed(t, string)
     | Eq(t, t)
     | Neq(t, t)
     | And(t, t)
-    | Or(t, t);
+    | Or(t, t)
+    | Lt(t, t)
+    | Leq(t, t)
+    | Gt(t, t)
+    | Geq(t, t)
+    | Call(string, array(t));
 
-  let col = (~t=?, col) => Column(Column.make(~t?, col));
+  let col = (~t=?, col) => Atom(Column(Column.make(~t?, col)));
+
+  let renderAtom: atom => string =
+    fun
+    | Column(col) => Column.render(col)
+    | Int(i) => string_of_int(i)
+    | Float(f) => Js.Float.toString(f)
+    | String(s) => "'" ++ s ++ "'" // TODO escape quotes
+    | Bool(b) => b ? "TRUE" : "FALSE";
 
   let rec render: t => string =
     fun
-    | Column(col) => Column.render(col)
+    | Atom(atom) => renderAtom(atom)
+    | Typed(e, t) => render(e) ++ "::" ++ t
     | Eq(ex1, ex2) => render(ex1) ++ " = " ++ render(ex2)
     | Neq(ex1, ex2) => render(ex1) ++ " <> " ++ render(ex2)
+    | Lt(ex1, ex2) => render(ex1) ++ " < " ++ render(ex2)
+    | Leq(ex1, ex2) => render(ex1) ++ " <= " ++ render(ex2)
+    | Gt(ex1, ex2) => render(ex1) ++ " > " ++ render(ex2)
+    | Geq(ex1, ex2) => render(ex1) ++ " >= " ++ render(ex2)
     | And(ex1, ex2) => render(ex1) ++ " AND " ++ render(ex2)
-    | Or(ex1, ex2) => render(ex1) ++ " OR " ++ render(ex2);
+    | Or(ex1, ex2) => render(ex1) ++ " OR " ++ render(ex2)
+    | Call(fnName, args) =>
+      fnName ++ "(" ++ Js.Array.joinWith(", ", A.map(args, render)) ++ ")";
 };
 
 module Join = {
@@ -68,28 +92,6 @@ module Join = {
     | Cross => ("CROSS JOIN", None);
 };
 
-// TODO distinct, other functions, etc
-module Selection = {
-  type t =
-    | All(option(tableName)) // e.g. '*' or 'mytable.*'
-    | Expression(Expression.t)
-    | Count(t);
-
-  let all: t = All(None);
-  let allFrom: tableName => t = name => All(Some(name));
-  let expr: Expression.t => t = e => Expression(e);
-  //  let col: string => t = colName => Expression(Expression.Column(Column.make(colName)));
-  let col = (~t=?, col) => Expression(Expression.Column(Column.make(~t?, col)));
-
-  let rec render: t => string =
-    fun
-    | All(None) => "*"
-    | All(Some(table)) => table ++ ".*"
-    | Expression(e) => Expression.render(e)
-    // TODO this feels more like an expression, but I'm not sure how that works with the '*'
-    | Count(sel) => "COUNT(" ++ render(sel) ++ ")";
-};
-
 module Query = {
   // What comes after the FROM of a query.
   type target =
@@ -99,20 +101,22 @@ module Query = {
 
   // Renders into a SELECT query.
   and t = {
-    selections: array(Aliased.t(Selection.t)),
+    selections: array(Aliased.t(Expression.t)),
     from: option(target),
     groupBy: array(Column.t),
     limit: option(int),
+    where: option(Expression.t),
   };
 
-  let make = (~groupBy=?, ~limit=?, ~from=?, selections) => {
+  let make = (~groupBy=?, ~limit=?, ~from=?, ~where=?, selections) => {
     selections,
     from,
     limit,
     groupBy: O.getWithDefault(groupBy, [||]),
+    where,
   };
 
-  let select = (~a=?, sel): (Selection.t, option(string)) => Aliased.make(~a?, sel);
+  let select = (~a=?, sel): (Expression.t, option(string)) => Aliased.make(~a?, sel);
   let table = (~a=?, tableName) => TableName(Aliased.make(tableName, ~a?));
   let innerJoin = (t1, t2, cond) => Join(Join.Inner(cond), t1, t2);
   let leftJoin = (t1, t2, cond) => Join(Join.Left(cond), t1, t2);
@@ -137,7 +141,7 @@ module Query = {
         };
       let limitString = O.mapWithDefault(limit, "", n => " LIMIT " ++ string_of_int(n));
       let selectionsString =
-        Js.Array.joinWith(", ", A.map(selections, Aliased.render(Selection.render)));
+        Js.Array.joinWith(", ", A.map(selections, Aliased.render(Expression.render)));
       let fromString = O.mapWithDefault(from, "", t => " FROM " ++ renderTarget(t));
       "SELECT " ++ selectionsString ++ fromString ++ groupByString ++ limitString;
     };
