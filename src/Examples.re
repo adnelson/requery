@@ -14,46 +14,7 @@ module Q = Query;
  ) AS counts ON counts.question_id = q.question_id and
     counts.response_option_id = ro.id
  WHERE q.id = 1;
- */
-let countsQuery: Query.t =
-  Query.(
-    make(
-      A.map(
-        [|
-          E.Call("COUNT", [|E.col("*")|]),
-          E.col("question_id"),
-          E.col("response_option_id"),
-        |],
-        select,
-      ),
-      ~from=table("single_choice_response"),
-      ~groupBy=A.map([|"question_id", "response_option_id"|], Column.make),
-    )
-  );
-
-let mainQuery: Query.t =
-  Query.(
-    make(
-      A.map([|E.col("id", ~t="q"), E.col("label", ~t="ro"), E.col("count")|], select),
-      ~from=
-        leftJoin(
-          innerJoin(
-            table("question", ~a="q"),
-            table("response_option", ~a="ro"),
-            E.(Eq(col(~t="q", "option_set_id"), col(~t="ro", "option_set_id"))),
-          ),
-          SubQuery(countsQuery, "counts"),
-          E.(
-            And(
-              Eq(col(~t="counts", "question_id"), col(~t="q", "id")),
-              Eq(col(~t="counts", "response_option_id"), col(~t="ro", "id")),
-            )
-          ),
-        ),
-    )
-  );
-
- // Would be best to have a ppx!
+*/
 
 let questionResponses = QueryBuilder.(
    select(

@@ -3,24 +3,28 @@ module O = Belt.Option;
 
 type tableName = string;
 
-module Column = {
+module type ColumnType = {
+  type t;
+  let fromString: string => t;
+  let render: t => string;
+}
+
+module Column: ColumnType = {
   // e.g. 'foo' or 'mytable.foo'
   type t = string;
   external fromString: string => t = "%identity";
-  let make = (~t=?, name: string): t =>
-    switch (t) {
-    | None => name
-    | Some(table) => table ++ "." ++ name
-    };
-
-  let render: t => string = s => s;
+  external render: t => string = "%identity";
 };
 
-module Aliased = {
+module type AliasedType = {
+  type t('a);
+  let make: (~a: string = ?, 'a) => t('a);
+  let render: ('a => string, t('a)) => string;
+};
+
+module Aliased: AliasedType = {
   type t('a) = ('a, option(string));
-  let bare: 'a => t('a) = x => (x, None);
   let make = (~a=?, x) => (x, a);
-  let as_: ('a, string) => t('a) = (x, alias) => (x, Some(alias));
   let render: ('a => string, t('a)) => string =
     renderInner =>
       fun
@@ -42,14 +46,12 @@ module Expression = {
     | Eq(t, t)
     | Neq(t, t)
     | And(t, t)
-    | Or(t, t)
-    | Lt(t, t)
     | Leq(t, t)
     | Gt(t, t)
     | Geq(t, t)
+    | Or(t, t)
+    | Lt(t, t)
     | Call(string, array(t));
-
-  let col = (~t=?, col) => Atom(Column(Column.make(~t?, col)));
 
   let renderAtom: atom => string =
     fun
@@ -107,19 +109,6 @@ module Query = {
     limit: option(int),
     where: option(Expression.t),
   };
-
-  let make = (~groupBy=?, ~limit=?, ~from=?, ~where=?, selections) => {
-    selections,
-    from,
-    limit,
-    groupBy: O.getWithDefault(groupBy, [||]),
-    where,
-  };
-
-  let select = (~a=?, sel): (Expression.t, option(string)) => Aliased.make(~a?, sel);
-  let table = (~a=?, tableName) => TableName(Aliased.make(tableName, ~a?));
-  let innerJoin = (t1, t2, cond) => Join(Join.Inner(cond), t1, t2);
-  let leftJoin = (t1, t2, cond) => Join(Join.Left(cond), t1, t2);
 
   let rec renderTarget: target => string =
     fun

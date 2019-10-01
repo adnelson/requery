@@ -15,7 +15,7 @@ let float = f => E.Atom(E.Float(f));
 let string = s => E.Atom(E.String(s));
 let bigint = i => typed(int(i), "BigInt");
 
-let col = c => E.col(c);
+let col = c => E.Atom(E.Column(Column.fromString(c)));
 let all = col("*");
 let allFrom = t => col(t ++ ".*");
 
