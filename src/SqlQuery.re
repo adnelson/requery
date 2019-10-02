@@ -68,6 +68,7 @@ module Select = {
     selections: array(Aliased.t(Expression.t)),
     from: option(target),
     groupBy: array(Column.t),
+    orderBy: array(Column.t),
     limit: option(int),
     where: option(Expression.t),
   };

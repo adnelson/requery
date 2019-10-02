@@ -46,11 +46,12 @@ let rightJoin = (t1, on, t2) => Select.(Join(Right(on), t2, t1));
 let crossJoin = (t1, t2) => Select.(Join(Cross, t2, t1));
 let sub = (select, alias) => Select.SubSelect(select, alias);
 
-let select = (~from=?, ~groupBy=[], ~limit=?, ~where=?, selections) =>
+let select = (~from=?, ~groupBy=[], ~orderBy=[], ~limit=?, ~where=?, selections) =>
   Select.{
     selections: L.toArray(selections),
     from,
     limit,
     groupBy: L.toArray(L.map(groupBy, Column.fromString)),
+    orderBy: L.toArray(L.map(orderBy, Column.fromString)),
     where,
   };

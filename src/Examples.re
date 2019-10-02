@@ -3,6 +3,13 @@ module Render = RenderQuery;
 module C = Column;
 module E = Expression;
 module S = Select;
+module Pool = BsPostgres.Pool;
+module Result = BsPostgres.Result;
+module Query = BsPostgres.Query;
+let (query', connect) = BsPostgres.Client.Promise.(query', connect);
+let (then_, resolve) = Js.Promise.(then_, resolve);
+
+let exit: int => 'a = [%bs.raw {|code => process.exit(code)|}];
 
 /*
   SELECT q.id AS question_id, ro.label, count FROM question AS q
@@ -64,22 +71,21 @@ let questionHistogram = (id, tbl) =>
   );
 
 let main = () => {
-  Js.log(
-    Render.Select.render(questionHistogram(1, QueryBuilder.table("single_choice_response")))
-    ++ ";",
-  );
+  let pool = Pool.make(~host="localhost", ~database="sheltie-test", ~port=5999, ());
+
+  let select = questionHistogram(1, QueryBuilder.table("single_choice_response"));
+  let rendered = Render.Select.render(select);
+  Js.log(rendered ++ ";");
+
+  Pool.Promise.connect(pool)
+  |> then_(client =>
+      query'(Query.make(~text=rendered, ()), client)
+      |> then_((result: Result.t(Js.Json.t)) => {
+           let rows = result##rows;
+           Js.log(Utils.Json.pretty(rows |> Utils.Encode.(array(json))));
+           resolve();
+         })
+      |> then_(() => Pool.Pool_Client.release(client)))
 };
 
-let _ = main();
-
-/*
-
- let main = () => {
-   getConnection()
-   |> then_(conn => {
-    execute(conn, questionHistogram(123, QueryBuilder.table("single_choice_response")))
-    |> then_(decode(decodeHistogram))
-    |> then_(histogram => Js.log(histogram))
-    |> then_(_ => close(conn))
-    |> catch(_ => close(conn))
- */
+let _ = main() |> then_(_ => exit(0));

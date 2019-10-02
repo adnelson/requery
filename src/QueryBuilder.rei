@@ -72,6 +72,7 @@ let sub: (select, string) => target;
 let select: (
   ~from: target = ?,
   ~groupBy: list(string) = ?,
+  ~orderBy: list(string) = ?,
   ~limit: int = ?,
   ~where: expr = ?,
   list(aliasedExpr),
