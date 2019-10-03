@@ -159,34 +159,36 @@ module Json = {
 
   let pretty: Js.Json.t => string = [%bs.raw {|json => JSON.stringify(json, null, 2)|}];
 
-module Decode = {
-  include Json.Decode;
-  external json: Js.Json.t => Js.Json.t = "%identity";
-  let strMap: decoder('a) => decoder(SMap.t('a)) =
-    (inner, obj) => obj |> dict(inner) |> Js.Dict.entries |> SMap.fromArray;
+  module Decode = {
+    include Json.Decode;
+    external json: Js.Json.t => Js.Json.t = "%identity";
+    let strMap: decoder('a) => decoder(SMap.t('a)) =
+      (inner, obj) => obj |> dict(inner) |> Js.Dict.entries |> SMap.fromArray;
 
-  let strMapWithKey: (string => decoder('a)) => decoder(SMap.t('a)) =
-    (inner, obj) => {
-      let entries = obj |> dict(x => x) |> Js.Dict.entries;
-      SMap.fromArray(A.map(entries, ((k, v)) => (k, inner(k, v))));
-    };
+    let strMapWithKey: (string => decoder('a)) => decoder(SMap.t('a)) =
+      (inner, obj) => {
+        let entries = obj |> dict(x => x) |> Js.Dict.entries;
+        SMap.fromArray(A.map(entries, ((k, v)) => (k, inner(k, v))));
+      };
 
-  // Can parse either a JSON float, or a float-like string.
-  let floatString: decoder(float) = oneOf([float, obj => obj |> string |> float_of_string]);
+    // Can parse either a JSON float, or a float-like string.
+    let floatString: decoder(float) = oneOf([float, obj => obj |> string |> float_of_string]);
 
-  // Can parse either a JSON int, or a int-like string.
-  let intString: decoder(int) = oneOf([int, obj => obj |> string |> int_of_string]);
+    // Can parse either a JSON int, or a int-like string.
+    let intString: decoder(int) = oneOf([int, obj => obj |> string |> int_of_string]);
 
-  let numberOrString: decoder(string) =
-    oneOf([string, obj => obj |> int |> string_of_int, obj => obj |> float |> Js.Float.toString]);
-};
+    let numberOrString: decoder(string) =
+      oneOf([
+        string,
+        obj => obj |> int |> string_of_int,
+        obj => obj |> float |> Js.Float.toString,
+      ]);
+  };
 
-module Encode = {
-  include Json.Encode;
-  external json: Js.Json.t => Js.Json.t = "%identity";
-  let strMap: encoder('t) => encoder(SMap.t('t)) =
-    (enc, map) => dict(enc, Dict.fromMap(map));
-};
-
-
+  module Encode = {
+    include Json.Encode;
+    external json: Js.Json.t => Js.Json.t = "%identity";
+    let strMap: encoder('t) => encoder(SMap.t('t)) =
+      (enc, map) => dict(enc, Dict.fromMap(map));
+  };
 };
