@@ -1,7 +1,17 @@
 module A = Belt.Array;
 module O = Belt.Option;
 
-type tableName = string;
+module type TableNameType = {
+  type t;
+  let fromString: string => t;
+  let toString: t => string;
+};
+
+module TableName: TableNameType = {
+  type t = string;
+  external fromString: string => t = "%identity";
+  external toString: t => string = "%identity";
+};
 
 module type ColumnType = {
   type t;
@@ -59,7 +69,7 @@ module Select = {
 
   // What comes after the FROM of a select.
   type target =
-    | TableName(Aliased.t(tableName))
+    | TableName(Aliased.t(TableName.t))
     | SubSelect(t, string)
     | Join(joinType, target, target)
 

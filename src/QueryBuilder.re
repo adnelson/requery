@@ -2,6 +2,7 @@ open SqlQuery;
 module E = Expression;
 module L = Belt.List;
 
+type tableName = SqlQuery.TableName.t;
 type target = SqlQuery.Select.target;
 type expr = SqlQuery.Expression.t;
 type aliasedExpr = SqlQuery.Aliased.t(expr);
@@ -21,12 +22,20 @@ let allFrom = t => col(t ++ ".*");
 
 let eq = (e1, e2) => E.Eq(e1, e2);
 let neq = (e1, e2) => E.Neq(e1, e2);
-let and_ = (e1, e2) => E.And(e1, e2);
-let or_ = (e1, e2) => E.Or(e1, e2);
 let lt = (e1, e2) => E.Lt(e1, e2);
 let leq = (e1, e2) => E.Leq(e1, e2);
 let gt = (e1, e2) => E.Gt(e1, e2);
 let geq = (e1, e2) => E.Geq(e1, e2);
+let and_ = (e1, e2) => E.And(e1, e2);
+let or_ = (e1, e2) => E.Or(e1, e2);
+let ands =
+  fun
+  | [] => bool(true)
+  | [expr, ...exprs] => L.reduce(exprs, expr, and_);
+let ors =
+  fun
+  | [] => bool(false)
+  | [expr, ...exprs] => L.reduce(exprs, expr, or_);
 
 let count = e => E.Call("COUNT", [|e|]);
 let distinct = e => E.Call("DISTINCT", [|e|]);

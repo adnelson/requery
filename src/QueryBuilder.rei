@@ -1,3 +1,4 @@
+type tableName = SqlQuery.TableName.t;
 type target = SqlQuery.Select.target;
 type select = SqlQuery.Select.t;
 type expr = SqlQuery.Expression.t;
@@ -28,12 +29,17 @@ let allFrom: string => expr;
 // Binary operators
 let eq: (expr, expr) => expr;
 let neq: (expr, expr) => expr;
-let and_: (expr, expr) => expr;
-let or_: (expr, expr) => expr;
 let lt: (expr, expr) => expr;
 let gt: (expr, expr) => expr;
 let leq: (expr, expr) => expr;
 let geq: (expr, expr) => expr;
+let and_: (expr, expr) => expr;
+let or_: (expr, expr) => expr;
+
+// AND all of the expressions in the list (true if empty)
+let ands: list(expr) => expr;
+// OR all of the expressions in the list (false if empty)
+let ors: list(expr) => expr;
 
 // Functions
 let count: expr => expr;
@@ -53,7 +59,7 @@ let e: (~a: string = ?, expr) => aliasedExpr;
 ****************************/
 
 // A named table
-let table: ( ~a: string = ?, string) => target;
+let table: (~a: string = ?, tableName) => target;
 
 // Joins
 let innerJoin: (target, expr, target) => target;

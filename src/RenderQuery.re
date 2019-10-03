@@ -54,7 +54,7 @@ module Select = {
 
   let rec renderTarget: target => string =
     fun
-    | TableName(tname) => Aliased.render(s => s, tname)
+    | TableName(tname) => Aliased.render(SqlQuery.TableName.toString, tname)
     | SubSelect(q, alias) => "(" ++ render(q) ++ ") AS " ++ alias
     | Join(join, t1, t2) =>
       switch (renderJoinType(join)) {
