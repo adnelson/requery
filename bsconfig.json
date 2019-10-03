@@ -4,7 +4,8 @@
     "bs-postgres"
   ],
   "bs-dev-dependencies": ["@glennsl/bs-jest"],
-  "name": "@knowledgehound/customer",
+  "name": "requery",
+  "namespace": true,
   "package-specs": {
     "in-source": true,
     "module": "commonjs"
