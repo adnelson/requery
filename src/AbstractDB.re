@@ -10,12 +10,28 @@ type config = {
 type error =
   | RowDecodeError(RowDecode.error);
 
+let encodeError: Utils.encoder(error) =
+  Utils.Json.Encode.(
+    fun
+    | RowDecodeError(e) => e |> object1("RowDecodeError", RowDecode.encodeError)
+  );
+
 exception Error(error);
 
 module QueryResult = {
   type t('a) =
     | Error(error)
     | Success('a);
+
+  module Enc = Utils.Json.Encode;
+
+  let encode: Utils.encoder('a) => Utils.encoder(t('a)) =
+    Enc.(
+      encodeSuccess =>
+        fun
+        | Error(e) => e |> object1("Error", encodeError)
+        | Success(x) => x |> object1("Success", encodeSuccess)
+    );
 
   let unwrap: t('a) => 'a =
     fun

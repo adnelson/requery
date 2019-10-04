@@ -102,6 +102,13 @@ module Option = {
       | Some(x) => x
       | None => make()
       };
+
+  let mapString: (option('a), 'a => string) => string =
+    (opt, f) =>
+      switch (opt) {
+      | None => ""
+      | Some(x) => f(x)
+      };
 };
 
 // Extra functions on arrays
@@ -111,9 +118,23 @@ module Array = {
   let min: array(float) => float = arr => reduce(arr, infinity, min);
   let contains: (array('a), 'a) => bool = (arr, elem) => some(arr, e => e == elem);
   let joinWith: (array(string), string) => string = (arr, sep) => Js.Array.joinWith(sep, arr);
+  let mapJoin: (array('a), ~prefix: string=?, ~suffix: string=?, string, 'a => string) => string =
+    (arr, ~prefix="", ~suffix="", sep, f) => prefix ++ joinWith(map(arr, f), sep) ++ suffix;
   let mapJoinWith: (array('a), string, 'a => string) => string =
     (arr, sep, f) => joinWith(map(arr, f), sep);
-
+  let mapJoinCommas: (array('a), 'a => string) => string =
+    (arr, f) => mapJoinWith(arr, ", ", f);
+  let mapJoinIfNonEmpty:
+    (array('a), ~onEmpty: string=?, ~prefix: string=?, ~suffix: string=?, string, 'a => string) =>
+    string =
+    (arr, ~onEmpty="", ~prefix="", ~suffix="", sep, f) =>
+      switch (arr) {
+      | [||] => onEmpty
+      | _ => mapJoin(arr, ~prefix, ~suffix, sep, f)
+      };
+  //  let mapJoinCommasIfNonEmpty: (array('a), ~prefix: string=?, 'a => string) => string =
+  //    (arr, ~prefix="", f) => mapJoinWithIfNonEmpty(arr, ~prefix, ", ", f);
+  //
   // like map, but argument order flipped
   let flipMap: ('a => 'b, array('a)) => array('b) = (f, a) => map(a, f);
 
@@ -186,12 +207,25 @@ module Array = {
   };
 };
 
+// Extra functions on lists
+module List = {
+  include Belt.List;
+  let amap: (list('a), 'a => 'b) => array('b) = (l, f) => toArray(map(l, f));
+};
+
 module Json = {
   module Decode = {
     include Json.Decode;
     external json: Js.Json.t => Js.Json.t = "%identity";
     let strMap: decoder('a) => decoder(SMap.t('a)) =
       (inner, obj) => obj |> dict(inner) |> Js.Dict.entries |> SMap.fromArray;
+
+    // Run two decoders on the same input
+    let tup2: (decoder('a), decoder('b)) => decoder(('a, 'b)) =
+      (first, second, obj) => (obj |> first, obj |> second);
+
+    let tup3: (decoder('a), decoder('b), decoder('c)) => decoder(('a, 'b, 'c)) =
+      (f1, f2, f3, obj) => (obj |> f1, obj |> f2, obj |> f3);
 
     let strMapWithKey: (string => decoder('a)) => decoder(SMap.t('a)) =
       (inner, obj) => {
@@ -218,6 +252,8 @@ module Json = {
     external json: Js.Json.t => Js.Json.t = "%identity";
     let strMap: encoder('t) => encoder(SMap.t('t)) =
       (enc, map) => dict(enc, Dict.fromMap(map));
+    let object1: (string, encoder('a)) => encoder('a) =
+      (key, encodeInner, inner) => object_([(key, encodeInner(inner))]);
   };
 
   let pretty: Js.Json.t => string = [%bs.raw {|json => JSON.stringify(json, null, 2)|}];

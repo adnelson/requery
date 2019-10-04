@@ -1,12 +1,14 @@
 open SqlQuery;
 module E = Expression;
-module L = Belt.List;
+module L = Utils.List;
 
+type column = SqlQuery.Column.t;
 type tableName = SqlQuery.TableName.t;
 type target = SqlQuery.Select.target;
 type expr = SqlQuery.Expression.t;
 type aliasedExpr = SqlQuery.Aliased.t(expr);
 type select = SqlQuery.Select.t;
+type direction = SqlQuery.Select.direction;
 
 let typed = (e, t) => E.Typed(e, t);
 
@@ -16,6 +18,7 @@ let float = f => E.Atom(E.Float(f));
 let string = s => E.Atom(E.String(s));
 let bigint = i => typed(int(i), "BigInt");
 
+let col_ = c => E.Atom(E.Column(c));
 let col = c => E.Atom(E.Column(Column.fromString(c)));
 let all = col("*");
 let allFrom = t => col(t ++ ".*");
@@ -55,12 +58,30 @@ let rightJoin = (t1, on, t2) => Select.(Join(Right(on), t2, t1));
 let crossJoin = (t1, t2) => Select.(Join(Cross, t2, t1));
 let sub = (select, alias) => Select.SubSelect(select, alias);
 
+let column = SqlQuery.Column.fromString;
+let columns = SqlQuery.Column.fromStringList;
+let (asc, desc) = Select.(ASC, DESC);
+
 let select = (~from=?, ~groupBy=[], ~orderBy=[], ~limit=?, ~where=?, selections) =>
   Select.{
     selections: L.toArray(selections),
     from,
     limit,
-    groupBy: L.toArray(L.map(groupBy, Column.fromString)),
-    orderBy: L.toArray(L.map(orderBy, Column.fromString)),
+    groupBy: L.toArray(groupBy),
+    orderBy: L.toArray(orderBy),
     where,
   };
+
+let selecting = (sels, s) => Select.{...s, selections: L.toArray(sels)};
+let from = (t, s) => Select.{...s, from: Some(t)};
+let limit = (n, s) => Select.{...s, limit: Some(n)};
+let where = (cond, s) => Select.{...s, where: Some(cond)};
+let orderBy = (cols, s) =>
+  Select.{...s, orderBy: L.amap(cols, ((c, dir)) => (c, Some(dir)))};
+let orderBy_ = (cols, s) => Select.{...s, orderBy: L.amap(cols, c => (c, None))};
+let orderBy1 = (col, dir, s) => Select.{...s, orderBy: [|(col, Some(dir))|]};
+let orderBy1_ = (col, s) => Select.{...s, orderBy: [|(col, None)|]};
+let orderBy2 = (col1, dir1, col2, dir2, s) =>
+  Select.{...s, orderBy: [|(col1, Some(dir1)), (col2, Some(dir2))|]};
+let orderBy2_ = (col1, col2, s) => Select.{...s, orderBy: [|(col1, None), (col2, None)|]};
+let groupBy = (cols, s) => Select.{...s, groupBy: L.toArray(cols)};

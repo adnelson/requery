@@ -1,8 +1,10 @@
+type column = SqlQuery.Column.t;
 type tableName = SqlQuery.TableName.t;
 type target = SqlQuery.Select.target;
 type select = SqlQuery.Select.t;
 type expr = SqlQuery.Expression.t;
 type aliasedExpr = SqlQuery.Aliased.t(expr);
+type direction = SqlQuery.Select.direction;
 
 /***************************
  * Expressions
@@ -18,8 +20,11 @@ let bool: bool => expr;
 // Add an explicit type cast to an expression
 let typed: (expr, string) => expr;
 
-// A single column
+// A single column, from a string
 let col: string => expr;
+
+// A single column, from a column name
+let col_: column => expr;
 
 // All columns (*)
 let all: expr;
@@ -76,14 +81,34 @@ let sub: (select, string) => target;
  * Queries
  ****************************/
 
+let column: string => column;
+let columns: list(string) => list(column);
+
+// For ORDER BY clauses
+let asc: direction;
+let desc: direction;
+
 // The top-level select statement.
 let select:
   (
     ~from: target=?,
-    ~groupBy: list(string)=?,
-    ~orderBy: list(string)=?,
+    ~groupBy: list(column)=?,
+    ~orderBy: list((column, option(direction)))=?,
     ~limit: int=?,
     ~where: expr=?,
     list(aliasedExpr)
   ) =>
   select;
+
+// Change what's being selected.
+let selecting: (list(aliasedExpr), select) => select;
+let from: (target, select) => select;
+let limit: (int, select) => select;
+let where: (expr, select) => select;
+let orderBy_: (list(column), select) => select;
+let orderBy: (list((column, direction)), select) => select;
+let orderBy1_: (column, select) => select;
+let orderBy1: (column, direction, select) => select;
+let orderBy2_: (column, column, select) => select;
+let orderBy2: (column, direction, column, direction, select) => select;
+let groupBy: (list(column), select) => select;

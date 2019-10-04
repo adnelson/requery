@@ -6,7 +6,19 @@ type error =
   | RowDecodeError(int, Js.Json.t, string)
   | EmptyRows;
 
-let errorToStringShort: error => string =
+let encodeError =
+  Utils.Json.Encode.(
+    fun
+    | RowDecodeError(num, rowJson, message) =>
+      object_([
+        ("number", num |> int),
+        ("rowJson", rowJson |> json),
+        ("message", message |> string),
+      ])
+    | EmptyRows => "EmptyRows" |> string
+  );
+
+let errorToString: error => string =
   fun
   | RowDecodeError(n, _, str) =>
     "Error occurred when parsing row " ++ string_of_int(n) ++ ": " ++ str
@@ -35,6 +47,8 @@ let column: (string, J.decoder('t)) => decoder('t) =
     | [||] => raise(Error(EmptyRows))
     | rows => rows[0] |> decodeRow(0, J.field(col, dec));
 
+// Given a way to get a (key, value) pair from a row, produce a
+// dictionary with those keys/values.
 let dict =
     (
       ~keyField: string,
@@ -44,7 +58,7 @@ let dict =
     )
     : decoder(Js.Dict.t('a)) =>
   decodeRows(
-    J.(pair(field(keyField, keyDecode), field(valueField, valueDecode))),
+    J.(tup2(field(keyField, keyDecode), field(valueField, valueDecode))),
     Js.Dict.fromArray,
   );
 
@@ -59,12 +73,11 @@ let nestedDict =
     )
     : decoder(Js.Dict.t(Js.Dict.t('a))) =>
   decodeRows(
-    obj =>
-      (
-        obj |> J.field(innerKeyField, innerKeyDecode),
-        obj |> J.field(outerKeyField, outerKeyDecode),
-        obj |> J.field(valueField, valueDecode),
-      ),
+    J.tup3(
+      J.field(innerKeyField, innerKeyDecode),
+      J.field(outerKeyField, outerKeyDecode),
+      J.field(valueField, valueDecode),
+    ),
     decoded => {
       let result = Js.Dict.empty();
       A.forEach(decoded, ((inner, outer, value)) =>

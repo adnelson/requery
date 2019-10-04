@@ -1,5 +1,5 @@
-module A = Belt.Array;
-module O = Belt.Option;
+module A = Utils.Array;
+module O = Utils.Option;
 
 module Column = {
   open SqlQuery.Column;
@@ -52,6 +52,11 @@ module Select = {
     | Right(on) => ("RIGHT OUTER JOIN", Some(Expression.render(on)))
     | Cross => ("CROSS JOIN", None);
 
+  let renderDirection: direction => string =
+    fun
+    | ASC => "ASC"
+    | DESC => "DESC";
+
   let rec renderTarget: target => string =
     fun
     | TableName(tname) => Aliased.render(SqlQuery.TableName.toString, tname)
@@ -64,21 +69,21 @@ module Select = {
       }
 
   and render: t => string =
-    ({selections, from, groupBy, limit, where}) => {
-      let groupByString =
-        switch (groupBy) {
-        | [||] => ""
-        | columns => " GROUP BY " ++ Js.Array.joinWith(", ", A.map(columns, Column.render))
-        };
-      let limitString = O.mapWithDefault(limit, "", n => " LIMIT " ++ string_of_int(n));
-      let selectionsString =
-        Js.Array.joinWith(", ", A.map(selections, Aliased.render(Expression.render)));
-      let fromString = O.mapWithDefault(from, "", t => " FROM " ++ renderTarget(t));
-      let whereString = O.mapWithDefault(where, "", e => " WHERE " ++ Expression.render(e));
-      "SELECT " ++ selectionsString ++ fromString ++ groupByString ++ whereString ++ limitString;
+    ({selections, from, orderBy, groupBy, limit, where}) => {
+      let selections = A.mapJoinCommas(selections, Aliased.render(Expression.render));
+      let from = O.mapString(from, t => " FROM " ++ renderTarget(t));
+      let orderBy =
+        A.mapJoinIfNonEmpty(orderBy, ~prefix=" ORDER BY ", ", ", ((c, optDir)) =>
+          Column.render(c) ++ O.mapString(optDir, dir => " " ++ renderDirection(dir))
+        );
+      let groupBy = A.mapJoinIfNonEmpty(groupBy, ~prefix=" GROUP BY ", ", ", Column.render);
+      let limit = O.mapString(limit, n => " LIMIT " ++ string_of_int(n));
+      let where = O.mapString(where, e => " WHERE " ++ Expression.render(e));
+      "SELECT " ++ selections ++ from ++ groupBy ++ where ++ orderBy ++ limit;
     };
 };
 
 let render: SqlQuery.query => string =
   fun
-  | Select(s) => Select.render(s);
+  | Select(s) => Select.render(s)
+  | Insert(_) => Utils.throw("Can't render inserts yet");

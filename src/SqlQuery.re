@@ -16,6 +16,8 @@ module TableName: TableNameType = {
 module type ColumnType = {
   type t;
   let fromString: string => t;
+  let fromStringArray: array(string) => array(t);
+  let fromStringList: list(string) => list(t);
   let toString: t => string;
 };
 
@@ -23,6 +25,8 @@ module Column: ColumnType = {
   // e.g. 'foo' or 'mytable.foo'
   type t = string;
   external fromString: string => t = "%identity";
+  external fromStringArray: array(string) => array(t) = "%identity";
+  external fromStringList: list(string) => list(t) = "%identity";
   external toString: t => string = "%identity";
 };
 
@@ -61,6 +65,9 @@ module Expression = {
 };
 
 module Select = {
+  type direction =
+    | ASC
+    | DESC;
   type joinType =
     | Inner(Expression.t)
     | Left(Expression.t)
@@ -78,7 +85,7 @@ module Select = {
     selections: array(Aliased.t(Expression.t)),
     from: option(target),
     groupBy: array(Column.t),
-    orderBy: array(Column.t),
+    orderBy: array((Column.t, option(direction))),
     limit: option(int),
     where: option(Expression.t),
   };
@@ -96,5 +103,6 @@ module Insert = {
 };
 
 type query =
-  | Select(Select.t);
+  | Select(Select.t)
+  | Insert(Insert.t);
 // let renderSelect = Select.render;
