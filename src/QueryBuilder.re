@@ -56,7 +56,8 @@ let innerJoin = (t1, on, t2) => Select.(Join(Inner(on), t2, t1));
 let leftJoin = (t1, on, t2) => Select.(Join(Left(on), t2, t1));
 let rightJoin = (t1, on, t2) => Select.(Join(Right(on), t2, t1));
 let crossJoin = (t1, t2) => Select.(Join(Cross, t2, t1));
-let sub = (select, alias) => Select.SubSelect(select, alias);
+// TODO this can inspect the type of the select to collapse unnecessary aliases
+let sub = (alias, select) => Select.SubSelect(select, alias);
 
 let column = SqlQuery.Column.fromString;
 let columns = SqlQuery.Column.fromStringList;

@@ -75,7 +75,7 @@ let rightJoin: (target, expr, target) => target;
 let crossJoin: (target, target) => target;
 
 // An inner SELECT query, requires an alias
-let sub: (select, string) => target;
+let sub: (string, select) => target;
 
 /***************************
  * Queries
