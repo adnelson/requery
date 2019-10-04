@@ -42,6 +42,16 @@ let geq: (expr, expr) => expr;
 let and_: (expr, expr) => expr;
 let or_: (expr, expr) => expr;
 
+// Symbolic versions of binary operators
+let (==): (expr, expr) => expr;
+let (!=): (expr, expr) => expr;
+let (<): (expr, expr) => expr;
+let (<=): (expr, expr) => expr;
+let (>): (expr, expr) => expr;
+let (>=): (expr, expr) => expr;
+let (&&): (expr, expr) => expr;
+let (||): (expr, expr) => expr;
+
 // AND all of the expressions in the list (true if empty)
 let ands: list(expr) => expr;
 // OR all of the expressions in the list (false if empty)

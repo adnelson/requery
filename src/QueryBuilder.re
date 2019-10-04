@@ -25,13 +25,21 @@ let all = col("*");
 let allFrom = t => col(t ++ ".*");
 
 let eq = (e1, e2) => E.Eq(e1, e2);
+let (==) = eq;
 let neq = (e1, e2) => E.Neq(e1, e2);
+let (!=) = neq;
 let lt = (e1, e2) => E.Lt(e1, e2);
+let (<) = lt;
 let leq = (e1, e2) => E.Leq(e1, e2);
+let (<=) = leq;
 let gt = (e1, e2) => E.Gt(e1, e2);
+let (>) = gt;
 let geq = (e1, e2) => E.Geq(e1, e2);
+let (>=) = geq;
 let and_ = (e1, e2) => E.And(e1, e2);
+let (&&) = and_;
 let or_ = (e1, e2) => E.Or(e1, e2);
+let (||) = or_;
 let ands =
   fun
   | [] => bool(true)
@@ -102,4 +110,4 @@ let insertValues = (values, into) =>
     data: Values(L.toArray(L.map(values, ((c, exprs)) => (c, L.toArray(exprs))))),
   };
 
-let insertSelect = (select, into) => Insert.{into, data: Select(select)};
+let insertSelect = (select, into) => {Insert.into, data: Select(select)};
