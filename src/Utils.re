@@ -147,9 +147,7 @@ module Array = {
       | [||] => onEmpty
       | _ => mapJoin(arr, ~prefix, ~suffix, sep, f)
       };
-  //  let mapJoinCommasIfNonEmpty: (array('a), ~prefix: string=?, 'a => string) => string =
-  //    (arr, ~prefix="", f) => mapJoinWithIfNonEmpty(arr, ~prefix, ", ", f);
-  //
+
   // like map, but argument order flipped
   let flipMap: ('a => 'b, array('a)) => array('b) = (f, a) => map(a, f);
 
@@ -173,15 +171,8 @@ module Array = {
       };
 
   // Mutates arr, adding each element of arr' to it.
-  let extend = (arr: array('a), arr': array('a)): unit => {
-    A.forEach(
-      arr',
-      elem => {
-        let _ = Js.Array.push(elem, arr);
-        ();
-      },
-    );
-  };
+  let extend = (arr: array('a), arr': array('a)): unit =>
+    A.forEach(arr', elem => Js.Array.push(elem, arr) |> ignore);
 
   // Flatten an array of arrays.
   let flat = (arr: array(array('a))): array('a) => {
@@ -193,7 +184,8 @@ module Array = {
   // map and then flatten
   let flatMap = (arr: array('a), f: 'a => array('b)): array('b) => flat(map(arr, f));
 
-  let sum = (arr: array(float)): float => reduce(arr, 0.0, (+.));
+  let sumInts = (arr: array(int)): int => reduce(arr, 0, (+));
+  let sumFloats = (arr: array(float)): float => reduce(arr, 0.0, (+.));
 
   // Cross-product two arrays, applying a function to each pair.
   let cross = (arr1: array('a), arr2: array('b), f: ('a, 'b) => 'c): array('c) => {
