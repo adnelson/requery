@@ -72,6 +72,14 @@ let select = (~from=?, ~groupBy=[], ~orderBy=[], ~limit=?, ~where=?, selections)
     where,
   };
 
+let as_ = alias =>
+  Select.(
+    fun
+    | TableName(tname) => TableName(Aliased.as_(tname, alias))
+    | SubSelect(q, _) => SubSelect(q, alias)
+    | target => SubSelect(select([e(all)], ~from=target), alias)
+  );
+
 let selecting = (sels, s) => Select.{...s, selections: L.toArray(sels)};
 let from = (t, s) => Select.{...s, from: Some(t)};
 let limit = (n, s) => Select.{...s, limit: Some(n)};

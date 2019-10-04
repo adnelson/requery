@@ -33,11 +33,13 @@ module Column: ColumnType = {
 module type AliasedType = {
   type t('a);
   let make: (~a: string=?, 'a) => t('a);
+  let as_: (t('a), string) => t('a);
   let toTuple: t('a) => ('a, option(string));
 };
 
 module Aliased: AliasedType = {
   type t('a) = ('a, option(string));
+  let as_ = ((x, _), alias) => (x, Some(alias));
   external toTuple: t('a) => ('a, option(string)) = "%identity";
   let make = (~a=?, x) => (x, a);
 };

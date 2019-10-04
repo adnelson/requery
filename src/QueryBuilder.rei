@@ -88,6 +88,9 @@ let columns: list(string) => list(column);
 let asc: direction;
 let desc: direction;
 
+// Modify or add an alias to a target.
+let as_: (string, target) => target;
+
 // The top-level select statement.
 let select:
   (
