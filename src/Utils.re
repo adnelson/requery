@@ -27,6 +27,32 @@ module Log = {
 
 let throw: string => 'a = [%raw message => {| throw new Error(message); |}];
 
+module Promise = {
+  include Js.Promise;
+
+  let transform: ('a => 'b, t('a)) => t('b) = (f, prom) => prom |> then_(x => resolve(f(x)));
+  let rLog: 'a => Js.Promise.t(unit) = x => Js.Promise.resolve(Js.log(x));
+  let rLog2: ('a, 'b) => Js.Promise.t(unit) = (a, b) => Js.Promise.resolve(Js.log2(a, b));
+  let rLogReturn: ('a => 'b, 'a) => Js.Promise.t('a) =
+    (toLog, x) => {
+      Js.log(toLog(x));
+      Js.Promise.resolve(x);
+    };
+  let pair: (t('a), t('b)) => t(('a, 'b)) = (p1, p2) => Js.Promise.all2((p1, p2));
+  exception Error(error);
+  let finally: (unit => t(unit), t('a)) => t('a) =
+    (action, prom) =>
+      prom
+      |> then_(result => {
+           ignore(action());
+           resolve(result);
+         })
+      |> catch(err => {
+           ignore(action());
+           reject(Error(err));
+         });
+};
+
 module Dict = {
   include Js.Dict;
 
@@ -87,6 +113,12 @@ module Array = {
   let joinWith: (array(string), string) => string = (arr, sep) => Js.Array.joinWith(sep, arr);
   let mapJoinWith: (array('a), string, 'a => string) => string =
     (arr, sep, f) => joinWith(map(arr, f), sep);
+
+  // like map, but argument order flipped
+  let flipMap: ('a => 'b, array('a)) => array('b) = (f, a) => map(a, f);
+
+  // like forEach, but reverse argument order
+  let flipForEach: ('a => 'b, array('a)) => unit = (f, a) => forEach(a, f);
 
   // Find the first item in the array which matches a predicate, or return None.
   let find: (array('a), 'a => bool) => option('a) =
@@ -155,8 +187,6 @@ module Array = {
 };
 
 module Json = {
-  let pretty: Js.Json.t => string = [%bs.raw {|json => JSON.stringify(json, null, 2)|}];
-
   module Decode = {
     include Json.Decode;
     external json: Js.Json.t => Js.Json.t = "%identity";
@@ -189,4 +219,12 @@ module Json = {
     let strMap: encoder('t) => encoder(SMap.t('t)) =
       (enc, map) => dict(enc, Dict.fromMap(map));
   };
+
+  let pretty: Js.Json.t => string = [%bs.raw {|json => JSON.stringify(json, null, 2)|}];
+  let pretty_ = pretty; // alias to avoid name clash below
+  let rLog = (~pretty=false, enc: Encode.encoder('a), obj: 'a) =>
+    Promise.rLog((pretty ? pretty_ : Json.stringify)(enc(obj)));
+  let rLogReturn = (~pretty=false, enc: Encode.encoder('a)) =>
+    Promise.rLogReturn(obj => (pretty ? pretty_ : Json.stringify)(enc(obj)));
+  let rLogJson = rLog(Encode.json);
 };

@@ -84,6 +84,17 @@ module Select = {
   };
 };
 
+module Insert = {
+  type data =
+    | Values(list((Column.t, Expression.t)))
+    | Select(Select.t);
+
+  type t = {
+    into: TableName.t,
+    data,
+  };
+};
+
 type query =
   | Select(Select.t);
 // let renderSelect = Select.render;
