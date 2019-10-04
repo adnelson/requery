@@ -66,7 +66,7 @@ let leftJoin = (t1, on, t2) => Select.(Join(Left(on), t2, t1));
 let rightJoin = (t1, on, t2) => Select.(Join(Right(on), t2, t1));
 let crossJoin = (t1, t2) => Select.(Join(Cross, t2, t1));
 // TODO this can inspect the type of the select to collapse unnecessary aliases
-let sub = (alias, select) => Select.SubSelect(select, alias);
+let selectAs = (alias, select) => Select.SubSelect(select, alias);
 
 let column = SqlQuery.Column.fromString;
 let columns = SqlQuery.Column.fromStringList;
@@ -104,10 +104,13 @@ let orderBy2 = (col1, dir1, col2, dir2, s) =>
 let orderBy2_ = (col1, col2, s) => Select.{...s, orderBy: [|(col1, None), (col2, None)|]};
 let groupBy = (cols, s) => Select.{...s, groupBy: L.toArray(cols)};
 
-let insertValues = (values, into) =>
+let insertRows = (rows, into) =>
   Insert.{
     into,
-    data: Values(L.toArray(L.map(values, ((c, exprs)) => (c, L.toArray(exprs))))),
+    data: Values(L.toArray(L.map(rows, ((c, exprs)) => (c, L.toArray(exprs))))),
   };
+
+let insertRow = (row, into) =>
+  Insert.{into, data: Values(L.toArray(L.map(row, ((c, e)) => (c, [|e|]))))};
 
 let insertSelect = (select, into) => {Insert.into, data: Select(select)};

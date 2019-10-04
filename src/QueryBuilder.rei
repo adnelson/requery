@@ -86,7 +86,7 @@ let rightJoin: (target, expr, target) => target;
 let crossJoin: (target, target) => target;
 
 // An inner SELECT query, requires an alias
-let sub: (string, select) => target;
+let selectAs: (string, select) => target;
 
 /***************************
  * SELECT Queries
@@ -131,5 +131,6 @@ let groupBy: (list(column), select) => select;
  * INSERT Queries
  ****************************/
 
-let insertValues: (list((column, list(expr))), tableName) => insert;
+let insertRows: (list((column, list(expr))), tableName) => insert;
+let insertRow: (list((column, expr)), tableName) => insert;
 let insertSelect: (select, tableName) => insert;
