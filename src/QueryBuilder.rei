@@ -1,5 +1,5 @@
 type column = SqlQuery.Column.t;
-type tableName = SqlQuery.TableName.t;
+type tableName = SqlQuery.Table.t;
 type target = SqlQuery.Select.target;
 type select = SqlQuery.Select.t;
 type expr = SqlQuery.Expression.t;

@@ -8,8 +8,8 @@ module Column = {
   let render = toString;
 };
 
-module TableName = {
-  open SqlQuery.TableName;
+module Table = {
+  open SqlQuery.Table;
   let render = toString;
 };
 
@@ -68,7 +68,7 @@ module Select = {
 
   let rec renderTarget: target => string =
     fun
-    | TableName(tname) => Aliased.render(SqlQuery.TableName.toString, tname)
+    | Table(tname) => Aliased.render(SqlQuery.Table.toString, tname)
     | SubSelect(q, alias) => "(" ++ render(q) ++ ") AS " ++ alias
     | Join(join, t1, t2) =>
       switch (renderJoinType(join)) {
@@ -97,7 +97,7 @@ module Insert = {
   let render: t => string =
     ({data, into}) => {
       "INSERT INTO "
-      ++ TableName.render(into)
+      ++ Table.render(into)
       ++ " "
       ++ (
         switch (data) {

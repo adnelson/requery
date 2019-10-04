@@ -1,13 +1,13 @@
 module A = Belt.Array;
 module O = Belt.Option;
 
-module type TableNameType = {
+module type TableType = {
   type t;
   let fromString: string => t;
   let toString: t => string;
 };
 
-module TableName: TableNameType = {
+module Table: TableType = {
   type t = string;
   external fromString: string => t = "%identity";
   external toString: t => string = "%identity";
@@ -78,7 +78,7 @@ module Select = {
 
   // What comes after the FROM of a select.
   type target =
-    | TableName(Aliased.t(TableName.t))
+    | Table(Aliased.t(Table.t))
     | SubSelect(t, string)
     | Join(joinType, target, target)
 
@@ -99,7 +99,7 @@ module Insert = {
     | Select(Select.t);
 
   type t = {
-    into: TableName.t,
+    into: Table.t,
     data,
   };
 };

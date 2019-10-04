@@ -3,7 +3,7 @@ module E = Expression;
 module L = Utils.List;
 
 type column = SqlQuery.Column.t;
-type tableName = SqlQuery.TableName.t;
+type tableName = SqlQuery.Table.t;
 type target = SqlQuery.Select.target;
 type expr = SqlQuery.Expression.t;
 type aliasedExpr = SqlQuery.Aliased.t(expr);
@@ -60,7 +60,7 @@ let call = (name, args) => E.Call(name, L.toArray(args));
 
 let e = (~a=?, expr): aliasedExpr => Aliased.make(expr, ~a?);
 
-let table = (~a=?, name) => Select.TableName(Aliased.make(name, ~a?));
+let table = (~a=?, name) => Select.Table(Aliased.make(name, ~a?));
 let innerJoin = (t1, on, t2) => Select.(Join(Inner(on), t2, t1));
 let leftJoin = (t1, on, t2) => Select.(Join(Left(on), t2, t1));
 let rightJoin = (t1, on, t2) => Select.(Join(Right(on), t2, t1));
@@ -85,7 +85,7 @@ let select = (~from=?, ~groupBy=[], ~orderBy=[], ~limit=?, ~where=?, selections)
 let as_ = alias =>
   Select.(
     fun
-    | TableName(tname) => TableName(Aliased.as_(tname, alias))
+    | Table(tname) => Table(Aliased.as_(tname, alias))
     | SubSelect(q, _) => SubSelect(q, alias)
     | target => SubSelect(select([e(all)], ~from=target), alias)
   );
