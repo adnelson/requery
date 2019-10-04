@@ -16,3 +16,4 @@ module DB: AbstractDB.DBType = {
 module Query = AbstractDB.Query(DB);
 
 let select = Query.select;
+let retrieve = Query.retrieve;

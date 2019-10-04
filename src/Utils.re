@@ -1,6 +1,17 @@
 module SMap = Belt.Map.String;
 module A = Belt.Array;
 
+let curry: (('a, 'b) => 'c, ('a, 'b)) => 'c = (f, (a, b)) => f(a, b);
+let curry3: (('a, 'b, 'c) => 'd, ('a, 'b, 'c)) => 'd = (f, (a, b, c)) => f(a, b, c);
+let curry4: (('a, 'b, 'c, 'd) => 'e, ('a, 'b, 'c, 'd)) => 'e =
+  (f, (a, b, c, d)) => f(a, b, c, d);
+
+// Given a function which expects a tuple, turn it into a function which expects two arguments.
+let uncurry: ((('a, 'b)) => 'c, 'a, 'b) => 'c = (f, a, b) => f((a, b));
+let uncurry3: ((('a, 'b, 'c)) => 'd, 'a, 'b, 'c) => 'd = (f, a, b, c) => f((a, b, c));
+let uncurry4: ((('a, 'b, 'c, 'd)) => 'd, 'a, 'b, 'c, 'd) => 'd =
+  (f, a, b, c, d) => f((a, b, c, d));
+
 // Convert a string to an int, handling failure with an option type.
 let parseInt = str =>
   switch (int_of_string(str)) {
@@ -31,6 +42,11 @@ module Promise = {
   include Js.Promise;
 
   let transform: ('a => 'b, t('a)) => t('b) = (f, prom) => prom |> then_(x => resolve(f(x)));
+
+  let then2: (('a, 'b) => t('c), t(('a, 'b))) => t('c) =
+    (f, prom) => prom |> then_(((a, b)) => f(a, b));
+  let then3: (('a, 'b, 'c) => t('d), t(('a, 'b, 'c))) => t('d) =
+    (f, prom) => prom |> then_(((a, b, c)) => f(a, b, c));
   let rLog: 'a => Js.Promise.t(unit) = x => Js.Promise.resolve(Js.log(x));
   let rLog2: ('a, 'b) => Js.Promise.t(unit) = (a, b) => Js.Promise.resolve(Js.log2(a, b));
   let rLogReturn: ('a => 'b, 'a) => Js.Promise.t('a) =
@@ -38,7 +54,6 @@ module Promise = {
       Js.log(toLog(x));
       Js.Promise.resolve(x);
     };
-  let pair: (t('a), t('b)) => t(('a, 'b)) = (p1, p2) => Js.Promise.all2((p1, p2));
   exception Error(error);
   let finally: (unit => t(unit), t('a)) => t('a) =
     (action, prom) =>
@@ -263,4 +278,8 @@ module Json = {
   let rLogReturn = (~pretty=false, enc: Encode.encoder('a)) =>
     Promise.rLogReturn(obj => (pretty ? pretty_ : Json.stringify)(enc(obj)));
   let rLogJson = rLog(Encode.json);
+  let rLog2 = (~pretty=false, encA: Encode.encoder('a), encB: Encode.encoder('b), a: 'a, b: 'b) => {
+    let toStr = pretty ? pretty_ : Json.stringify;
+    Promise.rLog2(toStr(encA(a)), toStr(encB(b)));
+  };
 };

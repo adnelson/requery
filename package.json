@@ -45,7 +45,7 @@
   "scripts": {
     "re:build": "bsb -make-world",
     "re:cleanbuild": "bsb -clean-world && bsb -make-world",
-    "re:watch": "onchange -k -i -d 500 'src/**/*.{re,rei}' '__tests__/**/*.{re,rei}' bsconfig.json -- sh -c 'bsb -make-world'",
+    "re:watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'bsb -make-world'",
     "re:test": "yarn re:build && jest __tests__",
     "re:test:watch": "onchange -v -k -i -d 500 'src/**/*.bs.js' '__tests__/**/*.bs.js' -- sh -c 'clear && jest __tests__'",
     "re:buildandtest:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && bsb && jest __tests__'",

@@ -81,31 +81,17 @@ module Query = (DB: DBType) => {
          );
        });
   };
+
+  let retrieve =
+      (
+        ~logQuery=?,
+        ~logResult=?,
+        client: DB.client,
+        {toSelect, decode}: Retrieval.t('args, 'result),
+        args: 'args,
+      )
+      : Js.Promise.t(QueryResult.t('result)) => {
+    let query = toSelect(args);
+    select(~logQuery?, ~logResult?, client, query, decode);
+  };
 };
-
-/*
- module type MyType {
-   type input;
-   let action: input => unit;
- };
-
- module A: MyType = {
-   type input = string;
-   let action = i => Js.log(i);
- }
-
- module B: MyType = {
-   type input = {
-     x: string,
-     y: string
-   };
-
-   let action = ({x, y}) => Js.log(x ++ ", " ++ y);
- }
-
- let _ = {
-   A.action("hello");
-   B.action({x: "hello", y: "world"});
- };
-
- */
