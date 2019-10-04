@@ -95,7 +95,7 @@ module Select = {
 
 module Insert = {
   type data =
-    | Values(list((Column.t, Expression.t)))
+    | Values(array((Column.t, array(Expression.t))))
     | Select(Select.t);
 
   type t = {

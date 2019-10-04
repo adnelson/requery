@@ -1,8 +1,15 @@
 module A = Utils.Array;
+module L = Utils.List;
 module O = Utils.Option;
+module ISet = Belt.Set.Int;
 
 module Column = {
   open SqlQuery.Column;
+  let render = toString;
+};
+
+module TableName = {
+  open SqlQuery.TableName;
   let render = toString;
 };
 
@@ -18,12 +25,14 @@ module Aliased = {
 
 module Expression = {
   open SqlQuery.Expression;
+  // Escape single quotes by replacing them with single quote pairs.
+  let escape = Js.String.replaceByRe(Js.Re.fromStringWithFlags("'", ~flags="g"), "''");
   let renderAtom: atom => string =
     fun
     | Column(col) => SqlQuery.Column.toString(col)
     | Int(i) => string_of_int(i)
     | Float(f) => Js.Float.toString(f)
-    | String(s) => "'" ++ s ++ "'" // TODO escape quotes
+    | String(s) => "'" ++ escape(s) ++ "'"
     | Bool(b) => b ? "TRUE" : "FALSE";
 
   // TODO handle precedence here, wrap with parentheses where needed
@@ -83,7 +92,42 @@ module Select = {
     };
 };
 
+module Insert = {
+  open SqlQuery.Insert;
+  let render: t => string =
+    ({data, into}) => {
+      "INSERT INTO "
+      ++ TableName.render(into)
+      ++ " "
+      ++ (
+        switch (data) {
+        | Values(values) =>
+          let cols =
+            A.mapJoinCommas(values, ~prefix="(", ~suffix=")", ((c, _)) => Column.render(c));
+          let numsOfExprs = ISet.fromArray(A.map(values, ((_, exprs)) => A.length(exprs)));
+          switch (ISet.toList(numsOfExprs)) {
+          // They must all have the same number of expressions.
+          | [count] =>
+            // Convert expressions to comma-separated tuples
+            let tuples = A.makeBy(count, n => A.map(values, ((_, exprs)) => exprs[n]));
+            let values =
+              A.mapJoinCommas(tuples, exprs =>
+                A.mapJoinCommas(exprs, ~prefix="(", ~suffix=")", Expression.render)
+              );
+            cols ++ " VALUES " ++ values;
+          | counts =>
+            let counts = A.mapJoinCommas(L.toArray(counts), string_of_int);
+            Utils.throw(
+              "Not all expression arrays were the same length. Saw lengths: " ++ counts,
+            );
+          };
+        | Select(sel) => Select.render(sel)
+        }
+      );
+    };
+};
+
 let render: SqlQuery.query => string =
   fun
   | Select(s) => Select.render(s)
-  | Insert(_) => Utils.throw("Can't render inserts yet");
+  | Insert(i) => Insert.render(i);

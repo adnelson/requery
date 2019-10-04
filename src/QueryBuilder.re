@@ -7,8 +7,9 @@ type tableName = SqlQuery.TableName.t;
 type target = SqlQuery.Select.target;
 type expr = SqlQuery.Expression.t;
 type aliasedExpr = SqlQuery.Aliased.t(expr);
-type select = SqlQuery.Select.t;
 type direction = SqlQuery.Select.direction;
+type select = SqlQuery.Select.t;
+type insert = SqlQuery.Insert.t;
 
 let typed = (e, t) => E.Typed(e, t);
 
@@ -94,3 +95,11 @@ let orderBy2 = (col1, dir1, col2, dir2, s) =>
   Select.{...s, orderBy: [|(col1, Some(dir1)), (col2, Some(dir2))|]};
 let orderBy2_ = (col1, col2, s) => Select.{...s, orderBy: [|(col1, None), (col2, None)|]};
 let groupBy = (cols, s) => Select.{...s, groupBy: L.toArray(cols)};
+
+let insertValues = (values, into) =>
+  Insert.{
+    into,
+    data: Values(L.toArray(L.map(values, ((c, exprs)) => (c, L.toArray(exprs))))),
+  };
+
+let insertSelect = (select, into) => Insert.{into, data: Select(select)};

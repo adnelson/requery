@@ -137,8 +137,8 @@ module Array = {
     (arr, ~prefix="", ~suffix="", sep, f) => prefix ++ joinWith(map(arr, f), sep) ++ suffix;
   let mapJoinWith: (array('a), string, 'a => string) => string =
     (arr, sep, f) => joinWith(map(arr, f), sep);
-  let mapJoinCommas: (array('a), 'a => string) => string =
-    (arr, f) => mapJoinWith(arr, ", ", f);
+  let mapJoinCommas = (arr, ~prefix=?, ~suffix=?, f) =>
+    mapJoin(arr, ~prefix?, ~suffix?, ", ", f);
   let mapJoinIfNonEmpty:
     (array('a), ~onEmpty: string=?, ~prefix: string=?, ~suffix: string=?, string, 'a => string) =>
     string =

@@ -5,6 +5,7 @@ type select = SqlQuery.Select.t;
 type expr = SqlQuery.Expression.t;
 type aliasedExpr = SqlQuery.Aliased.t(expr);
 type direction = SqlQuery.Select.direction;
+type insert = SqlQuery.Insert.t;
 
 /***************************
  * Expressions
@@ -78,7 +79,7 @@ let crossJoin: (target, target) => target;
 let sub: (string, select) => target;
 
 /***************************
- * Queries
+ * SELECT Queries
  ****************************/
 
 let column: string => column;
@@ -115,3 +116,10 @@ let orderBy1: (column, direction, select) => select;
 let orderBy2_: (column, column, select) => select;
 let orderBy2: (column, direction, column, direction, select) => select;
 let groupBy: (list(column), select) => select;
+
+/***************************
+ * INSERT Queries
+ ****************************/
+
+let insertValues: (list((column, list(expr))), tableName) => insert;
+let insertSelect: (select, tableName) => insert;
