@@ -84,4 +84,6 @@ module Select = {
   };
 };
 
+type query =
+  | Select(Select.t);
 // let renderSelect = Select.render;

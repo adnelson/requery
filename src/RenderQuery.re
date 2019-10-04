@@ -78,3 +78,7 @@ module Select = {
       "SELECT " ++ selectionsString ++ fromString ++ groupByString ++ whereString ++ limitString;
     };
 };
+
+let render: SqlQuery.query => string =
+  fun
+  | Select(s) => Select.render(s);

@@ -155,8 +155,6 @@ module Array = {
 };
 
 module Json = {
-  module Enc = Encode;
-
   let pretty: Js.Json.t => string = [%bs.raw {|json => JSON.stringify(json, null, 2)|}];
 
   module Decode = {
