@@ -1,7 +1,7 @@
 type t('args, 'result) = {
   // TODO this could be a promise
   toSelect: 'args => QueryBuilder.select,
-  decode: RowDecode.decoder('result),
+  decode: RowDecode.decodeRows('result),
 };
 
 let make = (toSelect, decode) => {toSelect, decode};

@@ -1,22 +1,24 @@
-type column = SqlQuery.Column.t;
-type tableName = SqlQuery.Table.t;
-type target = SqlQuery.Select.target;
-type select = SqlQuery.Select.t;
-type expr = SqlQuery.Expression.t;
-type aliasedExpr = SqlQuery.Aliased.t(expr);
-type direction = SqlQuery.Select.direction;
-type insert = SqlQuery.Insert.t;
+type column = Sql.Column.t;
+type table = Sql.Table.t;
+type target = Sql.Select.target;
+type select = Sql.Select.t;
+type expr = Sql.Expression.t;
+type aliasedExpr = Sql.Aliased.t(expr);
+type direction = Sql.Select.direction;
+type insert = Sql.Insert.t;
 
 /***************************
  * Expressions
  ****************************/
 
 // Literals
+let null: expr;
 let int: int => expr;
 let bigint: int => expr;
 let float: float => expr;
 let string: string => expr;
 let bool: bool => expr;
+let nullable: ('t => expr, option('t)) => expr;
 
 // Add an explicit type cast to an expression
 let typed: (expr, string) => expr;
@@ -77,7 +79,7 @@ let e: (~a: string=?, expr) => aliasedExpr;
  ****************************/
 
 // A named table
-let table: (~a: string=?, tableName) => target;
+let table: (~a: string=?, table) => target;
 
 // Joins
 let innerJoin: (target, expr, target) => target;
@@ -92,7 +94,10 @@ let selectAs: (string, select) => target;
  * SELECT Queries
  ****************************/
 
+// Make a column from a string
 let column: string => column;
+
+// Make multiple columns into strings
 let columns: list(string) => list(column);
 
 // For ORDER BY clauses
@@ -131,6 +136,10 @@ let groupBy: (list(column), select) => select;
  * INSERT Queries
  ****************************/
 
-let insertRows: (list((column, list(expr))), tableName) => insert;
-let insertRow: (list((column, expr)), tableName) => insert;
-let insertSelect: (select, tableName) => insert;
+type toInsert('t) = ('t, table) => insert;
+
+let insertRows: toInsert(list((column, list(expr))));
+let insertRow: toInsert(list((column, expr)));
+let insertRowWith: ('a => column) => toInsert(list(('a, expr)));
+let insertRow': toInsert(list((string, expr)));
+let insertSelect: toInsert(select);

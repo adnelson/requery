@@ -4,17 +4,17 @@ module O = Utils.Option;
 module ISet = Belt.Set.Int;
 
 module Column = {
-  open SqlQuery.Column;
+  open Sql.Column;
   let render = toString;
 };
 
 module Table = {
-  open SqlQuery.Table;
+  open Sql.Table;
   let render = toString;
 };
 
 module Aliased = {
-  open SqlQuery.Aliased;
+  open Sql.Aliased;
   let render: ('a => string, t('a)) => string =
     (renderInner, aliased) =>
       switch (toTuple(aliased)) {
@@ -24,12 +24,13 @@ module Aliased = {
 };
 
 module Expression = {
-  open SqlQuery.Expression;
+  open Sql.Expression;
   // Escape single quotes by replacing them with single quote pairs.
   let escape = Js.String.replaceByRe(Js.Re.fromStringWithFlags("'", ~flags="g"), "''");
   let renderAtom: atom => string =
     fun
-    | Column(col) => SqlQuery.Column.toString(col)
+    | Null => "NULL"
+    | Column(col) => Sql.Column.toString(col)
     | Int(i) => string_of_int(i)
     | Float(f) => Js.Float.toString(f)
     | String(s) => "'" ++ escape(s) ++ "'"
@@ -53,7 +54,7 @@ module Expression = {
 };
 
 module Select = {
-  open SqlQuery.Select;
+  open Sql.Select;
   let renderJoinType: joinType => (string, option(string)) =
     fun
     | Inner(on) => ("INNER JOIN", Some(Expression.render(on)))
@@ -68,7 +69,7 @@ module Select = {
 
   let rec renderTarget: target => string =
     fun
-    | Table(tname) => Aliased.render(SqlQuery.Table.toString, tname)
+    | Table(tname) => Aliased.render(Sql.Table.toString, tname)
     | SubSelect(q, alias) => "(" ++ render(q) ++ ") AS " ++ alias
     | Join(join, t1, t2) =>
       switch (renderJoinType(join)) {
@@ -93,7 +94,7 @@ module Select = {
 };
 
 module Insert = {
-  open SqlQuery.Insert;
+  open Sql.Insert;
   let render: t => string =
     ({data, into}) => {
       "INSERT INTO "
@@ -127,7 +128,7 @@ module Insert = {
     };
 };
 
-let render: SqlQuery.query => string =
+let render: Sql.query => string =
   fun
   | Select(s) => Select.render(s)
   | Insert(i) => Insert.render(i);

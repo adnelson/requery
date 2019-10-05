@@ -10,7 +10,7 @@ module DB: AbstractDB.DBType = {
   let releasePool = P.Pool.Promise.end_;
   let query = (client, q) =>
     P.Client.Promise.query'(P.Query.make(~text=RenderQuery.render(q), ()), client);
-  let resultToRows = (result: result) => result##rows;
+  let resultToRows = (result: result) => RowDecode.toRows(result##rows);
 };
 
 module Query = AbstractDB.Query(DB);

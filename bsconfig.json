@@ -24,7 +24,7 @@
   ],
   "suffix": ".bs.js",
   "warnings": {
-    "number": "-23-44",
-    "error": "+8+6",
+    "number": "-23-44+60",
+    "error": "+8+6+60",
   }
 }

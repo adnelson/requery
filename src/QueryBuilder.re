@@ -1,18 +1,23 @@
-open SqlQuery;
+open Sql;
 module E = Expression;
 module L = Utils.List;
 
-type column = SqlQuery.Column.t;
-type tableName = SqlQuery.Table.t;
-type target = SqlQuery.Select.target;
-type expr = SqlQuery.Expression.t;
-type aliasedExpr = SqlQuery.Aliased.t(expr);
-type direction = SqlQuery.Select.direction;
-type select = SqlQuery.Select.t;
-type insert = SqlQuery.Insert.t;
+type column = Sql.Column.t;
+type table = Sql.Table.t;
+type target = Sql.Select.target;
+type expr = Sql.Expression.t;
+type aliasedExpr = Sql.Aliased.t(expr);
+type direction = Sql.Select.direction;
+type select = Sql.Select.t;
+type insert = Sql.Insert.t;
 
 let typed = (e, t) => E.Typed(e, t);
 
+let null = E.Atom(E.Null);
+let nullable = toExpr =>
+  fun
+  | None => null
+  | Some(inner) => toExpr(inner);
 let int = i => E.Atom(E.Int(i));
 let bool = b => E.Atom(E.Bool(b));
 let float = f => E.Atom(E.Float(f));
@@ -68,8 +73,8 @@ let crossJoin = (t1, t2) => Select.(Join(Cross, t2, t1));
 // TODO this can inspect the type of the select to collapse unnecessary aliases
 let selectAs = (alias, select) => Select.SubSelect(select, alias);
 
-let column = SqlQuery.Column.fromString;
-let columns = SqlQuery.Column.fromStringList;
+let column = Sql.Column.fromString;
+let columns = Sql.Column.fromStringList;
 let (asc, desc) = Select.(ASC, DESC);
 
 let select = (~from=?, ~groupBy=[], ~orderBy=[], ~limit=?, ~where=?, selections) =>
@@ -104,6 +109,8 @@ let orderBy2 = (col1, dir1, col2, dir2, s) =>
 let orderBy2_ = (col1, col2, s) => Select.{...s, orderBy: [|(col1, None), (col2, None)|]};
 let groupBy = (cols, s) => Select.{...s, groupBy: L.toArray(cols)};
 
+type toInsert('t) = ('t, table) => insert;
+
 let insertRows = (rows, into) =>
   Insert.{
     into,
@@ -112,5 +119,9 @@ let insertRows = (rows, into) =>
 
 let insertRow = (row, into) =>
   Insert.{into, data: Values(L.toArray(L.map(row, ((c, e)) => (c, [|e|]))))};
+
+let insertRowWith = (toColumn, row) => insertRow(L.map(row, ((k, v)) => (toColumn(k), v)));
+
+let insertRow' = insertRowWith(column);
 
 let insertSelect = (select, into) => {Insert.into, data: Select(select)};

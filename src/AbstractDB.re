@@ -52,26 +52,27 @@ module type DBType = {
   type pool;
   type client;
 
-  let resultToRows: result => array(Js.Json.t);
+  let resultToRows: result => array(RowDecode.Row.t(Js.Json.t));
   let makePool: config => pool;
   let makeClient: pool => Js.Promise.t(client);
   let releaseClient: client => Js.Promise.t(unit);
   let releasePool: pool => Js.Promise.t(unit);
-  let query: (client, SqlQuery.query) => Js.Promise.t(result);
+  let query: (client, Sql.query) => Js.Promise.t(result);
 };
 
 module Query = (DB: DBType) => {
+  include DB;
   let select =
       (
         ~logQuery=?,
         ~logResult=?,
         client: DB.client,
         query: QueryBuilder.select,
-        decode: RowDecode.decoder('t),
+        decode: RowDecode.decodeRows('t),
       )
       : Js.Promise.t(QueryResult.t('t)) => {
     let _ = O.map(logQuery, f => f(query));
-    DB.query(client, SqlQuery.Select(query))
+    DB.query(client, Sql.Select(query))
     |> then_((result: DB.result) => {
          let _ = O.map(logResult, f => f(result));
          resolve(
