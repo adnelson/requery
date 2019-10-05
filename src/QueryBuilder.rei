@@ -6,6 +6,11 @@ type expr = Sql.Expression.t;
 type aliasedExpr = Sql.Aliased.t(expr);
 type direction = Sql.Select.direction;
 type insert = Sql.Insert.t;
+type row = list((column, expr));
+type toInsert('t) = ('t, table) => insert;
+type toColumn('t) = 't => column;
+type toExpr('t) = 't => expr;
+type toRow('t) = 't => row;
 
 /***************************
  * Expressions
@@ -31,6 +36,7 @@ let col_: column => expr;
 
 // All columns (*)
 let all: expr;
+
 // All columns from a particular table (foo.*)
 let allFrom: string => expr;
 
@@ -136,10 +142,22 @@ let groupBy: (list(column), select) => select;
  * INSERT Queries
  ****************************/
 
-type toInsert('t) = ('t, table) => insert;
+let stringRow: list((string, expr)) => row;
 
-let insertRows: toInsert(list((column, list(expr))));
+// Inserting literal columns/expressions.
+let insertColumns: toInsert(list((column, list(expr))));
+let insertRows: toInsert(list(list((column, expr))));
 let insertRow: toInsert(list((column, expr)));
-let insertRowWith: ('a => column) => toInsert(list(('a, expr)));
-let insertRow': toInsert(list((string, expr)));
+let insertStringRow: toInsert(list((string, expr)));
+
+// Apply a conversion function to create columns and expressions.
+let insertRowsWith': (toColumn('a), toExpr('b)) => toInsert(list(list(('a, 'b))));
+let insertRowWith': ('a => column, 'b => expr) => toInsert(list(('a, 'b)));
+let insertColumnsWith': (toColumn('a), toExpr('b)) => toInsert(list(('a, list('b))));
+
+// Given a function to convert an object to a row, insert one or more objects.
+let insertRowWith: toRow('t) => toInsert('t);
+let insertRowsWith: toRow('t) => toInsert(list('t));
+
+// Insert with a SELECT query.
 let insertSelect: toInsert(select);

@@ -12,7 +12,6 @@ module Row = {
     contents: 'a,
   };
   let make = (index: int, contents: 'a) => {index, contents};
-  let makeArr: array('a) => array(t('a)) = arr => A.mapWithIndex(arr, make);
   let map = (row, f) => {...row, contents: f(row.contents)};
   let mapGet = (row, f) => f(row.contents);
 
@@ -44,8 +43,6 @@ let errorToString: error => string =
   | RowDecodeError(n, _, str) =>
     "Error occurred when parsing row " ++ string_of_int(n) ++ ": " ++ str
   | EmptyRows => "No rows to parse";
-
-let row = Row.decodeJson;
 
 let toRows: array('a) => array(Row.t('a)) = rs => A.mapWithIndex(rs, Row.make);
 

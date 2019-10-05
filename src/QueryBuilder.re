@@ -10,6 +10,11 @@ type aliasedExpr = Sql.Aliased.t(expr);
 type direction = Sql.Select.direction;
 type select = Sql.Select.t;
 type insert = Sql.Insert.t;
+type row = list((column, expr));
+type toInsert('t) = ('t, table) => insert;
+type toColumn('t) = 't => column;
+type toExpr('t) = 't => expr;
+type toRow('t) = 't => row;
 
 let typed = (e, t) => E.Typed(e, t);
 
@@ -109,19 +114,36 @@ let orderBy2 = (col1, dir1, col2, dir2, s) =>
 let orderBy2_ = (col1, col2, s) => Select.{...s, orderBy: [|(col1, None), (col2, None)|]};
 let groupBy = (cols, s) => Select.{...s, groupBy: L.toArray(cols)};
 
-type toInsert('t) = ('t, table) => insert;
+let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
+let convertColumn = (toC, toE, (k, vs)) => (toC(k), A.map(L.toArray(vs), toE));
+let stringRow = row => L.map(row, convertRow(column, Utils.id));
 
-let insertRows = (rows, into) =>
+let insertColumns = (cols, into) =>
   Insert.{
     into,
-    data: Values(L.toArray(L.map(rows, ((c, exprs)) => (c, L.toArray(exprs))))),
+    data: Values(L.toArray(L.map(cols, ((c, exprs)) => (c, L.toArray(exprs))))),
   };
 
-let insertRow = (row, into) =>
-  Insert.{into, data: Values(L.toArray(L.map(row, ((c, e)) => (c, [|e|]))))};
+let insertColumnsWith' = (toColumn, toExpr, cols, into) =>
+  Insert.{into, data: Values(L.toArray(L.map(cols, convertColumn(toColumn, toExpr))))};
 
-let insertRowWith = (toColumn, row) => insertRow(L.map(row, ((k, v)) => (toColumn(k), v)));
+let insertRows = (rows, into) =>
+  Insert.{into, data: Values(rowsToColumns(L.toArray(L.map(rows, L.toArray))))};
 
-let insertRow' = insertRowWith(column);
+let insertRowsWith' = (toColumn, toExpr, rows, into) =>
+  Insert.{
+    into,
+    data:
+      Values(
+        rowsToColumns(
+          A.map(L.toArray(rows), row => A.map(L.toArray(row), convertRow(toColumn, toExpr))),
+        ),
+      ),
+  };
 
+let insertRow = row => insertRows([row]);
+let insertRowWith' = (toC, toE, row) => insertRow(L.map(row, convertRow(toC, toE)));
+let insertStringRow = insertRowWith'(column, Utils.id);
+let insertRowsWith = (toRow, objects) => insertRows(L.map(objects, toRow));
+let insertRowWith = (toRow, obj) => insertRow(toRow(obj));
 let insertSelect = (select, into) => {Insert.into, data: Select(select)};

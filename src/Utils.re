@@ -1,6 +1,8 @@
 module SMap = Belt.Map.String;
 module A = Belt.Array;
 
+external id: 'a => 'a = "%identity";
+
 let curry: (('a, 'b) => 'c, ('a, 'b)) => 'c = (f, (a, b)) => f(a, b);
 let curry3: (('a, 'b, 'c) => 'd, ('a, 'b, 'c)) => 'd = (f, (a, b, c)) => f(a, b, c);
 let curry4: (('a, 'b, 'c, 'd) => 'e, ('a, 'b, 'c, 'd)) => 'e =
@@ -126,6 +128,8 @@ module Option = {
       };
 };
 
+module O = Option;
+
 // Extra functions on arrays
 module Array = {
   include Belt.Array;
@@ -180,6 +184,10 @@ module Array = {
     A.forEach(arr, innerArr => extend(res, innerArr));
     res;
   };
+
+  let head = (arr: array('a)): option('a) => get(arr, 0);
+  let nestedHead = (arr: array(array('a))): option('a) =>
+    O.flatMap(head(arr), a => get(a, 0));
 
   // map and then flatten
   let flatMap = (arr: array('a), f: 'a => array('b)): array('b) => flat(map(arr, f));
