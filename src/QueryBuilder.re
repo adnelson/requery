@@ -141,7 +141,7 @@ let insertRowWith = (toC, toE, row) => insertRow(L.map(row, convertRow(toC, toE)
 let insertStringRow = insertRowWith(column, Utils.id);
 let insertOne = (toRow, obj) => insertRow(toRow(obj));
 let insertMany = (toRow, objects) => insertRows(L.map(objects, toRow));
-let insertSelect = select => Insert.(make(Select(select)));
+let insertSelect = select => Insert.make(Insert.Select(select));
 
 let returningColumns = (columns, insert) =>
   Insert.{...insert, returning: Some(Columns(columns))};
