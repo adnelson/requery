@@ -38,11 +38,10 @@ module QueryResult = {
     | Success(x) => x
     | Error(err) => raise(Error(err));
 
-  let unwrapPromise: ('a => Js.Promise.t('b), t('a)) => Js.Promise.t('b) =
-    next =>
-      fun
-      | Success(x) => next(x)
-      | Error(err) => reject(Error(err));
+  let unwrapPromise: t('a) => Js.Promise.t('a) =
+    fun
+    | Success(x) => resolve(x)
+    | Error(err) => reject(Error(err));
 };
 
 // This could be a functor, parameterized on an error type. Also, need
