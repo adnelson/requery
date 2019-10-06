@@ -28,9 +28,6 @@ let parseFloat = str =>
   | exception _ => None
   };
 
-type decoder('a) = Json.Decode.decoder('a);
-type encoder('a) = Json.Encode.encoder('a);
-
 module Log = {
   [@bs.val] external error: 'a => unit = "console.error";
   [@bs.val] external error2: ('a, 'b) => unit = "console.error";
@@ -143,6 +140,7 @@ module Array = {
     (arr, sep, f) => joinWith(map(arr, f), sep);
   let mapJoinCommas = (arr, ~prefix=?, ~suffix=?, f) =>
     mapJoin(arr, ~prefix?, ~suffix?, ", ", f);
+  let mapJoinCommasParens = (arr, f) => mapJoin(arr, ~prefix="(", ~suffix=")", ", ", f);
   let mapJoinIfNonEmpty:
     (array('a), ~onEmpty: string=?, ~prefix: string=?, ~suffix: string=?, string, 'a => string) =>
     string =
@@ -229,6 +227,9 @@ module List = {
 };
 
 module Json = {
+  type decoder('a) = Json.Decode.decoder('a);
+  type encoder('a) = Json.Encode.encoder('a);
+
   module Decode = {
     include Json.Decode;
     external json: Js.Json.t => Js.Json.t = "%identity";

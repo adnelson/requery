@@ -2,6 +2,7 @@ module A = Utils.Array;
 module L = Utils.List;
 module O = Utils.Option;
 module ISet = Belt.Set.Int;
+module J = Utils.Json;
 
 module Column = {
   open Sql.Column;
@@ -95,36 +96,37 @@ module Select = {
 
 module Insert = {
   open Sql.Insert;
+  exception UnequalNumberOfExpressions(list(int));
+
   let render: t => string =
-    ({data, into}) => {
+    ({data, into, returning}) => {
       "INSERT INTO "
       ++ Table.render(into)
       ++ " "
       ++ (
         switch (data) {
         | Values(values) =>
-          let cols =
-            A.mapJoinCommas(values, ~prefix="(", ~suffix=")", ((c, _)) => Column.render(c));
+          let cols = A.mapJoinCommasParens(values, v => Column.render(fst(v)));
           let numsOfExprs = ISet.fromArray(A.map(values, ((_, exprs)) => A.length(exprs)));
           switch (ISet.toList(numsOfExprs)) {
           // They must all have the same number of expressions.
           | [count] =>
             // Convert expressions to comma-separated tuples
             let tuples = A.makeBy(count, n => A.map(values, ((_, exprs)) => exprs[n]));
-            let values =
-              A.mapJoinCommas(tuples, exprs =>
-                A.mapJoinCommas(exprs, ~prefix="(", ~suffix=")", Expression.render)
-              );
-            cols ++ " VALUES " ++ values;
-          | counts =>
-            let counts = A.mapJoinCommas(L.toArray(counts), string_of_int);
-            Utils.throw(
-              "Not all expression arrays were the same length. Saw lengths: " ++ counts,
-            );
+            let valuesStr =
+              A.mapJoinCommas(tuples, exprs => A.mapJoinCommasParens(exprs, Expression.render));
+            cols ++ " VALUES " ++ valuesStr;
+          | counts => raise(UnequalNumberOfExpressions(counts))
           };
         | Select(sel) => Select.render(sel)
         }
-      );
+      )
+      ++ O.mapString(
+           returning,
+           fun
+           | Columns(columns) =>
+             " RETURNING " ++ A.mapJoinCommasParens(L.toArray(columns), Column.render),
+         );
     };
 };
 

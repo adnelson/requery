@@ -26,6 +26,9 @@ type row = Row.t(Js.Json.t);
 
 type decodeRows('t) = array(row) => 't;
 
+// A do-nothing decoder, used for queries which don't return information.
+let unit: decodeRows(unit) = _ => ();
+
 let encodeError =
   Utils.Json.Encode.(
     fun

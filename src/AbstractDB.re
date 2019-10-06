@@ -10,7 +10,7 @@ type config = {
 type error =
   | RowDecodeError(RowDecode.error);
 
-let encodeError: Utils.encoder(error) =
+let encodeError: Utils.Json.encoder(error) =
   Utils.Json.Encode.(
     fun
     | RowDecodeError(e) => e |> object1("RowDecodeError", RowDecode.encodeError)
@@ -25,7 +25,7 @@ module QueryResult = {
 
   module Enc = Utils.Json.Encode;
 
-  let encode: Utils.encoder('a) => Utils.encoder(t('a)) =
+  let encode: Utils.Json.encoder('a) => Utils.Json.encoder(t('a)) =
     Enc.(
       encodeSuccess =>
         fun
@@ -62,17 +62,19 @@ module type DBType = {
 
 module Query = (DB: DBType) => {
   include DB;
-  let select =
+
+  // Execute an arbitrary query, decoding the result.
+  let query =
       (
         ~logQuery=?,
         ~logResult=?,
         client: DB.client,
-        query: QueryBuilder.select,
         decode: RowDecode.decodeRows('t),
+        query: Sql.query,
       )
       : Js.Promise.t(QueryResult.t('t)) => {
     let _ = O.map(logQuery, f => f(query));
-    DB.query(client, Sql.Select(query))
+    DB.query(client, query)
     |> then_((result: DB.result) => {
          let _ = O.map(logResult, f => f(result));
          resolve(
@@ -83,6 +85,19 @@ module Query = (DB: DBType) => {
        });
   };
 
+  // Execute a SELECT, decoding the result.
+  let select =
+      (
+        ~logQuery=?,
+        ~logResult=?,
+        client: DB.client,
+        decode: RowDecode.decodeRows('t),
+        select: QueryBuilder.select,
+      )
+      : Js.Promise.t(QueryResult.t('t)) =>
+    query(~logQuery?, ~logResult?, client, decode, Sql.Select(select));
+
+  // Same as `select` but using the Retrieval.t abstraction.
   let retrieve =
       (
         ~logQuery=?,
@@ -92,7 +107,19 @@ module Query = (DB: DBType) => {
         args: 'args,
       )
       : Js.Promise.t(QueryResult.t('result)) => {
-    let query = toSelect(args);
-    select(~logQuery?, ~logResult?, client, query, decode);
+    select(~logQuery?, ~logResult?, client, decode, toSelect(args));
   };
+
+  // Run an INSERT query, decoding whatever's returned. Note: if nothing is
+  // returned from the insertion query, the decoder can be `RowDecode.unit`.
+  let insert =
+      (
+        ~logQuery=?,
+        ~logResult=?,
+        client: DB.client,
+        decode: RowDecode.decodeRows('t),
+        insert: QueryBuilder.insert,
+      )
+      : Js.Promise.t(QueryResult.t('t)) =>
+    query(~logQuery?, ~logResult?, client, decode, Sql.Insert(insert));
 };

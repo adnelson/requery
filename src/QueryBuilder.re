@@ -11,6 +11,7 @@ type direction = Sql.Select.direction;
 type select = Sql.Select.t;
 type insert = Sql.Insert.t;
 type row = list((column, expr));
+type toSelect('t) = 't => select;
 type toInsert('t) = ('t, table) => insert;
 type toColumn('t) = 't => column;
 type toExpr('t) = 't => expr;
@@ -19,10 +20,7 @@ type toRow('t) = 't => row;
 let typed = (e, t) => E.Typed(e, t);
 
 let null = E.Atom(E.Null);
-let nullable = toExpr =>
-  fun
-  | None => null
-  | Some(inner) => toExpr(inner);
+let nullable = (toExpr, opt) => O.mapWithDefault(opt, null, toExpr);
 let int = i => E.Atom(E.Int(i));
 let bool = b => E.Atom(E.Bool(b));
 let float = f => E.Atom(E.Float(f));
@@ -118,32 +116,34 @@ let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), A.map(L.toArray(vs), toE));
 let stringRow = row => L.map(row, convertRow(column, Utils.id));
 
-let insertColumns = (cols, into) =>
-  Insert.{
-    into,
-    data: Values(L.toArray(L.map(cols, ((c, exprs)) => (c, L.toArray(exprs))))),
-  };
+let insertColumns = cols =>
+  Insert.make(Values(L.toArray(L.map(cols, ((c, exprs)) => (c, L.toArray(exprs))))));
 
-let insertColumnsWith' = (toColumn, toExpr, cols, into) =>
-  Insert.{into, data: Values(L.toArray(L.map(cols, convertColumn(toColumn, toExpr))))};
+let insertColumnsWith = (toColumn, toExpr, cols) =>
+  Insert.make(Values(L.toArray(L.map(cols, convertColumn(toColumn, toExpr)))));
 
-let insertRows = (rows, into) =>
-  Insert.{into, data: Values(rowsToColumns(L.toArray(L.map(rows, L.toArray))))};
+let insertRows = rows =>
+  Insert.(make(Values(rowsToColumns(L.toArray(L.map(rows, L.toArray))))));
 
-let insertRowsWith' = (toColumn, toExpr, rows, into) =>
-  Insert.{
-    into,
-    data:
+let insertRowsWith = (toColumn, toExpr, rows) =>
+  Insert.(
+    make(
       Values(
         rowsToColumns(
           A.map(L.toArray(rows), row => A.map(L.toArray(row), convertRow(toColumn, toExpr))),
         ),
       ),
-  };
+    )
+  );
 
 let insertRow = row => insertRows([row]);
-let insertRowWith' = (toC, toE, row) => insertRow(L.map(row, convertRow(toC, toE)));
-let insertStringRow = insertRowWith'(column, Utils.id);
-let insertRowsWith = (toRow, objects) => insertRows(L.map(objects, toRow));
-let insertRowWith = (toRow, obj) => insertRow(toRow(obj));
-let insertSelect = (select, into) => {Insert.into, data: Select(select)};
+let insertRowWith = (toC, toE, row) => insertRow(L.map(row, convertRow(toC, toE)));
+let insertStringRow = insertRowWith(column, Utils.id);
+let insertOne = (toRow, obj) => insertRow(toRow(obj));
+let insertMany = (toRow, objects) => insertRows(L.map(objects, toRow));
+let insertSelect = select => Insert.(make(Select(select)));
+
+let returningColumns = (columns, insert) =>
+  Insert.{...insert, returning: Some(Columns(columns))};
+let returningColumn = (column, insert) =>
+  Insert.{...insert, returning: Some(Columns([column]))};

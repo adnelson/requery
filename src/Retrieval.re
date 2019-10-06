@@ -1,8 +1,10 @@
+// Retrieving objects, via select
+module QB = QueryBuilder;
+
 type t('args, 'result) = {
-  // TODO this could be a promise
-  toSelect: 'args => QueryBuilder.select,
+  toSelect: QB.toSelect('args),
   decode: RowDecode.decodeRows('result),
 };
 
 let make = (toSelect, decode) => {toSelect, decode};
-let toSelect: (t('a, 'r), 'a) => QueryBuilder.select = ({toSelect}, args) => toSelect(args);
+let toSelect: t('a, 'r) => QB.toSelect('a) = ({toSelect}, args) => toSelect(args);
