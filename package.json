@@ -14,7 +14,7 @@
       "bsrefmt --in-place --print-width 100",
       "git add"
     ],
-    "examples/*.{re,rei}": [
+    "example/*.{re,rei}": [
       "bsrefmt --in-place --print-width 100",
       "git add"
     ]
