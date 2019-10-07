@@ -76,6 +76,7 @@ let crossJoin = (t1, t2) => Select.(Join(Cross, t2, t1));
 // TODO this can inspect the type of the select to collapse unnecessary aliases
 let selectAs = (alias, select) => Select.SubSelect(select, alias);
 
+let tbl = Sql.Table.fromString;
 let column = Sql.Column.fromString;
 let columns = Sql.Column.fromStringList;
 let (asc, desc) = Select.(ASC, DESC);
@@ -114,7 +115,8 @@ let groupBy = (cols, s) => Select.{...s, groupBy: L.toArray(cols)};
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), A.map(L.toArray(vs), toE));
-let stringRow = row => L.map(row, convertRow(column, Utils.id));
+let stringRowWith = (toExpr, row) => L.map(row, convertRow(column, toExpr));
+let stringRow = stringRowWith(Utils.id);
 
 let insertColumns = cols =>
   Insert.make(Values(L.toArray(L.map(cols, ((c, exprs)) => (c, L.toArray(exprs))))));

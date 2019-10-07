@@ -101,10 +101,13 @@ let selectAs: (string, select) => target;
  * SELECT Queries
  ****************************/
 
-// Make a column from a string
+// Make a `table` from a string
+let tbl: string => table;
+
+// Make a `column` from a string
 let column: string => column;
 
-// Make multiple columns into strings
+// Make multiple `column`s from strings
 let columns: list(string) => list(column);
 
 // For ORDER BY clauses
@@ -118,6 +121,7 @@ let as_: (string, target) => target;
 let select:
   (
     ~from: target=?,
+    // TODO groupBy can contain expressions
     ~groupBy: list(column)=?,
     ~orderBy: list((column, option(direction)))=?,
     ~limit: int=?,
@@ -140,10 +144,14 @@ let orderBy2: (column, direction, column, direction, select) => select;
 let groupBy: (list(column), select) => select;
 
 /***************************
- * INSERT Queries
+ * INSERT queries
  ****************************/
 
-let stringRow: list((string, expr)) => row;
+// Create a row of literal expressions
+let stringRow: toRow(list((string, expr)));
+// Create a row of expressions where the expressions are converted
+// from another object.
+let stringRowWith: toExpr('e) => toRow(list((string, 'e)));
 
 // Inserting literal columns/expressions.
 let insertColumns: toInsert(list((column, list(expr))));
