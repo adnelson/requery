@@ -144,7 +144,7 @@ let orderBy2: (column, direction, column, direction, select) => select;
 let groupBy: (list(column), select) => select;
 
 /***************************
- * INSERT queries
+ * INSERT Queries
  ****************************/
 
 // Create a row of literal expressions
@@ -152,6 +152,8 @@ let stringRow: toRow(list((string, expr)));
 // Create a row of expressions where the expressions are converted
 // from another object.
 let stringRowWith: toExpr('e) => toRow(list((string, 'e)));
+// Create a row encoder from a bunch of individual encoders.
+let rowFromFields: list((string, toExpr('e))) => toRow('e);
 
 // Inserting literal columns/expressions.
 let insertColumns: toInsert(list((column, list(expr))));

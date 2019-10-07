@@ -154,6 +154,28 @@ In the above example, the way `shape` is defined is totally different,
 but since the insertion code we has just calls `toRow`, it will
 continue to work as it always did.
 
+There are helper functions for making encoders allowing you to do it however
+it makes sense for your code.
+
+```
+// Create a single encoder function.
+let shapeToRow = shape => QB.(
+  stringRow([
+    ("name", shape.name |> string),
+    ("sides", shape.sides |> int),
+  ])
+)
+
+// Create an encoder from a bunch of individual encoders. This
+// enables you to e.g. store the fields as their own separate data.
+let fields = QB.([
+  ("name", shape => shape.name |> string),
+  ("sides", shape => shape.sides |> int),
+]);
+
+let shapeToRow = QB.rowFromFields(fields);
+```
+
 ### Returning values from an INSERT
 
 An insert with a `returning` clause can be paired with a *decoder* to retrieve

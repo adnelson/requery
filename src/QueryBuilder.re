@@ -117,6 +117,8 @@ let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), A.map(L.toArray(vs), toE));
 let stringRowWith = (toExpr, row) => L.map(row, convertRow(column, toExpr));
 let stringRow = stringRowWith(Utils.id);
+let rowFromFields = (fields, obj) =>
+  stringRow(L.map(fields, ((field, fn)) => (field, fn(obj))));
 
 let insertColumns = cols =>
   Insert.make(Values(L.toArray(L.map(cols, ((c, exprs)) => (c, L.toArray(exprs))))));
