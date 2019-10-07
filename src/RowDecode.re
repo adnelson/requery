@@ -23,6 +23,7 @@ module Row = {
 };
 
 type row = Row.t(Js.Json.t);
+// TODO should have a QueryResult.t => Row.t(Js.Json.t) which can
 
 type decodeRows('t) = array(row) => 't;
 
@@ -56,6 +57,8 @@ let getFirst: array(Row.t('a)) => Row.t('a) =
 
 let decodeFirst: J.decoder('t) => decodeRows('t) =
   (decode, rows) => Row.decodeJson(rows |> getFirst, decode);
+
+let decodeOne: J.decoder('t) => decodeRows('t) = decodeFirst;
 
 let optColumn: (string, J.decoder('t)) => decodeRows(option('t)) =
   (col, dec) =>
