@@ -42,6 +42,12 @@ module QueryResult = {
     fun
     | Success(x) => resolve(x)
     | Error(err) => reject(Error(err));
+
+  let unwrapPromise2: ((t('a), t('b))) => Js.Promise.t(('a, 'b)) =
+    fun
+    | (Success(x), Success(y)) => resolve((x, y))
+    | (Error(err), _) => reject(Error(err))
+    | (_, Error(err)) => reject(Error(err));
 };
 
 // This could be a functor, parameterized on an error type. Also, need
@@ -108,6 +114,9 @@ module Query = (DB: DBType) => {
       : Js.Promise.t(QueryResult.t('result)) => {
     select(~logQuery?, ~logResult?, client, decode, toSelect(args));
   };
+
+  // TODO
+  // let retrieveUnwrap: do a retrieve and unwrap the result
 
   // Run an INSERT query, decoding whatever's returned. Note: if nothing is
   // returned from the insertion query, the decoder can be `RowDecode.unit`.

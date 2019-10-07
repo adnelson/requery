@@ -43,10 +43,10 @@
     }
   },
   "scripts": {
-    "re:build": "bsb -make-world",
-    "re:cleanbuild": "bsb -clean-world && bsb -make-world",
-    "re:watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- yarn re:build",
-    "re:watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'NINJA_ANSI_FORCED=1 yarn re:build && yarn testquery'",
+    "re:build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
+    "re:cleanbuild": "bsb -clean-world && yarn re:build",
+    "re:watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn re:build && yarn re:format'",
+    "re:watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn re:build && yarn testquery && yarn re:format'",
     "re:test": "yarn re:build && jest __tests__",
     "re:test:watch": "onchange -v -k -i -d 500 'src/**/*.bs.js' '__tests__/**/*.bs.js' -- sh -c 'clear && jest __tests__'",
     "re:buildandtest:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && bsb && jest __tests__'",
