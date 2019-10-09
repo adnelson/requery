@@ -1,6 +1,8 @@
 # requery
 
-`requery` is a library for interacting with a SQL database from a ReasonML application. It includes a generic SQL AST and combinators for constructing queries and parsing the results of these queries into domain objects. It is inspired by [`knex.js`](http://knexjs.org/), but leveraging the type system of ReasonML/Ocaml for new awesomeness.
+`requery` is a library for interacting with a SQL database from a ReasonML application. It includes a generic SQL AST and combinators for constructing queries and parsing the results of these queries into domain objects. It is inspired by [`knex.js`](http://knexjs.org/), but leveraging the type system of ReasonML/Ocaml for correctness and expressiveness.
+
+`requery` is currently dependent on being built with `bucklescript` and the javascript ecosystem. Future work might enable it to be used from native ReasonML/Ocaml apps as well.
 
 ### Features
 
@@ -24,13 +26,13 @@
 
 At present, the following query types have been implemented, with the following components. This list will be updated over time.
 
-### `SELECT` queries
+### SELECT
 
 - Expressions
   - Primitives like ints, floats, strings, booleans, tuples
   - Combinators for operators like `&&`, `||`, `LIKE` `IS NOT NULL`, etc
   - Function calls, e.g. `COUNT(*)`
-  - Custom encoders
+  - Encoders to translate your domain objects into SQL expressions
 - `FROM` clauses
   - Tables
   - Subqueries (`SELECT * FROM (SELECT ...) AS t`)
@@ -41,7 +43,7 @@ At present, the following query types have been implemented, with the following 
 - `LIMIT` clauses
 - `WHERE` clauses
 
-### `INSERT` queries
+### INSERT
 
 - `VALUES`, organized as one or more tuples of `(column, expression)`
 - Inserting an inner `SELECT` query
@@ -57,7 +59,7 @@ More examples will be forthcoming soon, but here's an example `SELECT` query:
 ```reason
 let booksByAuthor = (authorId: int) => Requery.QueryBuilder.(
   select([
-    e(tcol("authors", "first_name") ++ tcol("authors", "last_name")),
+    e(tcol("authors", "first_name") ++ tcol("authors", "last_name"), ~a="name"),
     e(tcol("books", "title")),
   ])
   |> from(
@@ -71,10 +73,10 @@ let booksByAuthor = (authorId: int) => Requery.QueryBuilder.(
 Js.log(Postgres.Render.select(booksByAuthor(10)));
 ```
 
-This code will output (line breaks added by hand here)
+Output:
 
-```
-SELECT "authors"."first_name" || "authors"."last_name", "books"."title"
+```sql
+SELECT "authors"."first_name" || "authors"."last_name" AS name, "books"."title"
 FROM authors INNER JOIN books ON "authors"."id" = "books"."author_id"
 WHERE "author"."id" = 10
 ```

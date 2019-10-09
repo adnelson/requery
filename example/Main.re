@@ -8,21 +8,6 @@ let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
   Utils.Promise.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 let exit = Utils_Process.exit;
 
-let booksByAuthor = (authorId: int) =>
-  Requery.QueryBuilder.(
-    select([
-      e(tcol("authors", "first_name") ++ tcol("authors", "last_name")),
-      e(tcol("books", "title")),
-    ])
-    |> from(
-         tableNamed("authors")
-         |> innerJoin(tableNamed("books"), tcol("authors", "id") == tcol("books", "author_id")),
-       )
-    |> where(tcol("author", "id") == int(authorId))
-  );
-
-let _ = Js.log(Postgres.Render.select(booksByAuthor(10)));
-
 module Seeds = (DB: AbstractDB.DBType, Rules: RenderQuery.SqlRenderingRules) => {
   module Query = AbstractDB.Query(DB, Rules);
   module Render = RenderQuery.WithRenderingRules(Rules);
