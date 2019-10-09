@@ -58,6 +58,11 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       fun
       | Atom(atom) => renderAtom(atom)
       | Typed(e, t) => render(e) ++ "::" ++ t
+      | Concat(ex1, ex2) => render(ex1) ++ " || " ++ render(ex2)
+      | Add(ex1, ex2) => render(ex1) ++ " + " ++ render(ex2)
+      | Subtract(ex1, ex2) => render(ex1) ++ " - " ++ render(ex2)
+      | Multiply(ex1, ex2) => render(ex1) ++ " * " ++ render(ex2)
+      | Divide(ex1, ex2) => render(ex1) ++ " / " ++ render(ex2)
       | Eq(ex1, ex2) => render(ex1) ++ " = " ++ render(ex2)
       | Neq(ex1, ex2) => render(ex1) ++ " <> " ++ render(ex2)
       | Lt(ex1, ex2) => render(ex1) ++ " < " ++ render(ex2)
@@ -150,8 +155,11 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       };
   };
 
+  let select: Sql.Select.t => string = Select.render;
+  let insert: Sql.Insert.t => string = Insert.render;
+
   let render: Sql.query => string =
     fun
-    | Select(s) => Select.render(s)
-    | Insert(i) => Insert.render(i);
+    | Select(s) => select(s)
+    | Insert(i) => insert(i);
 };

@@ -37,7 +37,7 @@ At present, the following query types have been implemented, with the following 
   - `JOIN` clauses
     - `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN`, `FULL JOIN` and `CROSS JOIN`
 - `GROUP BY`
-- `ORDER BY` (`DESC`/`ASC`)
+- `ORDER BY` (with optional `DESC`/`ASC`)
 - `LIMIT` clauses
 - `WHERE` clauses
 
@@ -52,12 +52,42 @@ Only PostgresQL so far, but SQLite will be hopefully following close behind. Dat
 
 ## Examples
 
-TODO! There's a tiny smattering of example code in the `examples` directory,
-and it's not well (or at all) documented. Much more will be forthcoming soon.
+More examples will be forthcoming soon, but here's an example `SELECT` query:
+
+```reason
+let booksByAuthor = (authorId: int) => Requery.QueryBuilder.(
+  select([
+    e(tcol("authors", "first_name") ++ tcol("authors", "last_name")),
+    e(tcol("books", "title")),
+  ])
+  |> from(
+    tableNamed("authors")
+    |> innerJoin(tableNamed("books"),
+                 tcol("authors", "id") == tcol("books", "author_id"))
+    )
+  |> where(tcol("author", "id") == int(authorId))
+);
+
+Js.log(Postgres.Render.select(booksByAuthor(10)));
+```
+
+This code will output (line breaks added by hand here)
+
+```
+SELECT "authors"."first_name" || "authors"."last_name", "books"."title"
+FROM authors INNER JOIN books ON "authors"."id" = "books"."author_id"
+WHERE "author"."id" = 10
+```
 
 ## Status and future work
 
-There's plenty left to do, and much will likely change, but at this point the library is at least worthy of playing around with for personal projects. The `QueryBuilder` library can be used to build useful queries of pretty sophiticated complexity, the `RenderQuery` library can render
+There's plenty left to do, and much will likely change, but at this point the library is at least worthy of playing around with for personal projects. The `QueryBuilder` library can be used to build useful queries of pretty sophiticated complexity, the `RenderQuery` library can render these into valid SQL, and functions exist for basic database interaction including object serialization/deserialization.
 
-in addition to a test suite. But in the meantime hopefully the code is
-readable enough.
+Planned upcoming work includes:
+
+* SQLite support. Besides being useful, this will provide guidance for and validation of the best way to abstract the database backend.
+* A test suite. Query generation, object encoding/decoding, SQL rendering (per DB), and query execution (per DB) should all be backed by tests.
+* `DELETE FROM` queries.
+* `CREATE VIEW`. While tools for table creation are not currently planned, it should be easy to create views, since we can create `SELECT` queries.
+* A richer set of tools for composing database actions. For example, making it easy to insert objects which are stored across multiple tables.
+* Pretty-printing of rendered SQL.

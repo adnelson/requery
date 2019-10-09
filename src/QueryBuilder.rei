@@ -45,6 +45,9 @@ let col: string => expr;
 // A single column, from a column name
 let col_: column => expr;
 
+// A single column from a table name and column name
+let tcol: (string, string) => expr;
+
 // All columns (*)
 let all: expr;
 
@@ -52,6 +55,11 @@ let all: expr;
 let allFrom: string => expr;
 
 // Binary operators
+let concat: (expr, expr) => expr;
+let add: (expr, expr) => expr;
+let subtract: (expr, expr) => expr;
+let multiply: (expr, expr) => expr;
+let divide: (expr, expr) => expr;
 let eq: (expr, expr) => expr;
 let neq: (expr, expr) => expr;
 let lt: (expr, expr) => expr;
@@ -63,6 +71,11 @@ let and_: (expr, expr) => expr;
 let or_: (expr, expr) => expr;
 
 // Symbolic versions of binary operators
+let (++): (expr, expr) => expr;
+let (+): (expr, expr) => expr;
+let (-): (expr, expr) => expr;
+let ( * ): (expr, expr) => expr;
+let (/): (expr, expr) => expr;
 let (==): (expr, expr) => expr;
 let (!=): (expr, expr) => expr;
 let (<): (expr, expr) => expr;
@@ -96,8 +109,11 @@ let e: (~a: string=?, expr) => aliasedExpr;
  * Targets
  ****************************/
 
-// A named table
+// A table target
 let table: (~a: string=?, table) => target;
+
+// A table target, via a string.
+let tableNamed: (~a: string=?, string) => target;
 
 // Joins
 let innerJoin: (target, expr, target) => target;

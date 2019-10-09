@@ -35,8 +35,20 @@ let columns = Sql.Column.fromStringList;
 let tcolumns = l => Sql.Column.fromTupleList(L.map(l, ((t, c)) => (tbl(t), c)));
 let col_ = c => E.Atom(E.Column(c));
 let col = c => E.Atom(E.Column(column(c)));
+let tcol = (t, c) => E.Atom(E.Column(tcolumn(t, c)));
 let all = col("*");
 let allFrom = t => col(t ++ ".*");
+
+let concat = (e1, e2) => E.Concat(e1, e2);
+let (++) = concat;
+let add = (e1, e2) => E.Add(e1, e2);
+let (+) = add;
+let subtract = (e1, e2) => E.Subtract(e1, e2);
+let (-) = subtract;
+let multiply = (e1, e2) => E.Multiply(e1, e2);
+let ( * ) = multiply;
+let divide = (e1, e2) => E.Divide(e1, e2);
+let (/) = divide;
 
 let eq = (e1, e2) => E.Eq(e1, e2);
 let (==) = eq;
@@ -77,7 +89,8 @@ let call = (name, args) => E.Call(name, L.toArray(args));
 
 let e = (~a=?, expr): aliasedExpr => Aliased.make(expr, ~a?);
 
-let table = (~a=?, name) => Select.Table(Aliased.make(name, ~a?));
+let table = (~a=?, t) => Select.Table(Aliased.make(t, ~a?));
+let tableNamed = (~a=?, name) => Select.Table(Aliased.make(tbl(name), ~a?));
 let innerJoin = (t1, on, t2) => Select.(Join(Inner(on), t2, t1));
 let leftJoin = (t1, on, t2) => Select.(Join(Left(on), t2, t1));
 let rightJoin = (t1, on, t2) => Select.(Join(Right(on), t2, t1));

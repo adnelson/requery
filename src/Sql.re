@@ -78,6 +78,11 @@ module Expression = {
   type t =
     | Atom(atom)
     | Typed(t, string)
+    | Concat(t, t)
+    | Add(t, t)
+    | Subtract(t, t)
+    | Multiply(t, t)
+    | Divide(t, t)
     | Eq(t, t)
     | Neq(t, t)
     | And(t, t)
