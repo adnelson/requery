@@ -1,3 +1,12 @@
+module Rules: RenderQuery.SqlRenderingRules = {
+  let _TRUE = "TRUE";
+  let _FALSE = "FALSE";
+  let _NAME_WRAP_LEFT = "\"";
+  let _NAME_WRAP_RIGHT = "\"";
+};
+
+module Render = RenderQuery.WithRenderingRules(Rules);
+
 module DB: AbstractDB.DBType = {
   module P = BsPostgres;
   type result = P.Result.t(Js.Json.t);
@@ -9,11 +18,8 @@ module DB: AbstractDB.DBType = {
   let releaseClient = P.Pool.Pool_Client.release;
   let releasePool = P.Pool.Promise.end_;
   let query = (client, q) =>
-    P.Client.Promise.query'(P.Query.make(~text=RenderQuery.render(q), ()), client);
+    P.Client.Promise.query'(P.Query.make(~text=Render.render(q), ()), client);
   let resultToRows = (result: result) => RowDecode.toRows(result##rows);
 };
 
 module Query = AbstractDB.Query(DB);
-
-let select = Query.select;
-let retrieve = Query.retrieve;

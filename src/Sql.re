@@ -1,4 +1,5 @@
 module A = Utils.Array;
+module L = Utils.List;
 module O = Utils.Option;
 module SMap = Belt.Map.String;
 
@@ -17,31 +18,38 @@ module Table: TableType = {
 module type ColumnType = {
   type t;
   let fromString: string => t;
+  let fromStringWithTable: (Table.t, string) => t;
+  let fromTuples: array((Table.t, string)) => array(t);
+  let fromTupleList: list((Table.t, string)) => list(t);
   let fromStringArray: array(string) => array(t);
   let fromStringList: list(string) => list(t);
-  let toTupleArray: array((t, 'a)) => array((string, 'a));
-  let toString: t => string;
-
-  // TODO figure out enough of the machinery in Belt.Map to do this "properly"
-  type map('v);
-  let fromStringMap: SMap.t('v) => map('v);
-  let mapFromArray: array((t, 'v)) => SMap.t('v);
-  let toStringMap: map('v) => SMap.t('v);
+  let toTuple: t => (option(Table.t), string);
+  //let toTupleArray: array((t, 'a)) => array((string, 'a));
+  // let toString: t => string;
 };
 
 module Column: ColumnType = {
   // e.g. 'foo' or 'mytable.foo'
-  type t = string;
-  external fromString: string => t = "%identity";
-  external fromStringArray: array(string) => array(t) = "%identity";
-  external fromStringList: list(string) => list(t) = "%identity";
-  external fromTupleArray: array((string, 'a)) => array((t, 'a)) = "%identity";
-  external toTupleArray: array((t, 'a)) => array((string, 'a)) = "%identity";
-  external toString: t => string = "%identity";
-  type map('v) = SMap.t('v);
-  external toStringMap: map('v) => SMap.t('v) = "%identity";
-  external fromStringMap: SMap.t('v) => map('v) = "%identity";
-  let mapFromArray = arr => SMap.fromArray(fromTupleArray(arr));
+  type t = (option(Table.t), string);
+  let fromString: string => t = c => (None, c);
+  let fromStringWithTable: (Table.t, string) => t = (t, c) => (Some(t), c);
+  let fromTuples: array((Table.t, string)) => array(t) =
+    a => A.map(a, Utils.uncurry(fromStringWithTable));
+  let fromTupleList: list((Table.t, string)) => list(t) =
+    l => L.map(l, Utils.uncurry(fromStringWithTable));
+  let fromStringArray: array(string) => array(t) = a => A.map(a, fromString);
+  let fromStringList: list(string) => list(t) = l => L.map(l, fromString);
+  //  let fromTupleArray: array((string, 'a)) => array((t, 'a)) = a => A.map(a,
+  //  let toTupleArray: array((t, 'a)) => array((string, 'a))
+  //    = a => A.map(a, ((c, x)) => (toString(c), x));
+  /* let toStrings: t => (string, string) = fun */
+  /*   | (None, c) => ("", c) */
+  /*   | (Some(t), c) => (Table.toString(t), c); */
+  external toTuple: t => (option(Table.t), string) = "%identity";
+  //type map('v) = SMap.t('v);
+  //external toStringMap: map('v) => SMap.t('v) = "%identity";
+  //external fromStringMap: SMap.t('v) => map('v) = "%identity";
+  //let mapFromArray = arr => SMap.fromArray(fromTupleArray(arr));
 };
 
 module type AliasedType = {
@@ -78,7 +86,11 @@ module Expression = {
     | Geq(t, t)
     | Or(t, t)
     | Lt(t, t)
-    | Call(string, array(t));
+    | Like(t, t)
+    | IsNull(t)
+    | IsNotNull(t)
+    | Call(string, array(t))
+    | Tuple(array(t));
 };
 
 module Select = {
@@ -89,6 +101,7 @@ module Select = {
     | Inner(Expression.t)
     | Left(Expression.t)
     | Right(Expression.t)
+    | Full(Expression.t)
     | Cross;
 
   // What comes after the FROM of a select.

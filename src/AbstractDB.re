@@ -65,7 +65,7 @@ module type DBType = {
   let query: (client, Sql.query) => Js.Promise.t(result);
 };
 
-module Query = (DB: DBType) => {
+module Query = (DB: DBType, Rules: RenderQuery.SqlRenderingRules) => {
   include DB;
 
   // Execute an arbitrary query, decoding the result.

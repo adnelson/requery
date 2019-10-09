@@ -18,12 +18,22 @@ type toRow('t) = 't => row;
  ****************************/
 
 // Literals
-let null: expr;
 let int: int => expr;
 let bigint: int => expr;
 let float: float => expr;
 let string: string => expr;
 let bool: bool => expr;
+let tuple: list(expr) => expr;
+
+/************************
+ *  Dealing with nulls
+ ***********************/
+
+let null: expr;
+let isNull: expr => expr;
+let isNotNull: expr => expr;
+
+// null if the value is None, else convert the Some value.
 let nullable: ('t => expr, option('t)) => expr;
 
 // Add an explicit type cast to an expression
@@ -48,6 +58,7 @@ let lt: (expr, expr) => expr;
 let gt: (expr, expr) => expr;
 let leq: (expr, expr) => expr;
 let geq: (expr, expr) => expr;
+let like: (expr, expr) => expr;
 let and_: (expr, expr) => expr;
 let or_: (expr, expr) => expr;
 
@@ -92,6 +103,7 @@ let table: (~a: string=?, table) => target;
 let innerJoin: (target, expr, target) => target;
 let leftJoin: (target, expr, target) => target;
 let rightJoin: (target, expr, target) => target;
+let fullJoin: (target, expr, target) => target;
 let crossJoin: (target, target) => target;
 
 // An inner SELECT query, requires an alias
@@ -104,11 +116,18 @@ let selectAs: (string, select) => target;
 // Make a `table` from a string
 let tbl: string => table;
 
-// Make a `column` from a string
+// Make a `column` from a string, without a table name.
 let column: string => column;
+
+// Make a `column` with a table name, e.g. `fruits.color`. Table name
+// comes first.
+let tcolumn: (string, string) => column;
 
 // Make multiple `column`s from strings
 let columns: list(string) => list(column);
+
+// Make multiple `table`.`column`s from string pairs.
+let tcolumns: list((string, string)) => list(column);
 
 // For ORDER BY clauses
 let asc: direction;

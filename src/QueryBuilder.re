@@ -26,9 +26,15 @@ let bool = b => E.Atom(E.Bool(b));
 let float = f => E.Atom(E.Float(f));
 let string = s => E.Atom(E.String(s));
 let bigint = i => typed(int(i), "BigInt");
+let tuple = exprs => E.Tuple(L.toArray(exprs));
 
+let tbl = Sql.Table.fromString;
+let column = Sql.Column.fromString;
+let tcolumn = (t, c) => Sql.Column.fromStringWithTable(tbl(t), c);
+let columns = Sql.Column.fromStringList;
+let tcolumns = l => Sql.Column.fromTupleList(L.map(l, ((t, c)) => (tbl(t), c)));
 let col_ = c => E.Atom(E.Column(c));
-let col = c => E.Atom(E.Column(Column.fromString(c)));
+let col = c => E.Atom(E.Column(column(c)));
 let all = col("*");
 let allFrom = t => col(t ++ ".*");
 
@@ -44,6 +50,7 @@ let gt = (e1, e2) => E.Gt(e1, e2);
 let (>) = gt;
 let geq = (e1, e2) => E.Geq(e1, e2);
 let (>=) = geq;
+let like = (e1, e2) => E.Like(e1, e2);
 let and_ = (e1, e2) => E.And(e1, e2);
 let (&&) = and_;
 let or_ = (e1, e2) => E.Or(e1, e2);
@@ -56,6 +63,8 @@ let ors =
   fun
   | [] => bool(false)
   | [expr, ...exprs] => L.reduce(exprs, expr, or_);
+let isNotNull = e => E.IsNotNull(e);
+let isNull = e => E.IsNull(e);
 
 let count = e => E.Call("COUNT", [|e|]);
 let distinct = e => E.Call("DISTINCT", [|e|]);
@@ -72,13 +81,11 @@ let table = (~a=?, name) => Select.Table(Aliased.make(name, ~a?));
 let innerJoin = (t1, on, t2) => Select.(Join(Inner(on), t2, t1));
 let leftJoin = (t1, on, t2) => Select.(Join(Left(on), t2, t1));
 let rightJoin = (t1, on, t2) => Select.(Join(Right(on), t2, t1));
+let fullJoin = (t1, on, t2) => Select.(Join(Full(on), t2, t1));
 let crossJoin = (t1, t2) => Select.(Join(Cross, t2, t1));
 // TODO this can inspect the type of the select to collapse unnecessary aliases
 let selectAs = (alias, select) => Select.SubSelect(select, alias);
 
-let tbl = Sql.Table.fromString;
-let column = Sql.Column.fromString;
-let columns = Sql.Column.fromStringList;
 let (asc, desc) = Select.(ASC, DESC);
 
 let select = (~from=?, ~groupBy=[], ~orderBy=[], ~limit=?, ~where=?, selections) =>
