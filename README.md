@@ -1,6 +1,6 @@
 # requery
 
-`requery` is a library for interacting with a SQL database from a ReasonML application. It includes a generic SQL AST and combinators for constructing queries and parsing the results of these queries into domain objects. It is inspired by `knex.js`[http://knexjs.org/], but leveraging the type system of ReasonML/Ocaml for new awesomeness.
+`requery` is a library for interacting with a SQL database from a ReasonML application. It includes a generic SQL AST and combinators for constructing queries and parsing the results of these queries into domain objects. It is inspired by [`knex.js`](http://knexjs.org/), but leveraging the type system of ReasonML/Ocaml for new awesomeness.
 
 ### Features
 
