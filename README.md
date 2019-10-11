@@ -54,12 +54,30 @@ Only PostgresQL so far, but SQLite will be hopefully following close behind. Dat
 
 ## Examples
 
-More examples will be forthcoming soon, but here's an example `SELECT` query:
+Let's say you have a database of books and authors. (Note: we can use `requery` to insert the rows, but we'll save that for later)
+
+```sql
+CREATE TABLE authors (id SERIAL PRIMARY KEY, first_name TEXT, last_name TEXT);
+CREATE TABLE books (
+  id SERIAL PRIMARY KEY,
+  author_id INT NOT NULL,
+  title TEXT NOT NULL,
+  FOREIGN KEY (author_id) REFERENCES authors(id)
+);
+
+INSERT INTO authors(first_name, last_name) VALUES ('Stephen', 'King');
+INSERT INTO books(author_id, title) VALUES (1, 'The Shining'), (1, 'Carrie');
+```
+
+One thing you might want to do is find all of the books that an author wrote. Here's an example of how that might look:
 
 ```reason
-let booksByAuthor = (authorId: int) => Requery.QueryBuilder.(
+// Note: be cautious about `open`ing this module at top level, since it
+// overrides common operators like `==`.
+open Requery.QueryBuilder;
+let booksByAuthor = (authorId: int): select =>
   select([
-    e(tcol("authors", "first_name") ++ tcol("authors", "last_name"), ~a="name"),
+    e(tcol("authors", "first_name") ++ string(" ") ++ tcol("authors", "last_name"), ~a="name"),
     e(tcol("books", "title")),
   ])
   |> from(
@@ -67,19 +85,63 @@ let booksByAuthor = (authorId: int) => Requery.QueryBuilder.(
     |> innerJoin(tableNamed("books"),
                  tcol("authors", "id") == tcol("books", "author_id"))
     )
-  |> where(tcol("author", "id") == int(authorId))
-);
+  |> where(tcol("authors", "id") == int(authorId));
 
-Js.log(Postgres.Render.select(booksByAuthor(10)));
+Js.log(Postgres.Render.select(booksByAuthor(1)));
 ```
 
 Output:
 
 ```sql
-SELECT "authors"."first_name" || "authors"."last_name" AS name, "books"."title"
+SELECT "authors"."first_name" || ' ' || "authors"."last_name" AS name, "books"."title"
 FROM authors INNER JOIN books ON "authors"."id" = "books"."author_id"
-WHERE "author"."id" = 10
+WHERE "authors"."id" = 1
 ```
+
+If I pipe this into `psql`:
+
+```
+⇒  node example/Books.bs.js | psql -p 5999 requery-example
+     name     |    title
+--------------+-------------
+ Stephen King | The Shining
+ Stephen King | Carrie
+(2 rows)
+```
+
+Now of course, for a query like this the Reason code is considerably more verbose than the query which is generated at the end. But the advantage is that this query can be reused! Maybe all you need to know is the *number* of books the author wrote. We can leverage the query we wrote before:
+
+```reason
+let bookCountByAuthor = (authorId: int): select =>
+  select([e(col("name")), e(count(all))])
+  |> from(booksByAuthor(authorId) |> selectAs("t"))
+  |> groupBy1(column("name"));
+
+Js.log(Postgres.Render.select(bookCountByAuthor(1)));
+```
+
+Output:
+
+```sql
+SELECT "name", COUNT(*) FROM (
+  SELECT "authors"."first_name" || ' ' || "authors"."last_name" AS name, "books"."title"
+  FROM authors INNER JOIN books ON "authors"."id" = "books"."author_id"
+  WHERE "authors"."id" = 1
+) AS t
+GROUP BY "name"
+```
+
+Result:
+
+```
+⇒  node example/Books.bs.js | psql -p 5999 requery-example
+     name     | count
+--------------+-------
+ Stephen King |     2
+(1 row)
+```
+
+The `QueryBuilder` library will ensure that whatever logic you follow to construct a query, the end result will be syntactically valid SQL. Of course, it does *not* ensure that the query will return the data you expect, or any data at all -- that's still up to you.
 
 ## Status and future work
 

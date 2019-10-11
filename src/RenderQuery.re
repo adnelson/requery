@@ -25,8 +25,10 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     open Sql.Column;
     let render = c =>
       switch (toTuple(c)) {
-      | (None, c) => wrap(c)
-      | (Some(t), c) => wrap(Sql.Table.toString(t)) ++ "." ++ wrap(c)
+      | (None, Named(c)) => wrap(c)
+      | (None, All) => "*"
+      | (Some(t), Named(c)) => wrap(Sql.Table.toString(t)) ++ "." ++ wrap(c)
+      | (Some(t), All) => wrap(Sql.Table.toString(t)) ++ ".*"
       };
   };
 
@@ -115,7 +117,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
         let groupBy = A.mapJoinIfNonEmpty(groupBy, ~prefix=" GROUP BY ", ", ", Column.render);
         let limit = O.mapString(limit, n => " LIMIT " ++ string_of_int(n));
         let where = O.mapString(where, e => " WHERE " ++ Expression.render(e));
-        "SELECT " ++ selections ++ from ++ groupBy ++ where ++ orderBy ++ limit;
+        "SELECT " ++ selections ++ from ++ where ++ groupBy ++ orderBy ++ limit;
       };
   };
 

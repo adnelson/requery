@@ -36,8 +36,8 @@ let tcolumns = l => Sql.Column.fromTupleList(L.map(l, ((t, c)) => (tbl(t), c)));
 let col_ = c => E.Atom(E.Column(c));
 let col = c => E.Atom(E.Column(column(c)));
 let tcol = (t, c) => E.Atom(E.Column(tcolumn(t, c)));
-let all = col("*");
-let allFrom = t => col(t ++ ".*");
+let all = E.(Atom(Column(Sql.Column.all)));
+let allFrom = t => E.Atom(Column(Sql.Column.allFrom(tbl(t))));
 
 let concat = (e1, e2) => E.Concat(e1, e2);
 let (++) = concat;
@@ -132,6 +132,7 @@ let orderBy2 = (col1, dir1, col2, dir2, s) =>
   Select.{...s, orderBy: [|(col1, Some(dir1)), (col2, Some(dir2))|]};
 let orderBy2_ = (col1, col2, s) => Select.{...s, orderBy: [|(col1, None), (col2, None)|]};
 let groupBy = (cols, s) => Select.{...s, groupBy: L.toArray(cols)};
+let groupBy1 = (col, s) => Select.{...s, groupBy: [|col|]};
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), A.map(L.toArray(vs), toE));

@@ -177,6 +177,7 @@ let orderBy1: (column, direction, select) => select;
 let orderBy2_: (column, column, select) => select;
 let orderBy2: (column, direction, column, direction, select) => select;
 let groupBy: (list(column), select) => select;
+let groupBy1: (column, select) => select;
 
 /***************************
  * INSERT Queries

@@ -16,40 +16,42 @@ module Table: TableType = {
 };
 
 module type ColumnType = {
+  type col =
+    | All
+    | Named(string);
   type t;
   let fromString: string => t;
   let fromStringWithTable: (Table.t, string) => t;
+  let all: t;
+  let allFrom: Table.t => t;
   let fromTuples: array((Table.t, string)) => array(t);
   let fromTupleList: list((Table.t, string)) => list(t);
   let fromStringArray: array(string) => array(t);
   let fromStringList: list(string) => list(t);
-  let toTuple: t => (option(Table.t), string);
+  let toTuple: t => (option(Table.t), col);
   //let toTupleArray: array((t, 'a)) => array((string, 'a));
   // let toString: t => string;
 };
 
 module Column: ColumnType = {
+  // `*` or `some_column`
+  type col =
+    | All
+    | Named(string);
+
   // e.g. 'foo' or 'mytable.foo'
-  type t = (option(Table.t), string);
-  let fromString: string => t = c => (None, c);
-  let fromStringWithTable: (Table.t, string) => t = (t, c) => (Some(t), c);
+  type t = (option(Table.t), col);
+  let fromString: string => t = c => (None, Named(c));
+  let fromStringWithTable: (Table.t, string) => t = (t, c) => (Some(t), Named(c));
+  let all: t = (None, All);
+  let allFrom: Table.t => t = t => (Some(t), All);
   let fromTuples: array((Table.t, string)) => array(t) =
     a => A.map(a, Utils.uncurry(fromStringWithTable));
   let fromTupleList: list((Table.t, string)) => list(t) =
     l => L.map(l, Utils.uncurry(fromStringWithTable));
   let fromStringArray: array(string) => array(t) = a => A.map(a, fromString);
   let fromStringList: list(string) => list(t) = l => L.map(l, fromString);
-  //  let fromTupleArray: array((string, 'a)) => array((t, 'a)) = a => A.map(a,
-  //  let toTupleArray: array((t, 'a)) => array((string, 'a))
-  //    = a => A.map(a, ((c, x)) => (toString(c), x));
-  /* let toStrings: t => (string, string) = fun */
-  /*   | (None, c) => ("", c) */
-  /*   | (Some(t), c) => (Table.toString(t), c); */
-  external toTuple: t => (option(Table.t), string) = "%identity";
-  //type map('v) = SMap.t('v);
-  //external toStringMap: map('v) => SMap.t('v) = "%identity";
-  //external fromStringMap: SMap.t('v) => map('v) = "%identity";
-  //let mapFromArray = arr => SMap.fromArray(fromTupleArray(arr));
+  external toTuple: t => (option(Table.t), col) = "%identity";
 };
 
 module type AliasedType = {
