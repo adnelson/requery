@@ -20,8 +20,7 @@ module Queries = {
     |> groupBy1(column("name"));
 };
 
-let argv = Node.Process.argv;
-if (Belt.Array.some(argv, s => s == "--counts")) {
+if (Belt.Array.some(Node.Process.argv, s => s == "--counts")) {
   Js.log(Postgres.Render.select(Queries.bookCountByAuthor(2)));
 } else {
   Js.log(Postgres.Render.select(Queries.booksByAuthor(2)));
