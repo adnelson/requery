@@ -63,6 +63,7 @@ module Promise = {
          })
       |> catch(err => {
            ignore(action());
+           Js.log(err);
            reject(Error(err));
          });
 };
