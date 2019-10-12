@@ -28,14 +28,15 @@
   "dependencies": {
     "@glennsl/bs-json": "^5.0.1",
     "bs-platform": "^5.0.6",
-    "bs-postgres": "^0.2.0"
+    "bs-postgres": "^0.2.0",
+    "bs-sqlite": "git://github.com/adnelson/bs-sqlite#reasonml"
   },
   "devDependencies": {
     "@glennsl/bs-jest": "^0.4.9",
     "husky": "^3.0.5",
     "lint-staged": "^9.3.0",
-    "prettier": "^1.18.2",
-    "onchange": "^6.1.0"
+    "onchange": "^6.1.0",
+    "prettier": "^1.18.2"
   },
   "husky": {
     "hooks": {
@@ -43,14 +44,14 @@
     }
   },
   "scripts": {
-    "re:build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
-    "re:cleanbuild": "bsb -clean-world && yarn re:build",
-    "re:watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn re:build'",
-    "re:watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn re:build && yarn testquery'",
-    "re:test": "yarn re:build && jest __tests__",
-    "re:test:watch": "onchange -v -k -i -d 500 'src/**/*.bs.js' '__tests__/**/*.bs.js' -- sh -c 'clear && jest __tests__'",
-    "re:buildandtest:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && bsb && jest __tests__'",
-    "re:format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
+    "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
+    "cleanbuild": "bsb -clean-world && yarn build",
+    "watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
+    "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
+    "test": "yarn build && jest __tests__",
+    "test:watch": "onchange -v -k -i -d 500 'src/**/*.bs.js' '__tests__/**/*.bs.js' -- sh -c 'clear && jest __tests__'",
+    "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
+    "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
     "testquery": "node example/Main.bs"
   }
 }

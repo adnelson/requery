@@ -1,7 +1,8 @@
 {
   "bs-dependencies": [
     "@glennsl/bs-json",
-    "bs-postgres"
+    "bs-postgres",
+    "bs-sqlite"
   ],
   "bs-dev-dependencies": ["@glennsl/bs-jest"],
   "name": "requery",

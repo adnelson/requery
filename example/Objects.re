@@ -1,5 +1,6 @@
 module A = Utils.Array;
 module J = Utils.Json.Decode;
+module RE = RowEncode;
 module RD = RowDecode;
 module L = Belt.List;
 module QB = QueryBuilder;
@@ -29,7 +30,7 @@ module Customer = {
 
     let toRow: QB.toRow(t) =
       customer =>
-        QB.(
+        RE.(
           stringRow([
             ("name", customer.name |> string),
             ("email", customer.email |> string),
@@ -46,6 +47,6 @@ module Address = {
   type t = string;
 
   module Encode = {
-    let toRow: QB.toRow(t) = address => QB.(stringRow([("contents", address |> string)]));
+    let toRow: QB.toRow(t) = address => RE.(stringRow([("contents", address |> string)]));
   };
 };

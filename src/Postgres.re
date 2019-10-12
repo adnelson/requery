@@ -1,10 +1,4 @@
-module Rules: RenderQuery.SqlRenderingRules = {
-  let _TRUE = "TRUE";
-  let _FALSE = "FALSE";
-  let _NAME_WRAP_LEFT = "\"";
-  let _NAME_WRAP_RIGHT = "\"";
-};
-
+module Rules = RenderQuery.DefaultRules;
 module Render = RenderQuery.WithRenderingRules(Rules);
 
 module DB: AbstractDB.DBType = {

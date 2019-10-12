@@ -13,6 +13,13 @@ module type SqlRenderingRules = {
   // TODO: text escaping function for column names
 };
 
+module DefaultRules: SqlRenderingRules = {
+  let _TRUE = "TRUE";
+  let _FALSE = "FALSE";
+  let _NAME_WRAP_LEFT = "\"";
+  let _NAME_WRAP_RIGHT = "\"";
+};
+
 module WithRenderingRules = (S: SqlRenderingRules) => {
   let wrap = s => S._NAME_WRAP_LEFT ++ s ++ S._NAME_WRAP_RIGHT;
 

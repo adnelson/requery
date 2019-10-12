@@ -27,6 +27,7 @@ let float = f => E.Atom(E.Float(f));
 let string = s => E.Atom(E.String(s));
 let bigint = i => typed(int(i), "BigInt");
 let tuple = exprs => E.Tuple(L.toArray(exprs));
+let tuple2 = (f, g, (a, b)) => tuple([f(a), g(b)]);
 
 let tbl = Sql.Table.fromString;
 let column = Sql.Column.fromString;
@@ -121,6 +122,7 @@ let as_ = alias =>
 
 let selecting = (sels, s) => Select.{...s, selections: L.toArray(sels)};
 let from = (t, s) => Select.{...s, from: Some(t)};
+let selectFrom = (target, exprs) => select(exprs) |> from(target);
 let limit = (n, s) => Select.{...s, limit: Some(n)};
 let where = (cond, s) => Select.{...s, where: Some(cond)};
 let orderBy = (cols, s) =>
@@ -136,10 +138,6 @@ let groupBy1 = (col, s) => Select.{...s, groupBy: [|col|]};
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), A.map(L.toArray(vs), toE));
-let stringRowWith = (toExpr, row) => L.map(row, convertRow(column, toExpr));
-let stringRow = stringRowWith(Utils.id);
-let rowFromFields = (fields, obj) =>
-  stringRow(L.map(fields, ((field, fn)) => (field, fn(obj))));
 
 let insertColumns = cols =>
   Insert.make(Values(L.toArray(L.map(cols, ((c, exprs)) => (c, L.toArray(exprs))))));
@@ -163,7 +161,6 @@ let insertRowsWith = (toColumn, toExpr, rows) =>
 
 let insertRow = row => insertRows([row]);
 let insertRowWith = (toC, toE, row) => insertRow(L.map(row, convertRow(toC, toE)));
-let insertStringRow = insertRowWith(column, Utils.id);
 let insertOne = (toRow, obj) => insertRow(toRow(obj));
 let insertMany = (toRow, objects) => insertRows(L.map(objects, toRow));
 let insertSelect = select => Insert.make(Insert.Select(select));
@@ -172,3 +169,5 @@ let returningColumns = (columns, insert) =>
   Insert.{...insert, returning: Some(Columns(columns))};
 let returningColumn = (column, insert) =>
   Insert.{...insert, returning: Some(Columns([column]))};
+
+let into: (table, table => insert) => insert = (t, f) => f(t);

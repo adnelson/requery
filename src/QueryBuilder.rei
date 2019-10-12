@@ -33,9 +33,6 @@ let null: expr;
 let isNull: expr => expr;
 let isNotNull: expr => expr;
 
-// null if the value is None, else convert the Some value.
-let nullable: ('t => expr, option('t)) => expr;
-
 // Add an explicit type cast to an expression
 let typed: (expr, string) => expr;
 
@@ -102,6 +99,16 @@ let avg: expr => expr;
 let coalesce: (expr, expr) => expr;
 let call: (string, list(expr)) => expr;
 
+/*********** Higher order functions **********/
+
+// null if the value is None, else convert the Some value.
+let nullable: ('t => expr, option('t)) => expr;
+
+// Convert to a tuple.
+let tuple2: (toExpr('a), toExpr('b)) => toExpr(('a, 'b));
+
+/*********************************************/
+
 // Aliased expressions (appear after a SELECT, can have an alias)
 let e: (~a: string=?, expr) => aliasedExpr;
 
@@ -167,6 +174,15 @@ let select:
 
 // Change what's being selected.
 let selecting: (list(aliasedExpr), select) => select;
+
+/*
+ Allows the items being selected to be put first.
+
+ let sql =
+   [e(col("first") ++ string(" ") ++ col("last"))]
+   |> selectFrom(tableNamed("authors"));
+ */
+let selectFrom: (target, list(aliasedExpr)) => select;
 let from: (target, select) => select;
 let limit: (int, select) => select;
 let where: (expr, select) => select;
@@ -183,19 +199,10 @@ let groupBy1: (column, select) => select;
  * INSERT Queries
  ****************************/
 
-// Create a row of literal expressions
-let stringRow: toRow(list((string, expr)));
-// Create a row of expressions where the expressions are converted
-// from another object.
-let stringRowWith: toExpr('e) => toRow(list((string, 'e)));
-// Create a row encoder from a bunch of individual encoders.
-let rowFromFields: list((string, toExpr('e))) => toRow('e);
-
 // Inserting literal columns/expressions.
 let insertColumns: toInsert(list((column, list(expr))));
 let insertRows: toInsert(list(list((column, expr))));
 let insertRow: toInsert(list((column, expr)));
-let insertStringRow: toInsert(list((string, expr)));
 
 // Apply a conversion function to create columns and expressions.
 let insertRowsWith: (toColumn('a), toExpr('b)) => toInsert(list(list(('a, 'b))));
@@ -212,3 +219,11 @@ let insertSelect: toInsert(select);
 // Set what's to be returned by the insertion
 let returningColumns: (list(column), insert) => insert;
 let returningColumn: (column, insert) => insert;
+
+/* Apply a table-to-query conversion.
+   let insertAuthors =
+     [("Stephen", "King"), ("Jane", "Austen")]
+     |> insertMany(RE.tuple2Row("first", string, "last", string))
+     |> into(tbl("authors"));
+   */
+let into: (table, table => insert) => insert;

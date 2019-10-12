@@ -4,6 +4,26 @@
 
 `requery` is currently dependent on being built with `bucklescript` and the javascript ecosystem. Future work might enable it to be used from native ReasonML/Ocaml apps as well.
 
+```reasonml
+let conn = Sqlite.(connect({path: "test.db", memory: true}));
+
+let insertAuthors =
+  [("Stephen", "King"), ("Jane", "Austen")]
+  |> insertMany(RE.tuple2Row("first", string, "last", string))
+  |> into(tbl("authors"));
+
+Sqlite.insert(conn,
+  [("Stephen", "King"), ("Jane", "Austen")]
+  |> insertMany(RE.tuple2Row("first", string, "last", string))
+  |> into(tbl("authors")));
+
+Sqlit
+
+let selectAuthorNames =
+  [e(col("first") ++ string(" ") ++ col("last"))]
+  |> selectFrom(tableNamed("authors"));
+```
+
 ### Features
 
 * A generic SQL abstract syntax tree as a suite of ReasonML types
@@ -141,7 +161,7 @@ At present, the following query types have been implemented, with the following 
 
 ## Supported databases
 
-Only PostgresQL so far, but SQLite will be hopefully following close behind. Database interaction is abstracted via a functor called Query. You can keep your code backend-agnostic by abstracting with a functor. You can see an example of this in `example/Main.re`.
+PostgresQL and SQLite so far.
 
 ## Status and future work
 
@@ -149,7 +169,7 @@ There's plenty left to do, and much will likely change, but at this point the li
 
 Planned upcoming work includes:
 
-* SQLite support. Besides being useful, this will provide guidance for and validation of the best way to abstract the database backend.
+* Figure out the best way to abstract the database backend to provide an ergonomic interface, make it easy to extend, and avoid code duplication between different DBs.
 * A test suite. Query generation, object encoding/decoding, SQL rendering (per DB), and query execution (per DB) should all be backed by tests.
 * `DELETE FROM` queries.
 * `CREATE VIEW`. While tools for table creation are not currently planned, it should be easy to create views, since we can create `SELECT` queries.
