@@ -5,17 +5,21 @@
 `requery` is currently dependent on being built with `bucklescript` and the javascript ecosystem. Future work might enable it to be used in other ecosystems as well.
 
 ```reason
-let conn = Sqlite.(connect({path: "test.db", memory: true}));
+let client = Sqlite3.(makeClient(Memory));
 
-Sqlite.insert(conn,
+AbstractClient.(insert(client, RowEncode.(
   [("Stephen", "King"), ("Jane", "Austen")]
-  |> insertMany(tuple2Row("first", string, "last", string))
-  |> into(tbl("authors")));
-
-Sqlite.select(conn,
-  [e(col("first") ++ string(" ") ++ col("last"))]
-  |> selectFrom(tableNamed("authors")))
-  |> Js.log;
+  |> insertMany(columns2("first", string, "last", string))
+  |> into(tbl("authors")))
+) |> Js.Promise.then_(_ =>
+  select(client,
+    RowDecode.(decodeEach(columns2("first", string, "last", string))),
+    QueryBuilder.(
+      [e(col("first") ++ string(" ") ++ col("last"))]
+      |> selectFrom(tableNamed("authors")))
+    )
+    |> Js.Promise.(then_(authors => authors |> Js.log |> resolve))
+));
 ```
 
 ### Features
@@ -162,11 +166,12 @@ There's plenty left to do, and much will likely change, but at this point the li
 
 Planned upcoming work includes:
 
-* Figure out the best way to abstract the database backend to provide an ergonomic interface, make it easy to extend, and avoid code duplication between different DBs.
+* Improving the abstraction of the database backend to provide an ergonomic interface, make it easy to extend, and avoid code duplication between different DBs.
 * A test suite. Query generation, object encoding/decoding, SQL rendering (per DB), and query execution (per DB) should all be backed by tests.
 * `DELETE FROM` queries.
 * `CREATE VIEW`. While tools for table creation are not currently planned, it should be easy to create views, since we can create `SELECT` queries.
 * A richer set of tools for composing database actions. For example, making it easy to insert objects which are stored across multiple tables.
 * Pretty-printing of rendered SQL.
+* Error handling for when queries fail.
 
 Contributions are very much welcome!
