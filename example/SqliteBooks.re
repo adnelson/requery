@@ -3,13 +3,13 @@ module RE = RowEncode;
 module S = Sqlite3;
 module Rules = RenderQuery.DefaultRules;
 module Render = RenderQuery.WithRenderingRules(Rules);
-module DBClient = AbstractClient.DBClient;
+module Client = AbstractClient;
 module P = Utils.Promise;
 module JD = Utils.Json.Decode;
 
-let client = S.(makeClient(Memory));
+let client: S.client = S.(makeClient(Memory));
 
-DBClient.execRaw(
+Client.execRaw(
   client,
   "CREATE TABLE author (id INTEGER PRIMARY KEY, first TEXT NOT NULL, last TEXT NOT NULL);",
 );
@@ -34,7 +34,7 @@ module Author = {
 };
 
 // Inserting with an explicit query, using columns2 to define the encoding on the fly
-DBClient.insert(
+Client.insert(
   client,
   QB.(
     [("Stephen", "King"), ("Jane", "Austen")]
@@ -44,7 +44,7 @@ DBClient.insert(
 );
 
 // Inserting using the Author-specific functions
-DBClient.insert(
+Client.insert(
   client,
   QB.(
     Author.[make("Anne", "Rice"), make("J.K.", "Rowling"), make("Jonathan", "Irving")]
@@ -54,7 +54,7 @@ DBClient.insert(
 );
 
 // Selecting author rows, as tuples
-DBClient.select(
+Client.select(
   client,
   RowDecode.(decodeEach(columns2("first", string, "last", string))),
   QB.(select([e(all)]) |> from(table(Author.table))),
@@ -62,7 +62,7 @@ DBClient.select(
 |> P.then_(r => P.rLog(r));
 
 // Selecting author rows, as Author objects
-DBClient.select(
+Client.select(
   client,
   RowDecode.(decodeEach(Author.fromJson)),
   QB.(select([e(all)]) |> from(table(Author.table))),

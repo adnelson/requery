@@ -3,6 +3,7 @@ module QB = QueryBuilder;
 module RE = RowEncode;
 module Rules = RenderQuery.DefaultRules;
 module Render = RenderQuery.WithRenderingRules(Rules);
+module AClient = AbstractClient;
 
 module S = {
   type conn = Sqlite.Connection.t;
@@ -32,7 +33,8 @@ let connect: args => S.conn =
       make(~path, ~memory=false, ~fileMustExist, ~readonly, ())
   );
 
-module AClient = AbstractClient.DBClient;
+type client = AClient.t(Sqlite.Connection.t, AClient.rows);
+
 let makeClient = args =>
   AClient.make(
     ~handle=connect(args),
@@ -50,44 +52,3 @@ let makeClient = args =>
     ~resultToRows=Utils.id,
     (),
   );
-
-/*
- let insert = (conn, insert) => {
-   let sql = Render.insert(insert);
-   Js.log(sql);
-   let stmt = S.prepare(conn, sql);
-   let _ = S.run(stmt, [||]);
-   ();
- };
-
- let select = (conn, select) => {
-   Js.log(Render.select(select));
-   let stmt = S.prepare(conn, Render.select(select));
-   S.all(stmt, [||]);
- };
- let execRaw = (conn, raw) => {
-   let stmt = S.prepare(conn, raw);
-   S.run(stmt, [||]);
- };
-
- let queryRaw = (conn, raw) => {
-   let stmt = S.prepare(conn, raw);
-   S.all(stmt, [||]);
- }
-
- */
-/*
- module DB: AbstractDB.DBType = {
-   type result = Js.Json.t;
-   type pool = P.Pool.t;
-   type client = P.Client.t;
-   let makePool = ({AbstractDB.host, database, port}) =>
-     P.Pool.make(~host, ~database, ~port, ());
-   let makeClient = P.Pool.Promise.connect;
-   let releaseClient = P.Pool.Pool_Client.release;
-   let releasePool = P.Pool.Promise.end_;
-   let query = (client, q) =>
-     P.Client.Promise.query'(P.Query.make(~text=Render.render(q), ()), client);
-   let resultToRows = (result: result) => RowDecode.toRows(result##rows);
- };
- */
