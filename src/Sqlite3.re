@@ -1,3 +1,4 @@
+module A = Utils.Array;
 module QB = QueryBuilder;
 module RE = RowEncode;
 module Rules = RenderQuery.DefaultRules;
@@ -31,27 +32,50 @@ let connect: args => S.conn =
       make(~path, ~memory=false, ~fileMustExist, ~readonly, ())
   );
 
-let insert = (conn, insert) => {
-  let sql = Render.insert(insert);
-  Js.log(sql);
-  let stmt = S.prepare(conn, sql);
-  let _ = S.run(stmt, [||]);
-  ();
-};
+module AClient = AbstractClient.DBClient;
+let makeClient = args =>
+  AClient.make(
+    ~handle=connect(args),
+    ~queryToSql=Render.render,
+    ~queryRaw=
+      (conn, raw) => {
+        let stmt = S.prepare(conn, raw);
+        S.all(stmt, [||]) |> RowDecode.toRows |> Js.Promise.resolve;
+      },
+    ~execRaw=
+      (conn, raw) => {
+        let stmt = S.prepare(conn, raw);
+        S.run(stmt, [||]) |> A.singleton |> RowDecode.toRows |> Js.Promise.resolve;
+      },
+    ~resultToRows=Utils.id,
+    (),
+  );
 
-let select = (conn, select) => {
-  Js.log(Render.select(select));
-  let stmt = S.prepare(conn, Render.select(select));
-  S.all(stmt, [||]);
-};
+/*
+ let insert = (conn, insert) => {
+   let sql = Render.insert(insert);
+   Js.log(sql);
+   let stmt = S.prepare(conn, sql);
+   let _ = S.run(stmt, [||]);
+   ();
+ };
 
-let runRaw = (conn, raw) => {
-  Js.log(raw);
-  let stmt = S.prepare(conn, raw);
-  let _ = S.run(stmt, [||]);
-  ();
-};
+ let select = (conn, select) => {
+   Js.log(Render.select(select));
+   let stmt = S.prepare(conn, Render.select(select));
+   S.all(stmt, [||]);
+ };
+ let execRaw = (conn, raw) => {
+   let stmt = S.prepare(conn, raw);
+   S.run(stmt, [||]);
+ };
 
+ let queryRaw = (conn, raw) => {
+   let stmt = S.prepare(conn, raw);
+   S.all(stmt, [||]);
+ }
+
+ */
 /*
  module DB: AbstractDB.DBType = {
    type result = Js.Json.t;

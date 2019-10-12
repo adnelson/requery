@@ -3,7 +3,7 @@ module QB = QueryBuilder;
 
 type t('args, 'result) = {
   toSelect: QB.toSelect('args),
-  decode: RowDecode.decodeRows('result),
+  decode: RowDecode.rowsDecoder('result),
 };
 
 let make = (toSelect, decode) => {toSelect, decode};

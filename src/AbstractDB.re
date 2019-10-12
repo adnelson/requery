@@ -52,20 +52,31 @@ module QueryResult = {
 
 // This could be a functor, parameterized on an error type. Also, need
 // to think about error handling.
-module type DBType = {
-  type result;
-  type pool;
-  type client;
+//module type DBType = {
+//  type result;
+//  type pool;
+//  type client;
+//
+//  let resultToRows: result => array(RowDecode.Row.t(Js.Json.t));
+//  let makePool: config => pool;
+//  let makeClient: pool => Js.Promise.t(client);
+//  let releaseClient: client => Js.Promise.t(unit);
+//  let releasePool: pool => Js.Promise.t(unit);
+//  let query: (client, Sql.query) => Js.Promise.t(result);
+//};
 
-  let resultToRows: result => array(RowDecode.Row.t(Js.Json.t));
-  let makePool: config => pool;
-  let makeClient: pool => Js.Promise.t(client);
-  let releaseClient: client => Js.Promise.t(unit);
-  let releasePool: pool => Js.Promise.t(unit);
+module type DBClient = {
+  // Handle to the client.
+  type client;
+  // Handle to the result of running a query.
+  type result;
+  // Execute a query.
   let query: (client, Sql.query) => Js.Promise.t(result);
+  // Translate a result into an array of rows.
+  let resultToRows: result => array(RowDecode.Row.t(Js.Json.t));
 };
 
-module Query = (DB: DBType, Rules: RenderQuery.SqlRenderingRules) => {
+module Query = (DB: DBClient, Rules: RenderQuery.SqlRenderingRules) => {
   include DB;
 
   // Execute an arbitrary query, decoding the result.
@@ -74,7 +85,7 @@ module Query = (DB: DBType, Rules: RenderQuery.SqlRenderingRules) => {
         ~logQuery=?,
         ~logResult=?,
         client: DB.client,
-        decode: RowDecode.decodeRows('t),
+        decode: RowDecode.rowsDecoder('t),
         query: Sql.query,
       )
       : Js.Promise.t(QueryResult.t('t)) => {
@@ -96,7 +107,7 @@ module Query = (DB: DBType, Rules: RenderQuery.SqlRenderingRules) => {
         ~logQuery=?,
         ~logResult=?,
         client: DB.client,
-        decode: RowDecode.decodeRows('t),
+        decode: RowDecode.rowsDecoder('t),
         select: QueryBuilder.select,
       )
       : Js.Promise.t(QueryResult.t('t)) =>
@@ -125,7 +136,7 @@ module Query = (DB: DBType, Rules: RenderQuery.SqlRenderingRules) => {
         ~logQuery=?,
         ~logResult=?,
         client: DB.client,
-        decode: RowDecode.decodeRows('t),
+        decode: RowDecode.rowsDecoder('t),
         insert: QueryBuilder.insert,
       )
       : Js.Promise.t(QueryResult.t('t)) =>
