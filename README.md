@@ -1,27 +1,21 @@
 # requery
 
-`requery` is a library for interacting with a SQL database from a ReasonML application. It includes a generic SQL AST and combinators for constructing queries and parsing the results of these queries into domain objects. It is inspired by [`knex.js`](http://knexjs.org/), but leveraging the type system of ReasonML/Ocaml for correctness and expressiveness.
+`requery` is a library for interacting with a SQL database from a ReasonML/Ocaml application. It includes a generic SQL AST and combinators for constructing queries and parsing the results of these queries into domain objects. It is inspired by [`knex.js`](http://knexjs.org/), but leveraging the type system of ML for correctness and expressiveness.
 
-`requery` is currently dependent on being built with `bucklescript` and the javascript ecosystem. Future work might enable it to be used from native ReasonML/Ocaml apps as well.
+`requery` is currently dependent on being built with `bucklescript` and the javascript ecosystem. Future work might enable it to be used in other ecosystems as well.
 
-```reasonml
+```reason
 let conn = Sqlite.(connect({path: "test.db", memory: true}));
-
-let insertAuthors =
-  [("Stephen", "King"), ("Jane", "Austen")]
-  |> insertMany(RE.tuple2Row("first", string, "last", string))
-  |> into(tbl("authors"));
 
 Sqlite.insert(conn,
   [("Stephen", "King"), ("Jane", "Austen")]
-  |> insertMany(RE.tuple2Row("first", string, "last", string))
+  |> insertMany(tuple2Row("first", string, "last", string))
   |> into(tbl("authors")));
 
-Sqlit
-
-let selectAuthorNames =
+Sqlite.select(conn,
   [e(col("first") ++ string(" ") ++ col("last"))]
-  |> selectFrom(tableNamed("authors"));
+  |> selectFrom(tableNamed("authors")))
+  |> Js.log;
 ```
 
 ### Features
@@ -62,10 +56,7 @@ INSERT INTO books(author_id, title) VALUES (1, 'The Shining'), (1, 'Carrie');
 One thing you might want to do is find all of the books that an author wrote. Here's an example of how that might look:
 
 ```reason
-// Note: be cautious about `open`ing this module at top level, since it
-// overrides common operators like `==`.
-open Requery.QueryBuilder;
-let booksByAuthor = (authorId: int): select =>
+let booksByAuthor = (authorId: int): select => Requery.QueryBuilder.(
   select([
     e(tcol("authors", "first_name") ++ string(" ") ++ tcol("authors", "last_name"), ~a="name"),
     e(tcol("books", "title")),
@@ -75,9 +66,10 @@ let booksByAuthor = (authorId: int): select =>
     |> innerJoin(tableNamed("books"),
                  tcol("authors", "id") == tcol("books", "author_id"))
     )
-  |> where(tcol("authors", "id") == int(authorId));
+  |> where(tcol("authors", "id") == int(authorId))
+);
 
-Js.log(Postgres.Render.select(booksByAuthor(1)));
+Js.log(Requery.Postgres.Render.select(booksByAuthor(1)));
 ```
 
 Output:
@@ -91,7 +83,7 @@ WHERE "authors"."id" = 1
 If I pipe this into `psql`:
 
 ```
-⇒  node example/Books.bs.js | psql -p 5999 requery-example
+⇒  node example/Books.bs.js | psql requery-example
      name     |    title
 --------------+-------------
  Stephen King | The Shining
@@ -102,12 +94,13 @@ If I pipe this into `psql`:
 Now of course, for a query like this the Reason code is considerably more verbose than the query which is generated at the end. But the advantage is that this query can be reused! Maybe all you need to know is the *number* of books the author wrote. We can leverage the query we wrote before:
 
 ```reason
-let bookCountByAuthor = (authorId: int): select =>
+let bookCountByAuthor = (authorId: int): select => Requery.QueryBuilder.(
   select([e(col("name")), e(count(all))])
   |> from(booksByAuthor(authorId) |> selectAs("t"))
-  |> groupBy1(column("name"));
+  |> groupBy1(column("name"))
+);
 
-Js.log(Postgres.Render.select(bookCountByAuthor(1)));
+Js.log(Requery.Postgres.Render.select(bookCountByAuthor(1)));
 ```
 
 Output:
@@ -124,7 +117,7 @@ GROUP BY "name"
 Result:
 
 ```
-⇒  node example/Books.bs.js | psql -p 5999 requery-example
+⇒  node example/Books.bs.js | psql requery-example
      name     | count
 --------------+-------
  Stephen King |     2
@@ -149,8 +142,8 @@ At present, the following query types have been implemented, with the following 
   - Subqueries (`SELECT * FROM (SELECT ...) AS t`)
   - `JOIN` clauses
     - `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN`, `FULL JOIN` and `CROSS JOIN`
-- `GROUP BY`
-- `ORDER BY` (with optional `DESC`/`ASC`)
+- `GROUP BY` one or more columns
+- `ORDER BY` one or more columns (with optional `DESC`/`ASC`)
 - `LIMIT` clauses
 - `WHERE` clauses
 
