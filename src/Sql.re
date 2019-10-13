@@ -3,22 +3,27 @@ module L = Utils.List;
 module O = Utils.Option;
 module SMap = Belt.Map.String;
 
-module type TableType = {
+module type OpaqueString = {
   type t;
   let fromString: string => t;
   let toString: t => string;
 };
 
-module Table: TableType = {
+module MakeOpaqueString = (()) : OpaqueString => {
   type t = string;
   external fromString: string => t = "%identity";
   external toString: t => string = "%identity";
 };
 
+module Table =
+  MakeOpaqueString({});
+module ColumnName =
+  MakeOpaqueString({});
+
 module type ColumnType = {
   type col =
     | All
-    | Named(string);
+    | Named(ColumnName.t);
   type t;
   let fromString: string => t;
   let fromStringWithTable: (Table.t, string) => t;
@@ -34,15 +39,18 @@ module type ColumnType = {
 };
 
 module Column: ColumnType = {
+  module CN = ColumnName;
   // `*` or `some_column`
   type col =
     | All
-    | Named(string);
+    | Named(CN.t);
+
+  let named: string => col = s => Named(CN.fromString(s));
 
   // e.g. 'foo' or 'mytable.foo'
   type t = (option(Table.t), col);
-  let fromString: string => t = c => (None, Named(c));
-  let fromStringWithTable: (Table.t, string) => t = (t, c) => (Some(t), Named(c));
+  let fromString: string => t = c => (None, named(c));
+  let fromStringWithTable: (Table.t, string) => t = (t, c) => (Some(t), named(c));
   let all: t = (None, All);
   let allFrom: Table.t => t = t => (Some(t), All);
   let fromTuples: array((Table.t, string)) => array(t) =
@@ -121,9 +129,9 @@ module Select = {
   and t = {
     selections: array(Aliased.t(Expression.t)),
     from: option(target),
-    groupBy: array(Column.t),
-    orderBy: array((Column.t, option(direction))),
-    limit: option(int),
+    groupBy: array(Expression.t),
+    orderBy: array((Expression.t, option(direction))),
+    limit: option(Expression.t),
     where: option(Expression.t),
   };
 };

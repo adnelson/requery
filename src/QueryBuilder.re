@@ -135,6 +135,8 @@ let orderBy2 = (col1, dir1, col2, dir2, s) =>
 let orderBy2_ = (col1, col2, s) => Select.{...s, orderBy: [|(col1, None), (col2, None)|]};
 let groupBy = (cols, s) => Select.{...s, groupBy: L.toArray(cols)};
 let groupBy1 = (col, s) => Select.{...s, groupBy: [|col|]};
+let groupByCol = (c, s) => Select.{...s, groupBy: [|col(c)|]};
+let groupByCols = (cols, s) => Select.{...s, groupBy: L.amap(cols, col)};
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), A.map(L.toArray(vs), toE));

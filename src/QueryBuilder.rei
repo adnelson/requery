@@ -163,10 +163,9 @@ let as_: (string, target) => target;
 let select:
   (
     ~from: target=?,
-    // TODO groupBy can contain expressions
-    ~groupBy: list(column)=?,
-    ~orderBy: list((column, option(direction)))=?,
-    ~limit: int=?,
+    ~groupBy: list(expr)=?,
+    ~orderBy: list((expr, option(direction)))=?,
+    ~limit: expr=?,
     ~where: expr=?,
     list(aliasedExpr)
   ) =>
@@ -184,16 +183,18 @@ let selecting: (list(aliasedExpr), select) => select;
  */
 let selectFrom: (target, list(aliasedExpr)) => select;
 let from: (target, select) => select;
-let limit: (int, select) => select;
+let limit: (expr, select) => select;
 let where: (expr, select) => select;
-let orderBy_: (list(column), select) => select;
-let orderBy: (list((column, direction)), select) => select;
-let orderBy1_: (column, select) => select;
-let orderBy1: (column, direction, select) => select;
-let orderBy2_: (column, column, select) => select;
-let orderBy2: (column, direction, column, direction, select) => select;
-let groupBy: (list(column), select) => select;
-let groupBy1: (column, select) => select;
+let orderBy_: (list(expr), select) => select;
+let orderBy: (list((expr, direction)), select) => select;
+let orderBy1_: (expr, select) => select;
+let orderBy1: (expr, direction, select) => select;
+let orderBy2_: (expr, expr, select) => select;
+let orderBy2: (expr, direction, expr, direction, select) => select;
+let groupBy: (list(expr), select) => select;
+let groupBy1: (expr, select) => select;
+let groupByCol: (string, select) => select;
+let groupByCols: (list(string), select) => select;
 
 /***************************
  * INSERT Queries

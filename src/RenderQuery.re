@@ -22,6 +22,7 @@ module DefaultRules: SqlRenderingRules = {
 
 module WithRenderingRules = (S: SqlRenderingRules) => {
   let wrap = s => S._NAME_WRAP_LEFT ++ s ++ S._NAME_WRAP_RIGHT;
+  let wrapColumn = c => wrap(Sql.ColumnName.toString(c));
 
   module Table = {
     open Sql.Table;
@@ -32,9 +33,9 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     open Sql.Column;
     let render = c =>
       switch (toTuple(c)) {
-      | (None, Named(c)) => wrap(c)
+      | (None, Named(c)) => wrapColumn(c)
       | (None, All) => "*"
-      | (Some(t), Named(c)) => wrap(Sql.Table.toString(t)) ++ "." ++ wrap(c)
+      | (Some(t), Named(c)) => wrap(Sql.Table.toString(t)) ++ "." ++ wrapColumn(c)
       | (Some(t), All) => wrap(Sql.Table.toString(t)) ++ ".*"
       };
   };
@@ -119,10 +120,10 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
         let from = O.mapString(from, t => " FROM " ++ renderTarget(t));
         let orderBy =
           A.mapJoinIfNonEmpty(orderBy, ~prefix=" ORDER BY ", ", ", ((c, optDir)) =>
-            Column.render(c) ++ O.mapString(optDir, dir => " " ++ renderDirection(dir))
+            Expression.render(c) ++ O.mapString(optDir, dir => " " ++ renderDirection(dir))
           );
-        let groupBy = A.mapJoinIfNonEmpty(groupBy, ~prefix=" GROUP BY ", ", ", Column.render);
-        let limit = O.mapString(limit, n => " LIMIT " ++ string_of_int(n));
+        let groupBy = A.mapJoinIfNonEmpty(groupBy, ~prefix=" GROUP BY ", ", ", Expression.render);
+        let limit = O.mapString(limit, n => " LIMIT " ++ Expression.render(n));
         let where = O.mapString(where, e => " WHERE " ++ Expression.render(e));
         "SELECT " ++ selections ++ from ++ where ++ groupBy ++ orderBy ++ limit;
       };
