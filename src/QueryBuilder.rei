@@ -1,5 +1,7 @@
 type columnName = Sql.ColumnName.t;
 type tableName = Sql.TableName.t;
+type constraintName = Sql.ConstraintName.t;
+type tableConstraint = Sql.CreateTable.tableConstraint;
 type column = Sql.Column.t;
 type typeName = Sql.TypeName.t;
 type target = Sql.Select.target;
@@ -263,6 +265,7 @@ let into: (tableName, tableName => insert) => insert;
  |> createTable(tname("author"), ~ifNotExists=true)
   ****************************/
 
+// Defining a column
 let cdef:
   (
     ~primaryKey: bool=?,
@@ -274,6 +277,18 @@ let cdef:
     typeName
   ) =>
   statement;
+
+let constraintName: string => constraintName;
+
+let constraint_: (~a: string=?, tableConstraint) => statement;
+
+// Table-level constraints
+let primaryKey: list(columnName) => tableConstraint;
+let foreignKey: (columnName, (tableName, columnName)) => tableConstraint;
+let unique: list(columnName) => tableConstraint;
+let check: expr => tableConstraint;
+
+// Creating a table
 let createTable: (~ifNotExists: bool=?, tableName, list(statement)) => createTable;
 
 /************************************

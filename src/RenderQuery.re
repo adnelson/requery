@@ -181,13 +181,19 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     let renderColumnConstraint = c => {
       let {primaryKey, notNull, unique, check, default} = c;
       Utils.String.(
-        joinSpaces([|
-          strIf(primaryKey, "PRIMARY KEY"),
-          strIf(notNull, "NOT NULL"),
-          strIf(unique, "UNIQUE"),
-          O.mapWithDefault(check, "", e => "CHECK " ++ Expression.render(e)),
-          O.mapWithDefault(default, "", e => "DEFAULT " ++ Expression.render(e)),
-        |])
+        joinSpaces(
+          A.keepSome(
+            O.(
+              [|
+                someIf(primaryKey, "PRIMARY KEY"),
+                someIf(notNull, "NOT NULL"),
+                someIf(unique, "UNIQUE"),
+                map(check, e => "CHECK " ++ Expression.render(e)),
+                map(default, e => "DEFAULT " ++ Expression.render(e)),
+              |]
+            ),
+          ),
+        )
       );
     };
 
@@ -195,16 +201,25 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       [|ColumnName.render(name), TypeName.render(type_), constraints |> renderColumnConstraint|]
       |> Utils.String.joinSpaces;
 
-    let renderConstraint: constraint_ => string =
+    let renderConstraint: tableConstraint => string =
       fun
-      | PrimaryKey(columns) => "PRIMARY KEY " ++ A.mapJoinCommas(columns, ColumnName.render)
-      | Unique(columns) => "UNIQUE " ++ A.mapJoinCommas(columns, ColumnName.render)
-      | Check(expr) => "CHECK " ++ Expression.render(expr);
+      | PrimaryKey(columns) =>
+        "PRIMARY KEY " ++ A.mapJoinCommasParens(columns, ColumnName.render)
+      | ForeignKey(col, (refTable, refCol)) =>
+        "FOREIGN KEY ("
+        ++ ColumnName.render(col)
+        ++ ") REFERENCES "
+        ++ TableName.render(refTable)
+        ++ "("
+        ++ ColumnName.render(refCol)
+        ++ ")"
+      | Unique(columns) => "UNIQUE " ++ A.mapJoinCommasParens(columns, ColumnName.render)
+      | Check(expr) => "CHECK (" ++ Expression.render(expr) ++ ")";
 
     let renderStatement: statement => string =
       fun
       | ColumnDef(cdef) => renderColumnDef(cdef)
-      | Constraint(None, constraint_) => "CONSTRAINT " ++ renderConstraint(constraint_)
+      | Constraint(None, constraint_) => renderConstraint(constraint_)
       | Constraint(Some(n), constraint_) =>
         "CONSTRAINT " ++ ConstraintName.render(n) ++ " " ++ renderConstraint(constraint_);
     let render: t => string =

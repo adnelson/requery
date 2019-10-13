@@ -140,6 +140,8 @@ module Dict = {
 module Option = {
   include Belt.Option;
 
+  let someIf: (bool, 'a) => option('a) = (cond, x) => cond ? Some(x) : None;
+
   // like getWithDefault, but obtains its default thru a lazily-evaluated function.
   let getWithDefaultLazy: (option('a), unit => 'a) => 'a =
     (opt, make) =>

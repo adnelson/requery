@@ -215,14 +215,15 @@ module CreateTable = {
 
   let makeColumnDef = (~name, type_, constraints) => {name, type_, constraints};
 
-  type constraint_ =
+  type tableConstraint =
     | PrimaryKey(array(ColumnName.t))
+    | ForeignKey(ColumnName.t, (TableName.t, ColumnName.t))
     | Unique(array(ColumnName.t))
     | Check(Expression.t);
 
   type statement =
     | ColumnDef(columnDef)
-    | Constraint(option(ConstraintName.t), constraint_);
+    | Constraint(option(ConstraintName.t), tableConstraint);
 
   type t = {
     name: TableName.t,

@@ -5,6 +5,8 @@ module L = Utils.List;
 type columnName = Sql.ColumnName.t;
 type column = Sql.Column.t;
 type tableName = Sql.TableName.t;
+type constraintName = Sql.ConstraintName.t;
+type tableConstraint = Sql.CreateTable.tableConstraint;
 type typeName = Sql.TypeName.t;
 type target = Sql.Select.target;
 type expr = Sql.Expression.t;
@@ -197,6 +199,17 @@ let cdef =
       },
     })
   );
+
+let constraintName = Sql.ConstraintName.fromString;
+let (constraint_, primaryKey, foreignKey, unique, check) = {
+  open Sql.CreateTable;
+  let constraint_ = (~a=?, c) => Constraint(O.map(a, constraintName), c);
+  let pk = cols => PrimaryKey(L.toArray(cols));
+  let fk = (col, (refTbl, refCol)) => ForeignKey(col, (refTbl, refCol));
+  let u = cols => Unique(L.toArray(cols));
+  let c = expr => Check(expr);
+  (constraint_, pk, fk, u, c);
+};
 
 let createTable = (~ifNotExists=true, name, statements) =>
   Sql.CreateTable.{name, statements: L.toArray(statements), ifNotExists};

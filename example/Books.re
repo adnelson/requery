@@ -9,8 +9,7 @@ let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
   Utils.Promise.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 
 module Author = {
-  let table = QB.tname("author");
-  let table_ = table;
+  let tableName = QB.tname("author");
   type t('id) = {
     id: 'id,
     first: string,
@@ -25,10 +24,51 @@ module Author = {
       first: j |> field("first", string),
       last: j |> field("last", string),
     };
+
+  let createTable = idType =>
+    QueryBuilder.(
+      [
+        cdef("id", idType, ~primaryKey=true),
+        cdef("first", Types.text),
+        cdef("last", Types.text),
+        constraint_(unique([cname("first"), cname("last")])),
+      ]
+      |> createTable(tableName, ~ifNotExists=true)
+    );
 };
 
-let run = (client, createTable) => {
-  Client.createTable(client, createTable)
+module Book = {
+  let tableName = QB.tname("book");
+  type t('id, 'author) = {
+    id: 'id,
+    author: 'author,
+    title: string,
+  };
+  let make = (author, title) => {id: (), author, title};
+  let toRow = ({author, title}) =>
+    RE.(stringRow([("author_id", author |> int), ("title", title |> string)]));
+  let fromJson = j =>
+    JD.{
+      id: j |> field("id", int),
+      author: j |> field("author_id", int),
+      title: j |> field("title", string),
+    };
+
+  let createTable = idType =>
+    QueryBuilder.(
+      [
+        cdef("id", idType, ~primaryKey=true),
+        cdef("author_id", idType),
+        cdef("title", Types.text),
+        constraint_(foreignKey(cname("author_id"), (tname("author"), cname("id")))),
+      ]
+      |> createTable(tname("book"), ~ifNotExists=true)
+    );
+};
+
+let run = (client, idType) => {
+  Client.createTable(client, Author.createTable(idType))
+  |> then_(_ => Client.createTable(client, Book.createTable(idType)))
   |> then_(_
        // Inserting with an explicit query, using columns2 to define the encoding on the fly
        =>
@@ -52,7 +92,7 @@ let run = (client, createTable) => {
                       make("Jonathan", "Irving"),
                     ]
                     |> insertMany(Author.toRow)
-                    |> into(Author.table)
+                    |> into(Author.tableName)
                   ),
                 )
               )
@@ -62,7 +102,7 @@ let run = (client, createTable) => {
                 Client.select(
                   client,
                   RowDecode.(decodeEach(columns2("first", string, "last", string))),
-                  QB.(select([e(all)]) |> from(table(Author.table))),
+                  QB.(select([e(all)]) |> from(table(Author.tableName))),
                 )
               )
          |> P.then_(r => P.rLog(r))
@@ -72,7 +112,7 @@ let run = (client, createTable) => {
                 Client.select(
                   client,
                   RowDecode.(decodeEach(Author.fromJson)),
-                  QB.(select([e(all)]) |> from(table(Author.table))),
+                  QB.(select([e(all)]) |> from(table(Author.tableName))),
                 )
               )
          |> P.then_(r => P.rLog(r))
