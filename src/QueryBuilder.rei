@@ -1,14 +1,18 @@
+type columnName = Sql.ColumnName.t;
+type tableName = Sql.TableName.t;
 type column = Sql.Column.t;
-type table = Sql.Table.t;
+type typeName = Sql.TypeName.t;
 type target = Sql.Select.target;
 type select = Sql.Select.t;
 type expr = Sql.Expression.t;
 type aliasedExpr = Sql.Aliased.t(expr);
 type direction = Sql.Select.direction;
 type insert = Sql.Insert.t;
+type statement = Sql.CreateTable.statement;
+type createTable = Sql.CreateTable.t;
 type row = list((column, expr));
 type toSelect('t) = 't => select;
-type toInsert('t) = ('t, table) => insert;
+type toInsert('t) = ('t, tableName) => insert;
 type toColumn('t) = 't => column;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
@@ -33,8 +37,16 @@ let null: expr;
 let isNull: expr => expr;
 let isNotNull: expr => expr;
 
+/************************
+ *  Dealing with types
+ ***********************/
+
 // Add an explicit type cast to an expression
-let typed: (expr, string) => expr;
+let typed: (expr, typeName) => expr;
+
+/************************
+ *  Dealing with columns
+ ***********************/
 
 // A single column, from a string
 let col: string => expr;
@@ -117,7 +129,7 @@ let e: (~a: string=?, expr) => aliasedExpr;
  ****************************/
 
 // A table target
-let table: (~a: string=?, table) => target;
+let table: (~a: string=?, tableName) => target;
 
 // A table target, via a string.
 let tableNamed: (~a: string=?, string) => target;
@@ -136,17 +148,25 @@ let selectAs: (string, select) => target;
  * SELECT Queries
  ****************************/
 
-// Make a `table` from a string
-let tbl: string => table;
+// Make a `tableName` from a string
+let tname: string => tableName;
+
+// Make a `column` from a string
+let cname: string => columnName;
+
+// Make a type name from a string.
+let typeName: string => typeName;
 
 // Make a `column` from a string, without a table name.
+// Remember the difference between the `column` and `columnName` types
+// is that the former can include a table name prefix (see `tcolumn`).
 let column: string => column;
 
 // Make a `column` with a table name, e.g. `fruits.color`. Table name
 // comes first.
 let tcolumn: (string, string) => column;
 
-// Make multiple `column`s from strings
+// Make multiple `column`s from strings.
 let columns: list(string) => list(column);
 
 // Make multiple `table`.`column`s from string pairs.
@@ -163,10 +183,9 @@ let as_: (string, target) => target;
 let select:
   (
     ~from: target=?,
-    // TODO groupBy can contain expressions
-    ~groupBy: list(column)=?,
-    ~orderBy: list((column, option(direction)))=?,
-    ~limit: int=?,
+    ~groupBy: list(expr)=?,
+    ~orderBy: list((expr, option(direction)))=?,
+    ~limit: expr=?,
     ~where: expr=?,
     list(aliasedExpr)
   ) =>
@@ -184,16 +203,18 @@ let selecting: (list(aliasedExpr), select) => select;
  */
 let selectFrom: (target, list(aliasedExpr)) => select;
 let from: (target, select) => select;
-let limit: (int, select) => select;
+let limit: (expr, select) => select;
 let where: (expr, select) => select;
-let orderBy_: (list(column), select) => select;
-let orderBy: (list((column, direction)), select) => select;
-let orderBy1_: (column, select) => select;
-let orderBy1: (column, direction, select) => select;
-let orderBy2_: (column, column, select) => select;
-let orderBy2: (column, direction, column, direction, select) => select;
-let groupBy: (list(column), select) => select;
-let groupBy1: (column, select) => select;
+let orderBy_: (list(expr), select) => select;
+let orderBy: (list((expr, direction)), select) => select;
+let orderBy1_: (expr, select) => select;
+let orderBy1: (expr, direction, select) => select;
+let orderBy2_: (expr, expr, select) => select;
+let orderBy2: (expr, direction, expr, direction, select) => select;
+let groupBy: (list(expr), select) => select;
+let groupBy1: (expr, select) => select;
+let groupByCol: (string, select) => select;
+let groupByCols: (list(string), select) => select;
 
 /***************************
  * INSERT Queries
@@ -220,10 +241,46 @@ let insertSelect: toInsert(select);
 let returningColumns: (list(column), insert) => insert;
 let returningColumn: (column, insert) => insert;
 
-/* Apply a table-to-query conversion.
-   let insertAuthors =
-     [("Stephen", "King"), ("Jane", "Austen")]
-     |> insertMany(RE.tuple2Row("first", string, "last", string))
-     |> into(tbl("authors"));
-   */
-let into: (table, table => insert) => insert;
+/*******************************************************************************
+ Apply a table-to-query conversion.
+
+ let insertAuthors =
+   [("Stephen", "King"), ("Jane", "Austen")]
+   |> insertMany(RE.columns2("first", string, "last", string))
+   |> into(tname("authors"));
+ ********************************************************************************/
+let into: (tableName, tableName => insert) => insert;
+
+/***************************
+  * CREATE TABLE Queries
+
+
+ [
+   cdef("id", Types.int, ~primaryKey=true),
+   cdef("first", Types.text),
+   cdef("last", Types.text),
+ ]
+ |> createTable(tname("author"), ~ifNotExists=true)
+  ****************************/
+
+let cdef:
+  (
+    ~primaryKey: bool=?,
+    ~notNull: bool=?,
+    ~unique: bool=?,
+    ~check: expr=?,
+    ~default: expr=?,
+    string,
+    typeName
+  ) =>
+  statement;
+let createTable: (~ifNotExists: bool=?, tableName, list(statement)) => createTable;
+
+/************************************
+ * Commonly used sql type names
+ ***********************************/
+
+module Types: {
+  let int: typeName;
+  let text: typeName;
+};

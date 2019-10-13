@@ -3,55 +3,67 @@ module L = Utils.List;
 module O = Utils.Option;
 module SMap = Belt.Map.String;
 
-module type TableType = {
+module type OpaqueString = {
   type t;
   let fromString: string => t;
   let toString: t => string;
 };
 
-module Table: TableType = {
+module MakeOpaqueString = (()) : OpaqueString => {
   type t = string;
   external fromString: string => t = "%identity";
   external toString: t => string = "%identity";
 };
 
+module TableName =
+  MakeOpaqueString({});
+module ColumnName =
+  MakeOpaqueString({});
+module TypeName =
+  MakeOpaqueString({});
+module ConstraintName =
+  MakeOpaqueString({});
+
 module type ColumnType = {
   type col =
     | All
-    | Named(string);
+    | Named(ColumnName.t);
   type t;
   let fromString: string => t;
-  let fromStringWithTable: (Table.t, string) => t;
+  let fromStringWithTable: (TableName.t, string) => t;
   let all: t;
-  let allFrom: Table.t => t;
-  let fromTuples: array((Table.t, string)) => array(t);
-  let fromTupleList: list((Table.t, string)) => list(t);
+  let allFrom: TableName.t => t;
+  let fromTuples: array((TableName.t, string)) => array(t);
+  let fromTupleList: list((TableName.t, string)) => list(t);
   let fromStringArray: array(string) => array(t);
   let fromStringList: list(string) => list(t);
-  let toTuple: t => (option(Table.t), col);
+  let toTuple: t => (option(TableName.t), col);
   //let toTupleArray: array((t, 'a)) => array((string, 'a));
   // let toString: t => string;
 };
 
 module Column: ColumnType = {
+  module CN = ColumnName;
   // `*` or `some_column`
   type col =
     | All
-    | Named(string);
+    | Named(CN.t);
+
+  let named: string => col = s => Named(CN.fromString(s));
 
   // e.g. 'foo' or 'mytable.foo'
-  type t = (option(Table.t), col);
-  let fromString: string => t = c => (None, Named(c));
-  let fromStringWithTable: (Table.t, string) => t = (t, c) => (Some(t), Named(c));
+  type t = (option(TableName.t), col);
+  let fromString: string => t = c => (None, named(c));
+  let fromStringWithTable: (TableName.t, string) => t = (t, c) => (Some(t), named(c));
   let all: t = (None, All);
-  let allFrom: Table.t => t = t => (Some(t), All);
-  let fromTuples: array((Table.t, string)) => array(t) =
+  let allFrom: TableName.t => t = t => (Some(t), All);
+  let fromTuples: array((TableName.t, string)) => array(t) =
     a => A.map(a, Utils.uncurry(fromStringWithTable));
-  let fromTupleList: list((Table.t, string)) => list(t) =
+  let fromTupleList: list((TableName.t, string)) => list(t) =
     l => L.map(l, Utils.uncurry(fromStringWithTable));
   let fromStringArray: array(string) => array(t) = a => A.map(a, fromString);
   let fromStringList: list(string) => list(t) = l => L.map(l, fromString);
-  external toTuple: t => (option(Table.t), col) = "%identity";
+  external toTuple: t => (option(TableName.t), col) = "%identity";
 };
 
 module type AliasedType = {
@@ -79,7 +91,7 @@ module Expression = {
 
   type t =
     | Atom(atom)
-    | Typed(t, string)
+    | Typed(t, TypeName.t)
     | Concat(t, t)
     | Add(t, t)
     | Subtract(t, t)
@@ -113,7 +125,7 @@ module Select = {
 
   // What comes after the FROM of a select.
   type target =
-    | Table(Aliased.t(Table.t))
+    | Table(Aliased.t(TableName.t))
     | SubSelect(t, string)
     | Join(joinType, target, target)
 
@@ -121,9 +133,9 @@ module Select = {
   and t = {
     selections: array(Aliased.t(Expression.t)),
     from: option(target),
-    groupBy: array(Column.t),
-    orderBy: array((Column.t, option(direction))),
-    limit: option(int),
+    groupBy: array(Expression.t),
+    orderBy: array((Expression.t, option(direction))),
+    limit: option(Expression.t),
     where: option(Expression.t),
   };
 };
@@ -174,10 +186,10 @@ module Insert = {
   // TODO the way returning is handled is pretty different for different DBs. We'll
   // eventually want to make this a type parameter.
   type returning =
-    | Columns(list(Column.t));
+    | Columns(array(Column.t));
 
   type t = {
-    into: Table.t,
+    into: TableName.t,
     data,
     returning: option(returning),
   };
@@ -185,7 +197,42 @@ module Insert = {
   let make = (~returning=?, data, into) => {into, data, returning};
 };
 
+// CREATE TABLE query
+module CreateTable = {
+  type columnConstraints = {
+    primaryKey: bool,
+    notNull: bool,
+    unique: bool,
+    check: option(Expression.t),
+    default: option(Expression.t),
+  };
+
+  type columnDef = {
+    name: ColumnName.t,
+    type_: TypeName.t,
+    constraints: columnConstraints,
+  };
+
+  let makeColumnDef = (~name, type_, constraints) => {name, type_, constraints};
+
+  type constraint_ =
+    | PrimaryKey(array(ColumnName.t))
+    | Unique(array(ColumnName.t))
+    | Check(Expression.t);
+
+  type statement =
+    | ColumnDef(columnDef)
+    | Constraint(option(ConstraintName.t), constraint_);
+
+  type t = {
+    name: TableName.t,
+    statements: array(statement),
+    ifNotExists: bool,
+  };
+};
+
 type query =
   | Select(Select.t)
-  | Insert(Insert.t);
+  | Insert(Insert.t)
+  | CreateTable(CreateTable.t);
 // let renderSelect = Select.render;

@@ -2,8 +2,10 @@ open Sql;
 module E = Expression;
 module L = Utils.List;
 
+type columnName = Sql.ColumnName.t;
 type column = Sql.Column.t;
-type table = Sql.Table.t;
+type tableName = Sql.TableName.t;
+type typeName = Sql.TypeName.t;
 type target = Sql.Select.target;
 type expr = Sql.Expression.t;
 type aliasedExpr = Sql.Aliased.t(expr);
@@ -12,11 +14,12 @@ type select = Sql.Select.t;
 type insert = Sql.Insert.t;
 type row = list((column, expr));
 type toSelect('t) = 't => select;
-type toInsert('t) = ('t, table) => insert;
+type toInsert('t) = ('t, tableName) => insert;
 type toColumn('t) = 't => column;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
 
+let typeName = Sql.TypeName.fromString;
 let typed = (e, t) => E.Typed(e, t);
 
 let null = E.Atom(E.Null);
@@ -25,20 +28,21 @@ let int = i => E.Atom(E.Int(i));
 let bool = b => E.Atom(E.Bool(b));
 let float = f => E.Atom(E.Float(f));
 let string = s => E.Atom(E.String(s));
-let bigint = i => typed(int(i), "BigInt");
+let bigint = i => typed(int(i), typeName("BigInt"));
 let tuple = exprs => E.Tuple(L.toArray(exprs));
 let tuple2 = (f, g, (a, b)) => tuple([f(a), g(b)]);
 
-let tbl = Sql.Table.fromString;
+let tname = Sql.TableName.fromString;
+let cname = Sql.ColumnName.fromString;
 let column = Sql.Column.fromString;
-let tcolumn = (t, c) => Sql.Column.fromStringWithTable(tbl(t), c);
+let tcolumn = (t, c) => Sql.Column.fromStringWithTable(tname(t), c);
 let columns = Sql.Column.fromStringList;
-let tcolumns = l => Sql.Column.fromTupleList(L.map(l, ((t, c)) => (tbl(t), c)));
+let tcolumns = l => Sql.Column.fromTupleList(L.map(l, ((t, c)) => (tname(t), c)));
 let col_ = c => E.Atom(E.Column(c));
 let col = c => E.Atom(E.Column(column(c)));
 let tcol = (t, c) => E.Atom(E.Column(tcolumn(t, c)));
 let all = E.(Atom(Column(Sql.Column.all)));
-let allFrom = t => E.Atom(Column(Sql.Column.allFrom(tbl(t))));
+let allFrom = t => E.Atom(Column(Sql.Column.allFrom(tname(t))));
 
 let concat = (e1, e2) => E.Concat(e1, e2);
 let (++) = concat;
@@ -91,7 +95,7 @@ let call = (name, args) => E.Call(name, L.toArray(args));
 let e = (~a=?, expr): aliasedExpr => Aliased.make(expr, ~a?);
 
 let table = (~a=?, t) => Select.Table(Aliased.make(t, ~a?));
-let tableNamed = (~a=?, name) => Select.Table(Aliased.make(tbl(name), ~a?));
+let tableNamed = (~a=?, name) => Select.Table(Aliased.make(tname(name), ~a?));
 let innerJoin = (t1, on, t2) => Select.(Join(Inner(on), t2, t1));
 let leftJoin = (t1, on, t2) => Select.(Join(Left(on), t2, t1));
 let rightJoin = (t1, on, t2) => Select.(Join(Right(on), t2, t1));
@@ -135,6 +139,8 @@ let orderBy2 = (col1, dir1, col2, dir2, s) =>
 let orderBy2_ = (col1, col2, s) => Select.{...s, orderBy: [|(col1, None), (col2, None)|]};
 let groupBy = (cols, s) => Select.{...s, groupBy: L.toArray(cols)};
 let groupBy1 = (col, s) => Select.{...s, groupBy: [|col|]};
+let groupByCol = (c, s) => Select.{...s, groupBy: [|col(c)|]};
+let groupByCols = (cols, s) => Select.{...s, groupBy: L.amap(cols, col)};
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), A.map(L.toArray(vs), toE));
@@ -166,8 +172,36 @@ let insertMany = (toRow, objects) => insertRows(L.map(objects, toRow));
 let insertSelect = select => Insert.make(Insert.Select(select));
 
 let returningColumns = (columns, insert) =>
-  Insert.{...insert, returning: Some(Columns(columns))};
+  Insert.{...insert, returning: Some(Columns(L.toArray(columns)))};
 let returningColumn = (column, insert) =>
-  Insert.{...insert, returning: Some(Columns([column]))};
+  Insert.{...insert, returning: Some(Columns([|column|]))};
 
-let into: (table, table => insert) => insert = (t, f) => f(t);
+let into: (tableName, tableName => insert) => insert = (t, f) => f(t);
+
+type statement = Sql.CreateTable.statement;
+type createTable = Sql.CreateTable.t;
+
+let cdef =
+    (~primaryKey=false, ~notNull=true, ~unique=false, ~check=?, ~default=?, name, type_)
+    : statement =>
+  CreateTable.(
+    ColumnDef({
+      name: cname(name),
+      type_,
+      constraints: {
+        notNull,
+        primaryKey,
+        unique,
+        check,
+        default,
+      },
+    })
+  );
+
+let createTable = (~ifNotExists=true, name, statements) =>
+  Sql.CreateTable.{name, statements: L.toArray(statements), ifNotExists};
+
+module Types = {
+  let int = typeName("INTEGER");
+  let text = typeName("TEXT");
+};

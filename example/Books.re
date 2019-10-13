@@ -9,7 +9,7 @@ let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
   Utils.Promise.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 
 module Author = {
-  let table = QB.tbl("author");
+  let table = QB.tname("author");
   let table_ = table;
   type t('id) = {
     id: 'id,
@@ -27,8 +27,8 @@ module Author = {
     };
 };
 
-let run = (client, createTables) => {
-  Client.execRaw(client, createTables)
+let run = (client, createTable) => {
+  Client.createTable(client, createTable)
   |> then_(_
        // Inserting with an explicit query, using columns2 to define the encoding on the fly
        =>
@@ -37,7 +37,7 @@ let run = (client, createTables) => {
            QB.(
              [("Stephen", "King"), ("Jane", "Austen")]
              |> insertMany(RE.columns2("first", string, "last", string))
-             |> into(tbl("author"))
+             |> into(tname("author"))
            ),
          )
          |> then_(_

@@ -1,4 +1,13 @@
-let client: Sqlite3.client = Sqlite3.(makeClient(Memory));
-let createTables = "CREATE TABLE author (id INTEGER PRIMARY KEY, first TEXT NOT NULL, last TEXT NOT NULL);";
+let client: Sqlite3.client = Sqlite3.(makeClient(Memory, ~onQuery=AbstractClient.logQuery));
 
-Books.run(client, createTables);
+let createTable =
+  QueryBuilder.(
+    [
+      cdef("id", Types.int, ~primaryKey=true),
+      cdef("first", Types.text),
+      cdef("last", Types.text),
+    ]
+    |> createTable(tname("author"), ~ifNotExists=true)
+  );
+
+Books.run(client, createTable);

@@ -1,4 +1,7 @@
+// This is a kitchen sink for various functions that I've written
+// and used in multiple places.
 module SMap = Belt.Map.String;
+module O_ = Belt.Option;
 module A = Belt.Array;
 
 external id: 'a => 'a = "%identity";
@@ -14,19 +17,46 @@ let curry3: ((('a, 'b, 'c)) => 'd, 'a, 'b, 'c) => 'd = (f, a, b, c) => f((a, b, 
 let curry4: ((('a, 'b, 'c, 'd)) => 'd, 'a, 'b, 'c, 'd) => 'd =
   (f, a, b, c, d) => f((a, b, c, d));
 
-// Convert a string to an int, handling failure with an option type.
-let parseInt = str =>
-  switch (int_of_string(str)) {
-  | i => Some(i)
-  | exception _ => None
-  };
+module String = {
+  // Return the string if condition is true, else empty string.
+  let strIf = (cond: bool, s: string) => cond ? s : "";
+  let strFrom = (toString: 'a => string, opt: option('a)) =>
+    O_.mapWithDefault(opt, "", toString);
 
-// Convert a string to an float, handling failure with an option type.
-let parseFloat = str =>
-  switch (float_of_string(str)) {
-  | i => Some(i)
-  | exception _ => None
-  };
+  // Convert a string to an int, handling failure with an option type.
+  let parseInt = str =>
+    switch (int_of_string(str)) {
+    | i => Some(i)
+    | exception _ => None
+    };
+
+  // Convert a string to an float, handling failure with an option type.
+  let parseFloat = str =>
+    switch (float_of_string(str)) {
+    | i => Some(i)
+    | exception _ => None
+    };
+
+  // Note: these are duplicates of corresponding functions in the Array module. Can remove those later
+  let joinWith: (array(string), string) => string = (arr, sep) => Js.Array.joinWith(sep, arr);
+  let joinSpaces: array(string) => string = arr => joinWith(arr, " ");
+  let mapJoin: (array('a), ~prefix: string=?, ~suffix: string=?, string, 'a => string) => string =
+    (arr, ~prefix="", ~suffix="", sep, f) => prefix ++ joinWith(A.map(arr, f), sep) ++ suffix;
+  let mapJoinWith: (array('a), string, 'a => string) => string =
+    (arr, sep, f) => joinWith(A.map(arr, f), sep);
+  let mapJoinCommas = (arr, ~prefix=?, ~suffix=?, f) =>
+    mapJoin(arr, ~prefix?, ~suffix?, ", ", f);
+  let mapJoinSpaces = (arr, ~prefix=?, ~suffix=?, f) => mapJoin(arr, ~prefix?, ~suffix?, " ", f);
+  let mapJoinCommasParens = (arr, f) => mapJoin(arr, ~prefix="(", ~suffix=")", ", ", f);
+  let mapJoinIfNonEmpty:
+    (array('a), ~onEmpty: string=?, ~prefix: string=?, ~suffix: string=?, string, 'a => string) =>
+    string =
+    (arr, ~onEmpty="", ~prefix="", ~suffix="", sep, f) =>
+      switch (arr) {
+      | [||] => onEmpty
+      | _ => mapJoin(arr, ~prefix, ~suffix, sep, f)
+      };
+};
 
 module Log = {
   [@bs.val] external error: 'a => unit = "console.error";
@@ -135,12 +165,14 @@ module Array = {
   let min: array(float) => float = arr => reduce(arr, infinity, min);
   let contains: (array('a), 'a) => bool = (arr, elem) => some(arr, e => e == elem);
   let joinWith: (array(string), string) => string = (arr, sep) => Js.Array.joinWith(sep, arr);
+  let joinSpaces: array(string) => string = arr => joinWith(arr, " ");
   let mapJoin: (array('a), ~prefix: string=?, ~suffix: string=?, string, 'a => string) => string =
     (arr, ~prefix="", ~suffix="", sep, f) => prefix ++ joinWith(map(arr, f), sep) ++ suffix;
   let mapJoinWith: (array('a), string, 'a => string) => string =
     (arr, sep, f) => joinWith(map(arr, f), sep);
   let mapJoinCommas = (arr, ~prefix=?, ~suffix=?, f) =>
     mapJoin(arr, ~prefix?, ~suffix?, ", ", f);
+  let mapJoinSpaces = (arr, ~prefix=?, ~suffix=?, f) => mapJoin(arr, ~prefix?, ~suffix?, " ", f);
   let mapJoinCommasParens = (arr, f) => mapJoin(arr, ~prefix="(", ~suffix=")", ", ", f);
   let mapJoinIfNonEmpty:
     (array('a), ~onEmpty: string=?, ~prefix: string=?, ~suffix: string=?, string, 'a => string) =>
