@@ -73,6 +73,14 @@ let columns2: (string, decoder('a), string, decoder('b)) => decoder(('a, 'b)) =
     j |> field(columnB, decodeB),
   );
 
+let columns3:
+  (string, decoder('a), string, decoder('b), string, decoder('c)) => decoder(('a, 'b, 'c)) =
+  (columnA, decodeA, columnB, decodeB, columnC, decodeC, j) => (
+    j |> field(columnA, decodeA),
+    j |> field(columnB, decodeB),
+    j |> field(columnC, decodeC),
+  );
+
 // Given a row where one of the fields is an ID, a decoder for
 // the ID and another decoder to get the rest of the object, decodes
 // the row into the object.

@@ -18,6 +18,12 @@ let curry4: ((('a, 'b, 'c, 'd)) => 'd, 'a, 'b, 'c, 'd) => 'd =
   (f, a, b, c, d) => f((a, b, c, d));
 
 module String = {
+  let contains = (~substring, str) => Js.String.indexOf(substring, str) >= 0;
+  let replace = (~old, ~new_, str) =>
+    Js.String.replaceByRe(Js.Re.fromStringWithFlags(old, ~flags="g"), new_, str);
+
+  let isMatch: (string, Js.Re.t) => bool = (s, r) => O_.isSome(Js.String.match(r, s));
+
   // Return the string if condition is true, else empty string.
   let strIf = (cond: bool, s: string) => cond ? s : "";
   let strFrom = (toString: 'a => string, opt: option('a)) =>

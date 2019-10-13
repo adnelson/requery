@@ -6,27 +6,33 @@ module J = Utils.Json;
 module S = Utils.String;
 
 module type SqlRenderingRules = {
+  // How to render TRUE and FALSE constants
   let _TRUE: string;
   let _FALSE: string;
-  // What character to use to wrap a column name on the left/right
-  let _NAME_WRAP_LEFT: string;
-  let _NAME_WRAP_RIGHT: string;
-  // TODO: text escaping function for column names
+  // How to escape a column/table/constraint/etc name to ensure it renders correctly
+  let escapeName: string => string;
 };
 
 module DefaultRules: SqlRenderingRules = {
   let _TRUE = "TRUE";
   let _FALSE = "FALSE";
-  let _NAME_WRAP_LEFT = "\"";
-  let _NAME_WRAP_RIGHT = "\"";
+  let validReg = {
+    let first = "[a-zA-Z_#@]";
+    let rest = "[a-zA-Z0-9_$#]*";
+    Js.log("^" ++ first ++ rest ++ "$");
+    Js.Re.fromString("^" ++ first ++ rest ++ "$");
+  };
+  let requiresEscape = n => !S.isMatch(n, validReg);
+  // Escape double quotes by turning them into double-double quotes.
+  let escapeName = n =>
+    !requiresEscape(n) ? n : "\"" ++ S.replace(~old="\"", ~new_="\"\"", n) ++ "\"";
 };
 
 module WithRenderingRules = (S: SqlRenderingRules) => {
   // Wrap a table/column/etc name in quotes
   module RenderWrapped = (String: Sql.OpaqueString) => {
     type t = String.t;
-    let wrapString = s => S._NAME_WRAP_LEFT ++ s ++ S._NAME_WRAP_RIGHT;
-    let render = s => wrapString(String.toString(s));
+    let render = s => S.escapeName(String.toString(s));
   };
 
   module TableName = RenderWrapped(Sql.TableName);
@@ -63,15 +69,14 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
 
   module Expression = {
     open Sql.Expression;
-    // Escape single quotes by replacing them with single quote pairs.
-    let escape = Js.String.replaceByRe(Js.Re.fromStringWithFlags("'", ~flags="g"), "''");
     let renderAtom: atom => string =
       fun
       | Null => "NULL"
       | Column(col) => Column.render(col)
       | Int(i) => string_of_int(i)
       | Float(f) => Js.Float.toString(f)
-      | String(s) => "'" ++ escape(s) ++ "'"
+      // Escape single quotes by replacing them with single quote pairs.
+      | String(s) => "'" ++ Utils.String.replace(~old="'", ~new_="''", s) ++ "'"
       | Bool(b) => b ? S._TRUE : S._FALSE;
 
     // TODO handle precedence here, wrap with parentheses where needed
