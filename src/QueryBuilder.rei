@@ -13,6 +13,12 @@ type insert = Sql.Insert.t;
 type statement = Sql.CreateTable.statement;
 type createTable = Sql.CreateTable.t;
 type createView = Sql.CreateView.t;
+type whereClause = Sql.Select.whereClause;
+
+/****************************
+ * Encoder types
+ ***************************/
+
 type row = list((column, expr));
 type toSelect('t) = 't => select;
 type toInsert('t) = ('t, tableName) => insert;
@@ -66,7 +72,9 @@ let all: expr;
 // All columns from a particular table (foo.*)
 let allFrom: string => expr;
 
-// Binary operators
+// Operators
+let between: (expr, expr, expr) => expr;
+let in_: (expr, expr) => expr;
 let concat: (expr, expr) => expr;
 let add: (expr, expr) => expr;
 let subtract: (expr, expr) => expr;
@@ -81,6 +89,7 @@ let geq: (expr, expr) => expr;
 let like: (expr, expr) => expr;
 let and_: (expr, expr) => expr;
 let or_: (expr, expr) => expr;
+let not: expr => expr;
 
 // Symbolic versions of binary operators
 let (++): (expr, expr) => expr;
@@ -186,10 +195,10 @@ let as_: (string, target) => target;
 let select:
   (
     ~from: target=?,
-    ~groupBy: list(expr)=?,
+    ~groupBy: (list(expr), option(expr))=?,
     ~orderBy: list((expr, option(direction)))=?,
     ~limit: expr=?,
-    ~where: expr=?,
+    ~where: whereClause=?,
     list(aliasedExpr)
   ) =>
   select;
@@ -208,16 +217,17 @@ let selectFrom: (target, list(aliasedExpr)) => select;
 let from: (target, select) => select;
 let limit: (expr, select) => select;
 let where: (expr, select) => select;
+let whereExists: (select, select) => select;
 let orderBy_: (list(expr), select) => select;
 let orderBy: (list((expr, direction)), select) => select;
 let orderBy1_: (expr, select) => select;
 let orderBy1: (expr, direction, select) => select;
 let orderBy2_: (expr, expr, select) => select;
 let orderBy2: (expr, direction, expr, direction, select) => select;
-let groupBy: (list(expr), select) => select;
-let groupBy1: (expr, select) => select;
-let groupByCol: (string, select) => select;
-let groupByCols: (list(string), select) => select;
+let groupBy: (~having: expr=?, list(expr), select) => select;
+let groupBy1: (~having: expr=?, expr, select) => select;
+let groupByCol: (~having: expr=?, string, select) => select;
+let groupByCols: (~having: expr=?, list(string), select) => select;
 
 /***************************
  * INSERT Queries

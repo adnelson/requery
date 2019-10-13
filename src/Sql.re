@@ -92,6 +92,8 @@ module Expression = {
   type t =
     | Atom(atom)
     | Typed(t, TypeName.t)
+    | Between(t, t, t)
+    | In(t, t)
     | Concat(t, t)
     | Add(t, t)
     | Subtract(t, t)
@@ -108,6 +110,7 @@ module Expression = {
     | Like(t, t)
     | IsNull(t)
     | IsNotNull(t)
+    | Not(t)
     | Call(string, array(t))
     | Tuple(array(t));
 };
@@ -129,14 +132,18 @@ module Select = {
     | SubSelect(t, string)
     | Join(joinType, target, target)
 
+  and whereClause =
+    | Where(Expression.t)
+    | WhereExists(t)
+
   // Renders into a SELECT query.
   and t = {
     selections: array(Aliased.t(Expression.t)),
     from: option(target),
-    groupBy: array(Expression.t),
+    groupBy: (array(Expression.t), option(Expression.t)),
     orderBy: array((Expression.t, option(direction))),
     limit: option(Expression.t),
-    where: option(Expression.t),
+    where: option(whereClause),
   };
 };
 
