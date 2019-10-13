@@ -199,25 +199,21 @@ module Insert = {
 
 // CREATE TABLE query
 module CreateTable = {
-  type columnConstraint =
-    | PrimaryKey1
-    | NotNull
-    | Unique1
-    | Check1(Expression.t);
+  type columnConstraints = {
+    primaryKey: bool,
+    notNull: bool,
+    unique: bool,
+    check: option(Expression.t),
+    default: option(Expression.t),
+  };
 
   type columnDef = {
     name: ColumnName.t,
     type_: TypeName.t,
-    constraints: array(columnConstraint),
-    default: option(Expression.t),
+    constraints: columnConstraints,
   };
 
-  let makeColumnDef = (~default=?, name, type_, constraints) => {
-    name,
-    type_,
-    constraints,
-    default,
-  };
+  let makeColumnDef = (~name, type_, constraints) => {name, type_, constraints};
 
   type constraint_ =
     | PrimaryKey(array(ColumnName.t))

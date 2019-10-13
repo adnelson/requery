@@ -27,8 +27,8 @@ module Author = {
     };
 };
 
-let run = (client, createTables) => {
-  Client.execRaw(client, createTables)
+let run = (client, createTable) => {
+  Client.createTable(client, createTable)
   |> then_(_
        // Inserting with an explicit query, using columns2 to define the encoding on the fly
        =>

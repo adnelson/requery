@@ -3,6 +3,7 @@ module L = Utils.List;
 module O = Utils.Option;
 module ISet = Belt.Set.Int;
 module J = Utils.Json;
+module S = Utils.String;
 
 module type SqlRenderingRules = {
   let _TRUE: string;
@@ -177,26 +178,22 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
 
   module CreateTable = {
     open Sql.CreateTable;
-    let renderColumnConstraint =
-      fun
-      | PrimaryKey1 => "PRIMARY KEY"
-      | NotNull => "NOT NULL"
-      | Unique1 => "UNIQUE"
-      | Check1(e) => "CHECK " ++ Expression.render(e);
-
-    let renderColumnDef = ({name, type_, constraints, default}) => {
-      let items = [|
-        ColumnName.render(name),
-        TypeName.render(type_),
-        A.mapJoinSpaces(constraints, renderColumnConstraint),
-      |];
-      A.joinSpaces(
-        switch (default) {
-        | None => items
-        | Some(def) => A.concat(items, [|"DEFAULT " ++ Expression.render(def)|])
-        },
+    let renderColumnConstraint = c => {
+      let {primaryKey, notNull, unique, check, default} = c;
+      Utils.String.(
+        joinSpaces([|
+          strIf(primaryKey, "PRIMARY KEY"),
+          strIf(notNull, "NOT NULL"),
+          strIf(unique, "UNIQUE"),
+          O.mapWithDefault(check, "", e => "CHECK " ++ Expression.render(e)),
+          O.mapWithDefault(default, "", e => "DEFAULT " ++ Expression.render(e)),
+        |])
       );
     };
+
+    let renderColumnDef = ({name, type_, constraints}) =>
+      [|ColumnName.render(name), TypeName.render(type_), constraints |> renderColumnConstraint|]
+      |> Utils.String.joinSpaces;
 
     let renderConstraint: constraint_ => string =
       fun

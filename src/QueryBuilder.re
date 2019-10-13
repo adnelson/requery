@@ -178,6 +178,29 @@ let returningColumn = (column, insert) =>
 
 let into: (tableName, tableName => insert) => insert = (t, f) => f(t);
 
+type statement = Sql.CreateTable.statement;
+type createTable = Sql.CreateTable.t;
+
+let cdef =
+    (~primaryKey=false, ~notNull=true, ~unique=false, ~check=?, ~default=?, name, type_)
+    : statement =>
+  CreateTable.(
+    ColumnDef({
+      name: cname(name),
+      type_,
+      constraints: {
+        notNull,
+        primaryKey,
+        unique,
+        check,
+        default,
+      },
+    })
+  );
+
+let createTable = (~ifNotExists=true, name, statements) =>
+  Sql.CreateTable.{name, statements: L.toArray(statements), ifNotExists};
+
 module Types = {
   let int = typeName("INTEGER");
   let text = typeName("TEXT");

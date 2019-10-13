@@ -8,6 +8,8 @@ type expr = Sql.Expression.t;
 type aliasedExpr = Sql.Aliased.t(expr);
 type direction = Sql.Select.direction;
 type insert = Sql.Insert.t;
+type statement = Sql.CreateTable.statement;
+type createTable = Sql.CreateTable.t;
 type row = list((column, expr));
 type toSelect('t) = 't => select;
 type toInsert('t) = ('t, tableName) => insert;
@@ -38,9 +40,6 @@ let isNotNull: expr => expr;
 /************************
  *  Dealing with types
  ***********************/
-
-// Make a type name from a string.
-let typeName: string => typeName;
 
 // Add an explicit type cast to an expression
 let typed: (expr, typeName) => expr;
@@ -149,10 +148,18 @@ let selectAs: (string, select) => target;
  * SELECT Queries
  ****************************/
 
-// Make a `table` from a string
+// Make a `tableName` from a string
 let tname: string => tableName;
 
+// Make a `column` from a string
+let cname: string => columnName;
+
+// Make a type name from a string.
+let typeName: string => typeName;
+
 // Make a `column` from a string, without a table name.
+// Remember the difference between the `column` and `columnName` types
+// is that the former can include a table name prefix (see `tcolumn`).
 let column: string => column;
 
 // Make a `column` with a table name, e.g. `fruits.color`. Table name
@@ -245,10 +252,33 @@ let returningColumn: (column, insert) => insert;
 let into: (tableName, tableName => insert) => insert;
 
 /***************************
- * CREATE TABLE Queries
- ****************************/
+  * CREATE TABLE Queries
 
-let cname: string => columnName;
+
+ [
+   cdef("id", Types.int, ~primaryKey=true),
+   cdef("first", Types.text),
+   cdef("last", Types.text),
+ ]
+ |> createTable(tname("author"), ~ifNotExists=true)
+  ****************************/
+
+let cdef:
+  (
+    ~primaryKey: bool=?,
+    ~notNull: bool=?,
+    ~unique: bool=?,
+    ~check: expr=?,
+    ~default: expr=?,
+    string,
+    typeName
+  ) =>
+  statement;
+let createTable: (~ifNotExists: bool=?, tableName, list(statement)) => createTable;
+
+/************************************
+ * Commonly used sql type names
+ ***********************************/
 
 module Types: {
   let int: typeName;

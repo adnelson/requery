@@ -70,4 +70,7 @@ let insertReturn = (cli, decode, insert) =>
   query(cli, Sql.Insert(insert)) |> then_(decodeResultPromise(decode));
 let select = (cli, decode, select) =>
   query(cli, Sql.Select(select)) |> then_(decodeResultPromise(decode));
+
+let createTable = (cli, ct) => exec(cli, Sql.CreateTable(ct));
+
 let execRaw = ({handle, execRaw}, sql) => execRaw(handle, sql);
