@@ -21,7 +21,7 @@ type t('handle, 'result) = {
 };
 
 // Can be passed to a `onQuery` argument, logs each query before it's made.
-let logQuery = ({queryToSql}, q) => Js.log(queryToSql(q));
+let logQuery = ({queryToSql}, q) => Js.log(queryToSql(q) ++ ";");
 
 // Create a client.
 let make = (~handle, ~queryToSql, ~resultToRows, ~queryRaw, ~execRaw, ~onQuery=?, ~onResult=?, ()) => {
@@ -75,5 +75,6 @@ let select = (cli, decode, select) =>
   query(cli, Sql.Select(select)) |> then_(decodeResultPromise(decode));
 
 let createTable = (cli, ct) => exec(cli, Sql.CreateTable(ct));
+let createView = (cli, cv) => exec(cli, Sql.CreateView(cv));
 
 let execRaw = ({handle, execRaw}, sql) => execRaw(handle, sql);

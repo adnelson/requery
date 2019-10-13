@@ -27,10 +27,11 @@ RowEncode.(
 ### Features
 
 * A generic SQL abstract syntax tree as a suite of ReasonML types
-* Functions to build queries programmatically and composably
-* Functions to decode rows returned from a query into domain objects
-* Functions to encode domain objects into rows for database insertion
-* Functors for using these queries to interact with a database
+* Functions and other tools for:
+  * Building queries programmatically and composably
+  * Decoding rows returned from a query into domain objects
+  * Encoding domain objects into rows for database insertion
+  * Orchestrating query execution with a database
 
 ### Goals
 
@@ -38,13 +39,11 @@ RowEncode.(
 * Query generation, query execution, and query result parsing are clearly separated at the type level.
 * Abstractions compose correctly, allowing you to avoid gotchas and write DRY code.
 
-#### Not an ORM
-
-`requery` is not intended to be an ORM. It instead is intentended to provide powerful abstractions for query generation, encoding/decoding objects, and database interaction. As a user you can use as much or as little of the types as you want, whether you just want to just dump some SQL to stdout, or you want to use the `Query` functor to set up an app that interacts with a database, or maybe you want to write your queries by hand, but you want to use the `RowDecode` library to unpack the results. That said, an ORM might at some point use `requery` as a library for parts of its implementation.
+Note that `requery` is not intended to be an ORM. It instead is intentended to provide powerful abstractions for query generation, encoding/decoding objects, and database interaction. As a user you can use as much or as little of the types as you want, whether you just want to just dump some SQL to stdout, or you want to use the `Query` functor to set up an app that interacts with a database, or maybe you want to write your queries by hand, but you want to use the `RowDecode` library to unpack the results. That said, the tools provided by `requery` could conceivably be used to implement the SQL underpinnings of an ORM.
 
 ## Examples
 
-Let's say you have a Postgres database of books and authors. (Note: we can use `requery` to create the table and insert rows, but we'll save that for later)
+Let's say you have a Postgres database of books and authors, with the following tables and data. Note that we can use `requery` to create the table and insert rows, but since we're focusing on SELECT queries, we'll save that for later:
 
 ```sql
 CREATE TABLE authors (id SERIAL PRIMARY KEY, first_name TEXT, last_name TEXT);
@@ -55,8 +54,8 @@ CREATE TABLE books (
   FOREIGN KEY (author_id) REFERENCES authors(id)
 );
 
-INSERT INTO authors(first_name, last_name) VALUES ('Stephen', 'King');
-INSERT INTO books(author_id, title) VALUES (1, 'The Shining'), (1, 'Carrie');
+INSERT INTO authors (first_name, last_name) VALUES ('Stephen', 'King');
+INSERT INTO books (author_id, title) VALUES (1, 'The Shining'), (1, 'Carrie');
 ```
 
 One thing you might want to do is find all of the books that an author wrote. Here's an example of how that might look:
@@ -132,6 +131,8 @@ Result:
 
 The `QueryBuilder` library will ensure that whatever logic you follow to construct a query, the end result will be syntactically valid SQL. Of course, it does *not* ensure that the query will return the data you expect, or any data at all -- that's still up to you.
 
+For a more complete example, which includes table creation, insertion and selection, see `examples/Books.re`, `examples/SqliteBooks.re` and `examples.PostgresBooks.re`.
+
 ## Supported queries
 
 At present, the following query types have been implemented, with the following components. This list will be updated over time.
@@ -158,6 +159,17 @@ At present, the following query types have been implemented, with the following 
 - `VALUES`, organized as one or more tuples of `(column, expression)`
 - Inserting an inner `SELECT` query
 
+### CREATE TABLE
+
+- `IF NOT EXISTS`
+- Per-column `PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `NOT NULL`, `CHECK` and `DEFAULT` constraints
+- Per-table `PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, and `CHECK` constraints
+
+### CREATE VIEW
+
+- Using a `SELECT` query
+- `IF NOT EXISTS`
+
 ## Supported databases
 
 PostgresQL and SQLite so far.
@@ -169,10 +181,9 @@ There's plenty left to do, and much will likely change, but at this point the li
 Planned upcoming work includes:
 
 * Improving the abstraction of the database backend to provide an ergonomic interface, make it easy to extend, and avoid code duplication between different DBs.
+* A richer set of tools for composing database actions. For example, making it easy to insert objects which are stored across multiple tables.
 * A test suite. Query generation, object encoding/decoding, SQL rendering (per DB), and query execution (per DB) should all be backed by tests.
 * `DELETE FROM` queries.
-* `CREATE VIEW`.
-* A richer set of tools for composing database actions. For example, making it easy to insert objects which are stored across multiple tables.
 * Pretty-printing of rendered SQL.
 * Error handling for when queries fail.
 

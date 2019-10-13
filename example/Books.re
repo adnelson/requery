@@ -66,9 +66,21 @@ module Book = {
     );
 };
 
+// View of books written by each author
+let authorBooksView =
+  QueryBuilder.(
+    select([e(all)])
+    |> from(
+         table(Author.tableName, ~a="a")
+         |> innerJoin(table(Book.tableName, ~a="b"), tcol("a", "id") == tcol("b", "author_id")),
+       )
+    |> createView(tname("author_books"))
+  );
+
 let run = (client, idType) => {
   Client.createTable(client, Author.createTable(idType))
   |> then_(_ => Client.createTable(client, Book.createTable(idType)))
+  |> then_(_ => Client.createView(client, authorBooksView))
   |> then_(_
        // Inserting with an explicit query, using columns2 to define the encoding on the fly
        =>

@@ -231,14 +231,26 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
         ++ A.mapJoinCommasParens(statements, renderStatement);
   };
 
+  module CreateView = {
+    open Sql.CreateView;
+    let render = ({name, query, ifNotExists}) =>
+      "CREATE VIEW "
+      ++ (ifNotExists ? "IF NOT EXISTS " : "")
+      ++ TableName.render(name)
+      ++ " AS "
+      ++ Select.render(query);
+  };
+
   let select: Sql.Select.t => string = Select.render;
   let insert: Sql.Insert.t => string = Insert.render;
   let createTable: Sql.CreateTable.t => string = CreateTable.render;
+  let createView: Sql.CreateView.t => string = CreateView.render;
   let render: Sql.query => string =
     fun
     | Select(s) => select(s)
     | Insert(i) => insert(i)
-    | CreateTable(ct) => createTable(ct);
+    | CreateTable(ct) => createTable(ct)
+    | CreateView(cv) => createView(cv);
 };
 
 module Default = WithRenderingRules(DefaultRules);
