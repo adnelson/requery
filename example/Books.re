@@ -9,7 +9,7 @@ let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
   Utils.Promise.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 
 module Author = {
-  let table = QB.tbl("author");
+  let table = QB.tname("author");
   let table_ = table;
   type t('id) = {
     id: 'id,
@@ -37,7 +37,7 @@ let run = (client, createTables) => {
            QB.(
              [("Stephen", "King"), ("Jane", "Austen")]
              |> insertMany(RE.columns2("first", string, "last", string))
-             |> into(tbl("author"))
+             |> into(tname("author"))
            ),
          )
          |> then_(_

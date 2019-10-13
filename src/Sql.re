@@ -21,6 +21,8 @@ module ColumnName =
   MakeOpaqueString({});
 module TypeName =
   MakeOpaqueString({});
+module ConstraintName =
+  MakeOpaqueString({});
 
 module type ColumnType = {
   type col =
@@ -89,7 +91,7 @@ module Expression = {
 
   type t =
     | Atom(atom)
-    | Typed(t, string)
+    | Typed(t, TypeName.t)
     | Concat(t, t)
     | Add(t, t)
     | Subtract(t, t)
@@ -195,40 +197,46 @@ module Insert = {
   let make = (~returning=?, data, into) => {into, data, returning};
 };
 
-// The definition of a column in a CREATE TABLE query
-module ColumnDef = {
-  type constraint_ =
-    | PrimaryKey
+// CREATE TABLE query
+module CreateTable = {
+  type columnConstraint =
+    | PrimaryKey1
     | NotNull
-    | Unique
-    | Check(Expression.t);
+    | Unique1
+    | Check1(Expression.t);
 
-  type t = {
+  type columnDef = {
     name: ColumnName.t,
     type_: TypeName.t,
-    constraints: array(constraint_),
+    constraints: array(columnConstraint),
+    default: option(Expression.t),
   };
-};
 
-module CreateTable = {
+  let makeColumnDef = (~default=?, name, type_, constraints) => {
+    name,
+    type_,
+    constraints,
+    default,
+  };
+
   type constraint_ =
     | PrimaryKey(array(ColumnName.t))
     | Unique(array(ColumnName.t))
     | Check(Expression.t);
 
   type statement =
-    | ColumnDef(ColumnDef.t)
-    | PrimaryKey(array(ColumnName.t))
-    | Unique(array(ColumnName.t))
-    | Constraint(option(string), constraint_);
+    | ColumnDef(columnDef)
+    | Constraint(option(ConstraintName.t), constraint_);
 
   type t = {
     name: TableName.t,
     statements: array(statement),
+    ifNotExists: bool,
   };
 };
 
 type query =
   | Select(Select.t)
-  | Insert(Insert.t);
+  | Insert(Insert.t)
+  | CreateTable(CreateTable.t);
 // let renderSelect = Select.render;

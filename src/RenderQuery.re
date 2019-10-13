@@ -21,22 +21,32 @@ module DefaultRules: SqlRenderingRules = {
 };
 
 module WithRenderingRules = (S: SqlRenderingRules) => {
-  let wrap = s => S._NAME_WRAP_LEFT ++ s ++ S._NAME_WRAP_RIGHT;
-  let wrapColumn = c => wrap(Sql.ColumnName.toString(c));
-
-  module Table = {
-    open Sql.TableName;
-    let render = toString;
+  // Wrap a table/column/etc name in quotes
+  module RenderWrapped = (String: Sql.OpaqueString) => {
+    type t = String.t;
+    let wrapString = s => S._NAME_WRAP_LEFT ++ s ++ S._NAME_WRAP_RIGHT;
+    let render = s => wrapString(String.toString(s));
   };
+
+  module TableName = RenderWrapped(Sql.TableName);
+  module ColumnName = RenderWrapped(Sql.ColumnName);
+  module ConstraintName = RenderWrapped(Sql.ConstraintName);
+
+  module RenderString = (String: Sql.OpaqueString) => {
+    type t = String.t;
+    let render = s => String.toString(s);
+  };
+
+  module TypeName = RenderString(Sql.TypeName);
 
   module Column = {
     open Sql.Column;
     let render = c =>
       switch (toTuple(c)) {
-      | (None, Named(c)) => wrapColumn(c)
+      | (None, Named(c)) => ColumnName.render(c)
       | (None, All) => "*"
-      | (Some(t), Named(c)) => wrap(Sql.TableName.toString(t)) ++ "." ++ wrapColumn(c)
-      | (Some(t), All) => wrap(Sql.TableName.toString(t)) ++ ".*"
+      | (Some(t), Named(c)) => TableName.render(t) ++ "." ++ ColumnName.render(c)
+      | (Some(t), All) => TableName.render(t) ++ ".*"
       };
   };
 
@@ -67,7 +77,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     let rec render: t => string =
       fun
       | Atom(atom) => renderAtom(atom)
-      | Typed(e, t) => render(e) ++ "::" ++ t
+      | Typed(e, t) => render(e) ++ "::" ++ TypeName.render(t)
       | Concat(ex1, ex2) => render(ex1) ++ " || " ++ render(ex2)
       | Add(ex1, ex2) => render(ex1) ++ " + " ++ render(ex2)
       | Subtract(ex1, ex2) => render(ex1) ++ " - " ++ render(ex2)
@@ -136,7 +146,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     let render: t => string =
       ({data, into, returning}) => {
         "INSERT INTO "
-        ++ Table.render(into)
+        ++ TableName.render(into)
         ++ " "
         ++ (
           switch (data) {
@@ -165,11 +175,58 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       };
   };
 
+  module CreateTable = {
+    open Sql.CreateTable;
+    let renderColumnConstraint =
+      fun
+      | PrimaryKey1 => "PRIMARY KEY"
+      | NotNull => "NOT NULL"
+      | Unique1 => "UNIQUE"
+      | Check1(e) => "CHECK " ++ Expression.render(e);
+
+    let renderColumnDef = ({name, type_, constraints, default}) => {
+      let items = [|
+        ColumnName.render(name),
+        TypeName.render(type_),
+        A.mapJoinSpaces(constraints, renderColumnConstraint),
+      |];
+      A.joinSpaces(
+        switch (default) {
+        | None => items
+        | Some(def) => A.concat(items, [|"DEFAULT " ++ Expression.render(def)|])
+        },
+      );
+    };
+
+    let renderConstraint: constraint_ => string =
+      fun
+      | PrimaryKey(columns) => "PRIMARY KEY " ++ A.mapJoinCommas(columns, ColumnName.render)
+      | Unique(columns) => "UNIQUE " ++ A.mapJoinCommas(columns, ColumnName.render)
+      | Check(expr) => "CHECK " ++ Expression.render(expr);
+
+    let renderStatement: statement => string =
+      fun
+      | ColumnDef(cdef) => renderColumnDef(cdef)
+      | Constraint(None, constraint_) => "CONSTRAINT " ++ renderConstraint(constraint_)
+      | Constraint(Some(n), constraint_) =>
+        "CONSTRAINT " ++ ConstraintName.render(n) ++ " " ++ renderConstraint(constraint_);
+    let render: t => string =
+      ({name, statements, ifNotExists}) =>
+        "CREATE TABLE "
+        ++ (ifNotExists ? "IF NOT EXISTS " : "")
+        ++ TableName.render(name)
+        ++ " "
+        ++ A.mapJoinCommasParens(statements, renderStatement);
+  };
+
   let select: Sql.Select.t => string = Select.render;
   let insert: Sql.Insert.t => string = Insert.render;
-
+  let createTable: Sql.CreateTable.t => string = CreateTable.render;
   let render: Sql.query => string =
     fun
     | Select(s) => select(s)
-    | Insert(i) => insert(i);
+    | Insert(i) => insert(i)
+    | CreateTable(ct) => createTable(ct);
 };
+
+module Default = WithRenderingRules(DefaultRules);

@@ -135,12 +135,14 @@ module Array = {
   let min: array(float) => float = arr => reduce(arr, infinity, min);
   let contains: (array('a), 'a) => bool = (arr, elem) => some(arr, e => e == elem);
   let joinWith: (array(string), string) => string = (arr, sep) => Js.Array.joinWith(sep, arr);
+  let joinSpaces: array(string) => string = arr => joinWith(arr, " ");
   let mapJoin: (array('a), ~prefix: string=?, ~suffix: string=?, string, 'a => string) => string =
     (arr, ~prefix="", ~suffix="", sep, f) => prefix ++ joinWith(map(arr, f), sep) ++ suffix;
   let mapJoinWith: (array('a), string, 'a => string) => string =
     (arr, sep, f) => joinWith(map(arr, f), sep);
   let mapJoinCommas = (arr, ~prefix=?, ~suffix=?, f) =>
     mapJoin(arr, ~prefix?, ~suffix?, ", ", f);
+  let mapJoinSpaces = (arr, ~prefix=?, ~suffix=?, f) => mapJoin(arr, ~prefix?, ~suffix?, " ", f);
   let mapJoinCommasParens = (arr, f) => mapJoin(arr, ~prefix="(", ~suffix=")", ", ", f);
   let mapJoinIfNonEmpty:
     (array('a), ~onEmpty: string=?, ~prefix: string=?, ~suffix: string=?, string, 'a => string) =>

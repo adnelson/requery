@@ -1,5 +1,7 @@
-type column = Sql.Column.t;
+type columnName = Sql.ColumnName.t;
 type tableName = Sql.TableName.t;
+type column = Sql.Column.t;
+type typeName = Sql.TypeName.t;
 type target = Sql.Select.target;
 type select = Sql.Select.t;
 type expr = Sql.Expression.t;
@@ -33,8 +35,19 @@ let null: expr;
 let isNull: expr => expr;
 let isNotNull: expr => expr;
 
+/************************
+ *  Dealing with types
+ ***********************/
+
+// Make a type name from a string.
+let typeName: string => typeName;
+
 // Add an explicit type cast to an expression
-let typed: (expr, string) => expr;
+let typed: (expr, typeName) => expr;
+
+/************************
+ *  Dealing with columns
+ ***********************/
 
 // A single column, from a string
 let col: string => expr;
@@ -137,7 +150,7 @@ let selectAs: (string, select) => target;
  ****************************/
 
 // Make a `table` from a string
-let tbl: string => tableName;
+let tname: string => tableName;
 
 // Make a `column` from a string, without a table name.
 let column: string => column;
@@ -227,6 +240,17 @@ let returningColumn: (column, insert) => insert;
  let insertAuthors =
    [("Stephen", "King"), ("Jane", "Austen")]
    |> insertMany(RE.columns2("first", string, "last", string))
-   |> into(tbl("authors"));
+   |> into(tname("authors"));
  ********************************************************************************/
 let into: (tableName, tableName => insert) => insert;
+
+/***************************
+ * CREATE TABLE Queries
+ ****************************/
+
+let cname: string => columnName;
+
+module Types: {
+  let int: typeName;
+  let text: typeName;
+};
