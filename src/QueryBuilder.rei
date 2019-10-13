@@ -12,6 +12,7 @@ type direction = Sql.Select.direction;
 type insert = Sql.Insert.t;
 type statement = Sql.CreateTable.statement;
 type createTable = Sql.CreateTable.t;
+type createView = Sql.CreateView.t;
 type row = list((column, expr));
 type toSelect('t) = 't => select;
 type toInsert('t) = ('t, tableName) => insert;
@@ -290,6 +291,9 @@ let check: expr => tableConstraint;
 
 // Creating a table
 let createTable: (~ifNotExists: bool=?, tableName, list(statement)) => createTable;
+
+// Creating a view
+let createView: (~ifNotExists: bool=?, tableName, select) => createView;
 
 /************************************
  * Commonly used sql type names

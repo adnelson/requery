@@ -232,8 +232,19 @@ module CreateTable = {
   };
 };
 
+module CreateView = {
+  type t = {
+    // Since views act like tables, reuse this type. Eventually we
+    // might want to separate them
+    name: TableName.t,
+    query: Select.t,
+    ifNotExists: bool,
+  };
+};
+
 type query =
   | Select(Select.t)
   | Insert(Insert.t)
-  | CreateTable(CreateTable.t);
+  | CreateTable(CreateTable.t)
+  | CreateView(CreateView.t);
 // let renderSelect = Select.render;

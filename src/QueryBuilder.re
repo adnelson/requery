@@ -14,6 +14,9 @@ type aliasedExpr = Sql.Aliased.t(expr);
 type direction = Sql.Select.direction;
 type select = Sql.Select.t;
 type insert = Sql.Insert.t;
+type statement = Sql.CreateTable.statement;
+type createTable = Sql.CreateTable.t;
+type createView = Sql.CreateView.t;
 type row = list((column, expr));
 type toSelect('t) = 't => select;
 type toInsert('t) = ('t, tableName) => insert;
@@ -180,9 +183,6 @@ let returningColumn = (column, insert) =>
 
 let into: (tableName, tableName => insert) => insert = (t, f) => f(t);
 
-type statement = Sql.CreateTable.statement;
-type createTable = Sql.CreateTable.t;
-
 let cdef =
     (~primaryKey=false, ~notNull=true, ~unique=false, ~check=?, ~default=?, name, type_)
     : statement =>
@@ -191,8 +191,8 @@ let cdef =
       name: cname(name),
       type_,
       constraints: {
-        notNull,
         primaryKey,
+        notNull,
         unique,
         check,
         default,
@@ -213,6 +213,8 @@ let (constraint_, primaryKey, foreignKey, unique, check) = {
 
 let createTable = (~ifNotExists=true, name, statements) =>
   Sql.CreateTable.{name, statements: L.toArray(statements), ifNotExists};
+
+let createView = (~ifNotExists=true, name, query) => Sql.CreateView.{name, query, ifNotExists};
 
 module Types = {
   let int = typeName("INTEGER");
