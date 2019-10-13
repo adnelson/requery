@@ -7,15 +7,15 @@
 ```reason
 let (then_, resolve) = Js.Promise.(then_, resolve);
 let client = Sqlite3.(makeClient(Memory));
-
+let authors = QueryBuilder.tbl("authors");
 RowEncode.(
   [("Stephen", "King"), ("Jane", "Austen"), ("Kurt", "Vonnegut")]
   |> insertMany(columns2("first", string, "last", string))
-  |> into(tbl("authors"))
+  |> into(authors)
 )
 |> AbstractClient.insert(client)
 |> then_(_ =>
-     QueryBuilder.([e(col("first")), e(col("last"))] |> selectFrom(tableNamed("authors")))
+     QueryBuilder.([e(col("first")), e(col("last"))] |> selectFrom(table(authors)))
      |> AbstractClient.select(
           client,
           RowDecode.(decodeEach(columns2("first", string, "last", string))),
@@ -44,7 +44,7 @@ RowEncode.(
 
 ## Examples
 
-Let's say you have a Postgres database of books and authors. (Note: we can use `requery` to insert the rows, but we'll save that for later)
+Let's say you have a Postgres database of books and authors. (Note: we can use `requery` to create the table and insert rows, but we'll save that for later)
 
 ```sql
 CREATE TABLE authors (id SERIAL PRIMARY KEY, first_name TEXT, last_name TEXT);
@@ -171,7 +171,7 @@ Planned upcoming work includes:
 * Improving the abstraction of the database backend to provide an ergonomic interface, make it easy to extend, and avoid code duplication between different DBs.
 * A test suite. Query generation, object encoding/decoding, SQL rendering (per DB), and query execution (per DB) should all be backed by tests.
 * `DELETE FROM` queries.
-* `CREATE VIEW`. While tools for table creation are not currently planned, it should be easy to create views, since we can create `SELECT` queries.
+* `CREATE VIEW`.
 * A richer set of tools for composing database actions. For example, making it easy to insert objects which are stored across multiple tables.
 * Pretty-printing of rendered SQL.
 * Error handling for when queries fail.
