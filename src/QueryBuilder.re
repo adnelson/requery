@@ -3,7 +3,7 @@ module E = Expression;
 module L = Utils.List;
 
 type column = Sql.Column.t;
-type table = Sql.Table.t;
+type tableName = Sql.TableName.t;
 type target = Sql.Select.target;
 type expr = Sql.Expression.t;
 type aliasedExpr = Sql.Aliased.t(expr);
@@ -12,7 +12,7 @@ type select = Sql.Select.t;
 type insert = Sql.Insert.t;
 type row = list((column, expr));
 type toSelect('t) = 't => select;
-type toInsert('t) = ('t, table) => insert;
+type toInsert('t) = ('t, tableName) => insert;
 type toColumn('t) = 't => column;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
@@ -29,7 +29,7 @@ let bigint = i => typed(int(i), "BigInt");
 let tuple = exprs => E.Tuple(L.toArray(exprs));
 let tuple2 = (f, g, (a, b)) => tuple([f(a), g(b)]);
 
-let tbl = Sql.Table.fromString;
+let tbl = Sql.TableName.fromString;
 let column = Sql.Column.fromString;
 let tcolumn = (t, c) => Sql.Column.fromStringWithTable(tbl(t), c);
 let columns = Sql.Column.fromStringList;
@@ -168,8 +168,8 @@ let insertMany = (toRow, objects) => insertRows(L.map(objects, toRow));
 let insertSelect = select => Insert.make(Insert.Select(select));
 
 let returningColumns = (columns, insert) =>
-  Insert.{...insert, returning: Some(Columns(columns))};
+  Insert.{...insert, returning: Some(Columns(L.toArray(columns)))};
 let returningColumn = (column, insert) =>
-  Insert.{...insert, returning: Some(Columns([column]))};
+  Insert.{...insert, returning: Some(Columns([|column|]))};
 
-let into: (table, table => insert) => insert = (t, f) => f(t);
+let into: (tableName, tableName => insert) => insert = (t, f) => f(t);

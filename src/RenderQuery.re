@@ -25,7 +25,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
   let wrapColumn = c => wrap(Sql.ColumnName.toString(c));
 
   module Table = {
-    open Sql.Table;
+    open Sql.TableName;
     let render = toString;
   };
 
@@ -35,8 +35,8 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       switch (toTuple(c)) {
       | (None, Named(c)) => wrapColumn(c)
       | (None, All) => "*"
-      | (Some(t), Named(c)) => wrap(Sql.Table.toString(t)) ++ "." ++ wrapColumn(c)
-      | (Some(t), All) => wrap(Sql.Table.toString(t)) ++ ".*"
+      | (Some(t), Named(c)) => wrap(Sql.TableName.toString(t)) ++ "." ++ wrapColumn(c)
+      | (Some(t), All) => wrap(Sql.TableName.toString(t)) ++ ".*"
       };
   };
 
@@ -105,7 +105,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
 
     let rec renderTarget: target => string =
       fun
-      | Table(tname) => Aliased.render(Sql.Table.toString, tname)
+      | Table(tname) => Aliased.render(Sql.TableName.toString, tname)
       | SubSelect(q, alias) => "(" ++ render(q) ++ ") AS " ++ alias
       | Join(join, t1, t2) =>
         switch (renderJoinType(join)) {
@@ -160,7 +160,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
              returning,
              fun
              | Columns(columns) =>
-               " RETURNING " ++ A.mapJoinCommasParens(L.toArray(columns), Column.render),
+               " RETURNING " ++ A.mapJoinCommasParens(columns, Column.render),
            );
       };
   };

@@ -1,5 +1,5 @@
 type column = Sql.Column.t;
-type table = Sql.Table.t;
+type tableName = Sql.TableName.t;
 type target = Sql.Select.target;
 type select = Sql.Select.t;
 type expr = Sql.Expression.t;
@@ -8,7 +8,7 @@ type direction = Sql.Select.direction;
 type insert = Sql.Insert.t;
 type row = list((column, expr));
 type toSelect('t) = 't => select;
-type toInsert('t) = ('t, table) => insert;
+type toInsert('t) = ('t, tableName) => insert;
 type toColumn('t) = 't => column;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
@@ -117,7 +117,7 @@ let e: (~a: string=?, expr) => aliasedExpr;
  ****************************/
 
 // A table target
-let table: (~a: string=?, table) => target;
+let table: (~a: string=?, tableName) => target;
 
 // A table target, via a string.
 let tableNamed: (~a: string=?, string) => target;
@@ -137,7 +137,7 @@ let selectAs: (string, select) => target;
  ****************************/
 
 // Make a `table` from a string
-let tbl: string => table;
+let tbl: string => tableName;
 
 // Make a `column` from a string, without a table name.
 let column: string => column;
@@ -146,7 +146,7 @@ let column: string => column;
 // comes first.
 let tcolumn: (string, string) => column;
 
-// Make multiple `column`s from strings
+// Make multiple `column`s from strings.
 let columns: list(string) => list(column);
 
 // Make multiple `table`.`column`s from string pairs.
@@ -221,10 +221,12 @@ let insertSelect: toInsert(select);
 let returningColumns: (list(column), insert) => insert;
 let returningColumn: (column, insert) => insert;
 
-/* Apply a table-to-query conversion.
-   let insertAuthors =
-     [("Stephen", "King"), ("Jane", "Austen")]
-     |> insertMany(RE.tuple2Row("first", string, "last", string))
-     |> into(tbl("authors"));
-   */
-let into: (table, table => insert) => insert;
+/*******************************************************************************
+ Apply a table-to-query conversion.
+
+ let insertAuthors =
+   [("Stephen", "King"), ("Jane", "Austen")]
+   |> insertMany(RE.columns2("first", string, "last", string))
+   |> into(tbl("authors"));
+ ********************************************************************************/
+let into: (tableName, tableName => insert) => insert;
