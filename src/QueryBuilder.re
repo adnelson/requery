@@ -17,6 +17,7 @@ type insert = Sql.Insert.t;
 type statement = Sql.CreateTable.statement;
 type createTable = Sql.CreateTable.t;
 type createView = Sql.CreateView.t;
+type whereClause = Sql.Select.whereClause;
 type row = list((column, expr));
 type toSelect('t) = 't => select;
 type toInsert('t) = ('t, tableName) => insert;
@@ -49,6 +50,8 @@ let tcol = (t, c) => E.Atom(E.Column(tcolumn(t, c)));
 let all = E.(Atom(Column(Sql.Column.all)));
 let allFrom = t => E.Atom(Column(Sql.Column.allFrom(tname(t))));
 
+let between = (e, lo, hi) => E.Between(e, lo, hi);
+let in_ = (e1, e2) => E.In(e1, e2);
 let concat = (e1, e2) => E.Concat(e1, e2);
 let (++) = concat;
 let add = (e1, e2) => E.Add(e1, e2);
@@ -77,6 +80,7 @@ let and_ = (e1, e2) => E.And(e1, e2);
 let (&&) = and_;
 let or_ = (e1, e2) => E.Or(e1, e2);
 let (||) = or_;
+let not = e => E.Not(e);
 let ands =
   fun
   | [] => bool(true)
@@ -111,12 +115,16 @@ let selectAs = (alias, select) => Select.SubSelect(select, alias);
 
 let (asc, desc) = Select.(ASC, DESC);
 
-let select = (~from=?, ~groupBy=[], ~orderBy=[], ~limit=?, ~where=?, selections) =>
+let select = (~from=?, ~groupBy=([], None), ~orderBy=[], ~limit=?, ~where=?, selections) =>
   Select.{
     selections: L.toArray(selections),
     from,
     limit,
-    groupBy: L.toArray(groupBy),
+    groupBy:
+      switch (groupBy) {
+      | ([], _) => ([||], None)
+      | (es, h) => (L.toArray(es), h)
+      },
     orderBy: L.toArray(orderBy),
     where,
   };
@@ -133,7 +141,8 @@ let selecting = (sels, s) => Select.{...s, selections: L.toArray(sels)};
 let from = (t, s) => Select.{...s, from: Some(t)};
 let selectFrom = (target, exprs) => select(exprs) |> from(target);
 let limit = (n, s) => Select.{...s, limit: Some(n)};
-let where = (cond, s) => Select.{...s, where: Some(cond)};
+let where = (cond, s) => Select.{...s, where: Some(Sql.Select.Where(cond))};
+let whereExists = (sel, s) => Select.{...s, where: Some(Sql.Select.WhereExists(sel))};
 let orderBy = (cols, s) =>
   Select.{...s, orderBy: L.amap(cols, ((c, dir)) => (c, Some(dir)))};
 let orderBy_ = (cols, s) => Select.{...s, orderBy: L.amap(cols, c => (c, None))};
@@ -142,10 +151,10 @@ let orderBy1_ = (col, s) => Select.{...s, orderBy: [|(col, None)|]};
 let orderBy2 = (col1, dir1, col2, dir2, s) =>
   Select.{...s, orderBy: [|(col1, Some(dir1)), (col2, Some(dir2))|]};
 let orderBy2_ = (col1, col2, s) => Select.{...s, orderBy: [|(col1, None), (col2, None)|]};
-let groupBy = (cols, s) => Select.{...s, groupBy: L.toArray(cols)};
-let groupBy1 = (col, s) => Select.{...s, groupBy: [|col|]};
-let groupByCol = (c, s) => Select.{...s, groupBy: [|col(c)|]};
-let groupByCols = (cols, s) => Select.{...s, groupBy: L.amap(cols, col)};
+let groupBy = (~having=?, cols, s) => Select.{...s, groupBy: (L.toArray(cols), having)};
+let groupBy1 = (~having=?, col, s) => Select.{...s, groupBy: ([|col|], having)};
+let groupByCol = (~having=?, c, s) => Select.{...s, groupBy: ([|col(c)|], having)};
+let groupByCols = (~having=?, cols, s) => Select.{...s, groupBy: (L.amap(cols, col), having)};
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), A.map(L.toArray(vs), toE));

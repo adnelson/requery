@@ -79,29 +79,40 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       | String(s) => "'" ++ Utils.String.replace(~old="'", ~new_="''", s) ++ "'"
       | Bool(b) => b ? S._TRUE : S._FALSE;
 
-    // TODO handle precedence here, wrap with parentheses where needed
+    // TODO right now we're parenthesizing more than we need to. We could be
+    // smarter about this
     let rec render: t => string =
       fun
       | Atom(atom) => renderAtom(atom)
-      | Typed(e, t) => render(e) ++ "::" ++ TypeName.render(t)
-      | Concat(ex1, ex2) => render(ex1) ++ " || " ++ render(ex2)
-      | Add(ex1, ex2) => render(ex1) ++ " + " ++ render(ex2)
-      | Subtract(ex1, ex2) => render(ex1) ++ " - " ++ render(ex2)
-      | Multiply(ex1, ex2) => render(ex1) ++ " * " ++ render(ex2)
-      | Divide(ex1, ex2) => render(ex1) ++ " / " ++ render(ex2)
-      | Eq(ex1, ex2) => render(ex1) ++ " = " ++ render(ex2)
-      | Neq(ex1, ex2) => render(ex1) ++ " <> " ++ render(ex2)
-      | Lt(ex1, ex2) => render(ex1) ++ " < " ++ render(ex2)
-      | Leq(ex1, ex2) => render(ex1) ++ " <= " ++ render(ex2)
-      | Gt(ex1, ex2) => render(ex1) ++ " > " ++ render(ex2)
-      | Geq(ex1, ex2) => render(ex1) ++ " >= " ++ render(ex2)
-      | Like(ex1, ex2) => render(ex1) ++ " LIKE " ++ render(ex2)
-      | And(ex1, ex2) => render(ex1) ++ " AND " ++ render(ex2)
-      | Or(ex1, ex2) => render(ex1) ++ " OR " ++ render(ex2)
-      | IsNull(e) => render(e) ++ " IS NULL"
-      | IsNotNull(e) => render(e) ++ " IS NOT NULL"
+      | Typed(e, t) => renderP(e) ++ "::" ++ TypeName.render(t)
+      | Concat(ex1, ex2) => renderP(ex1) ++ " || " ++ renderP(ex2)
+      | Between(e, lo, hi) =>
+        renderP(e) ++ " BETWEEN " ++ renderP(lo) ++ " AND " ++ renderP(hi)
+      | In(ex1, ex2) => renderP(ex1) ++ " IN " ++ renderP(ex2)
+      | Add(ex1, ex2) => renderP(ex1) ++ " + " ++ renderP(ex2)
+      | Subtract(ex1, ex2) => renderP(ex1) ++ " - " ++ renderP(ex2)
+      | Multiply(ex1, ex2) => renderP(ex1) ++ " * " ++ renderP(ex2)
+      | Divide(ex1, ex2) => renderP(ex1) ++ " / " ++ renderP(ex2)
+      | Eq(ex1, ex2) => renderP(ex1) ++ " = " ++ renderP(ex2)
+      | Neq(ex1, ex2) => renderP(ex1) ++ " <> " ++ renderP(ex2)
+      | Lt(ex1, ex2) => renderP(ex1) ++ " < " ++ renderP(ex2)
+      | Leq(ex1, ex2) => renderP(ex1) ++ " <= " ++ renderP(ex2)
+      | Gt(ex1, ex2) => renderP(ex1) ++ " > " ++ renderP(ex2)
+      | Geq(ex1, ex2) => renderP(ex1) ++ " >= " ++ renderP(ex2)
+      | Like(ex1, ex2) => renderP(ex1) ++ " LIKE " ++ renderP(ex2)
+      | And(ex1, ex2) => renderP(ex1) ++ " AND " ++ renderP(ex2)
+      | Or(ex1, ex2) => renderP(ex1) ++ " OR " ++ renderP(ex2)
+      | IsNull(e) => renderP(e) ++ " IS NULL"
+      | IsNotNull(e) => renderP(e) ++ " IS NOT NULL"
+      | Not(e) => "NOT " ++ renderP(e)
       | Call(fnName, args) => fnName ++ A.mapJoinCommasParens(args, render)
-      | Tuple(exprs) => A.mapJoinCommasParens(exprs, render);
+      | Tuple(exprs) => A.mapJoinCommasParens(exprs, render)
+    and renderP =
+      fun
+      | Atom(_) as e
+      | Tuple(_) as e
+      | Call(_) as e => render(e)
+      | e => "(" ++ render(e) ++ ")";
   };
 
   module Select = {
@@ -138,9 +149,21 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
           A.mapJoinIfNonEmpty(orderBy, ~prefix=" ORDER BY ", ", ", ((c, optDir)) =>
             Expression.render(c) ++ O.mapString(optDir, dir => " " ++ renderDirection(dir))
           );
-        let groupBy = A.mapJoinIfNonEmpty(groupBy, ~prefix=" GROUP BY ", ", ", Expression.render);
+        let groupBy =
+          switch (groupBy) {
+          | ([||], _) => ""
+          | (exprs, having) =>
+            let gb = "GROUP BY " ++ A.mapJoinCommas(exprs, Expression.render);
+            gb ++ O.mapWithDefault(having, "", h => "HAVING " ++ Expression.render(h));
+          };
         let limit = O.mapString(limit, n => " LIMIT " ++ Expression.render(n));
-        let where = O.mapString(where, e => " WHERE " ++ Expression.render(e));
+        let where =
+          O.mapString(
+            where,
+            fun
+            | Where(e) => " WHERE " ++ Expression.render(e)
+            | WhereExists(select) => " WHERE EXISTS (" ++ render(select) ++ ")",
+          );
         "SELECT " ++ selections ++ from ++ where ++ groupBy ++ orderBy ++ limit;
       };
   };
