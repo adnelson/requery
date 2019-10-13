@@ -15,10 +15,13 @@ type t('handle, 'result) = {
   // Translate a result into an array of rows.
   resultToRows: 'result => rows,
   // Function to run on the query right before it's executed.
-  onQuery: option(('handle, Sql.query) => unit),
+  onQuery: option((t('handle, 'result), Sql.query) => unit),
   // Function to run after the result is received.
-  onResult: option(('handle, Sql.query, 'result) => unit),
+  onResult: option((t('handle, 'result), Sql.query, 'result) => unit),
 };
+
+// Can be passed to a `onQuery` argument, logs each query before it's made.
+let logQuery = ({queryToSql}, q) => Js.log(queryToSql(q));
 
 // Create a client.
 let make = (~handle, ~queryToSql, ~resultToRows, ~queryRaw, ~execRaw, ~onQuery=?, ~onResult=?, ()) => {
@@ -35,21 +38,21 @@ let renderQuery = ({queryToSql}, query) => queryToSql(query);
 let handle = ({handle}) => handle;
 
 let query: (t('h, 'r), Sql.query) => Js.Promise.t(rows) =
-  ({onQuery, onResult, handle, queryToSql, queryRaw, resultToRows}, query) => {
-    let _ = O.map(onQuery, f => f(handle, query));
+  ({onQuery, onResult, handle, queryToSql, queryRaw, resultToRows} as client, query) => {
+    let _ = O.map(onQuery, f => f(client, query));
     queryRaw(handle, queryToSql(query))
     |> then_(result => {
-         let _ = O.map(onResult, f => f(handle, query, result));
+         let _ = O.map(onResult, f => f(client, query, result));
          result |> resultToRows |> resolve;
        });
   };
 
 let exec: (t('h, 'r), Sql.query) => Js.Promise.t(rows) =
-  ({onQuery, onResult, handle, queryToSql, execRaw, resultToRows}, query) => {
-    let _ = O.map(onQuery, f => f(handle, query));
+  ({onQuery, onResult, handle, queryToSql, execRaw, resultToRows} as client, query) => {
+    let _ = O.map(onQuery, f => f(client, query));
     execRaw(handle, queryToSql(query))
     |> then_(result => {
-         let _ = O.map(onResult, f => f(handle, query, result));
+         let _ = O.map(onResult, f => f(client, query, result));
          result |> resultToRows |> resolve;
        });
   };

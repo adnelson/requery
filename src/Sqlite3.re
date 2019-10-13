@@ -19,6 +19,7 @@ type fileargs = {
   fileMustExist: bool,
 };
 
+// Use either the filesystem or an in-memory database
 type args =
   | Memory
   | MemoryNamed(string)
@@ -35,8 +36,10 @@ let connect: args => S.conn =
 
 type client = AClient.t(Sqlite.Connection.t, AClient.rows);
 
-let makeClient = args =>
+let makeClient = (~onQuery=?, ~onResult=?, args) =>
   AClient.make(
+    ~onQuery?,
+    ~onResult?,
     ~handle=connect(args),
     ~queryToSql=Render.render,
     ~queryRaw=
