@@ -66,7 +66,11 @@ module Book = {
     );
 };
 
+<<<<<<< HEAD
 // View of books written by each author
+=======
+// Make a view
+>>>>>>> initial implementation of CREATE VIEW
 let authorBooksView =
   QueryBuilder.(
     select([e(all)])
