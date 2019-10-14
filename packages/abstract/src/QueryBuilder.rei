@@ -9,7 +9,7 @@ type select = Sql.Select.t;
 type expr = Sql.Expression.t;
 type aliasedExpr = Sql.Aliased.t(expr);
 type direction = Sql.Select.direction;
-type insert = Sql.Insert.t;
+type insert('r) = Sql.Insert.t('r);
 type statement = Sql.CreateTable.statement;
 type createTable = Sql.CreateTable.t;
 type createView = Sql.CreateView.t;
@@ -21,7 +21,7 @@ type whereClause = Sql.Select.whereClause;
 
 type row = list((column, expr));
 type toSelect('t) = 't => select;
-type toInsert('t) = ('t, tableName) => insert;
+type toInsert('r, 't) = ('t, tableName) => insert('r);
 type toColumn('t) = 't => column;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
@@ -234,25 +234,22 @@ let groupByCols: (~having: expr=?, list(string), select) => select;
  ****************************/
 
 // Inserting literal columns/expressions.
-let insertColumns: toInsert(list((column, list(expr))));
-let insertRows: toInsert(list(list((column, expr))));
-let insertRow: toInsert(list((column, expr)));
+let insertColumns: toInsert('r, list((column, list(expr))));
+let insertRows: toInsert('r, list(list((column, expr))));
+let insertRow: toInsert('r, list((column, expr)));
 
 // Apply a conversion function to create columns and expressions.
-let insertRowsWith: (toColumn('a), toExpr('b)) => toInsert(list(list(('a, 'b))));
-let insertRowWith: ('a => column, 'b => expr) => toInsert(list(('a, 'b)));
-let insertColumnsWith: (toColumn('a), toExpr('b)) => toInsert(list(('a, list('b))));
+let insertRowsWith: (toColumn('a), toExpr('b)) => toInsert('r, list(list(('a, 'b))));
+let insertRowWith: ('a => column, 'b => expr) => toInsert('r, list(('a, 'b)));
+let insertColumnsWith: (toColumn('a), toExpr('b)) => toInsert('r, list(('a, list('b))));
 
 // Given a function to convert an object to a row, insert one or more objects.
-let insertOne: toRow('t) => toInsert('t);
-let insertMany: toRow('t) => toInsert(list('t));
+let insertOne: toRow('t) => toInsert('r, 't);
+let insertMany: toRow('t) => toInsert('r, list('t));
+let returning: ('r, insert('r)) => insert('r);
 
 // Insert with a SELECT query.
-let insertSelect: toInsert(select);
-
-// Set what's to be returned by the insertion
-let returningColumns: (list(column), insert) => insert;
-let returningColumn: (column, insert) => insert;
+let insertSelect: toInsert('r, select);
 
 /*******************************************************************************
  Apply a table-to-query conversion.
@@ -262,7 +259,7 @@ let returningColumn: (column, insert) => insert;
    |> insertMany(RE.columns2("first", string, "last", string))
    |> into(tname("authors"));
  ********************************************************************************/
-let into: (tableName, tableName => insert) => insert;
+let into: (tableName, tableName => insert('r)) => insert('r);
 
 /***************************
   * CREATE TABLE Queries

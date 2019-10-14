@@ -195,10 +195,10 @@ module Insert = {
   type returning =
     | Columns(array(Column.t));
 
-  type t = {
+  type t('returning) = {
     into: TableName.t,
     data,
-    returning: option(returning),
+    returning: option('returning),
   };
 
   let make = (~returning=?, data, into) => {into, data, returning};
@@ -249,9 +249,9 @@ module CreateView = {
   };
 };
 
-type query =
+type query('returning) =
   | Select(Select.t)
-  | Insert(Insert.t)
+  | Insert(Insert.t('returning))
   | CreateTable(CreateTable.t)
   | CreateView(CreateView.t);
 // let renderSelect = Select.render;

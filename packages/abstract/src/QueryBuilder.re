@@ -13,14 +13,14 @@ type expr = Sql.Expression.t;
 type aliasedExpr = Sql.Aliased.t(expr);
 type direction = Sql.Select.direction;
 type select = Sql.Select.t;
-type insert = Sql.Insert.t;
+type insert('r) = Sql.Insert.t('r);
 type statement = Sql.CreateTable.statement;
 type createTable = Sql.CreateTable.t;
 type createView = Sql.CreateView.t;
 type whereClause = Sql.Select.whereClause;
 type row = list((column, expr));
 type toSelect('t) = 't => select;
-type toInsert('t) = ('t, tableName) => insert;
+type toInsert('r, 't) = ('t, tableName) => insert('r);
 type toColumn('t) = 't => column;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
@@ -185,12 +185,9 @@ let insertOne = (toRow, obj) => insertRow(toRow(obj));
 let insertMany = (toRow, objects) => insertRows(L.map(objects, toRow));
 let insertSelect = select => Insert.make(Insert.Select(select));
 
-let returningColumns = (columns, insert) =>
-  Insert.{...insert, returning: Some(Columns(L.toArray(columns)))};
-let returningColumn = (column, insert) =>
-  Insert.{...insert, returning: Some(Columns([|column|]))};
+let returning = (returning, insert) => Insert.{...insert, returning: Some(returning)};
 
-let into: (tableName, tableName => insert) => insert = (t, f) => f(t);
+let into = (t, f) => f(t);
 
 let cdef =
     (~primaryKey=false, ~notNull=true, ~unique=false, ~check=?, ~default=?, name, type_)

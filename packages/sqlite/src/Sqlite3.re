@@ -4,7 +4,6 @@ module QB = QueryBuilder;
 module RE = RowEncode;
 module Rules = RenderQuery.DefaultRules;
 module Render = RenderQuery.WithRenderingRules(Rules);
-module AClient = AbstractClient;
 
 module S = {
   type conn = Sqlite.Connection.t;
@@ -35,24 +34,33 @@ let connect: args => S.conn =
       make(~path, ~memory=false, ~fileMustExist, ~readonly, ())
   );
 
-type client = AClient.t(Sqlite.Connection.t, AClient.rows);
+// No RETURNING statement support in SQLite, so `unit` is passed in. At some
+// point there might be an abstraction of this that we
+// can plug into the type.
+type query = Sql.query(unit);
 
-let makeClient = (~onQuery=?, ~onResult=?, args) =>
-  AClient.make(
+// The sqlite library returns back a JSON array.
+type client = Client.t(Sqlite.Connection.t, array(Js.Json.t), query);
+
+let makeClient = (~onQuery=?, ~onResult=?, args): client =>
+  Client.make(
     ~onQuery?,
     ~onResult?,
     ~handle=connect(args),
-    ~queryToSql=Render.render,
+    // We don't have anything to render, so this will never
+    // be called, but nonetheless a function is required.
+    ~queryToSql=Render.render(_ => ""),
     ~queryRaw=
       (conn, raw) => {
         let stmt = S.prepare(conn, raw);
-        S.all(stmt, [||]) |> RowDecode.toRows |> Js.Promise.resolve;
+        Js.Promise.resolve(S.all(stmt, [||]));
       },
     ~execRaw=
       (conn, raw) => {
         let stmt = S.prepare(conn, raw);
-        S.run(stmt, [||]) |> A.singleton |> RowDecode.toRows |> Js.Promise.resolve;
+        S.run(stmt, [||]) |> A.singleton |> Js.Promise.resolve;
       },
-    ~resultToRows=Utils.id,
+    //
+    ~resultToRows=RowDecode.toRows,
     (),
   );
