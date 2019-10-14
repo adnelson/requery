@@ -1,12 +1,12 @@
 {
   "name": "@requery/sqlite",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Sqlite interface for Requery",
   "repository": "https://github.com/adnelson/requery",
   "author": "Allen Nelson <ithinkican@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@requery/abstract": "^0.1.0",
+    "@requery/abstract": "^0.2.0",
     "bs-platform": "^5.0.6",
     "bs-sqlite": "git://github.com/adnelson/bs-sqlite#reasonml"
   },
