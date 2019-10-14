@@ -8,7 +8,7 @@
     "bs-platform": "^5.0.6",
     "requery-abstract": "*",
     "requery-postgres": "*",
-    "requery-example-abstract": "../../abstract/example/books"
+    "requery-example-abstract": "../../abstract/example"
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",

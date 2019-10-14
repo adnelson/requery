@@ -1,4 +1,4 @@
-open RequeryAbstract;
+open Requery;
 module Pg = BsPostgres;
 module Rules = RenderQuery.DefaultRules;
 module Render = RenderQuery.WithRenderingRules(Rules);

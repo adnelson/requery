@@ -1,8 +1,8 @@
-module A = RequeryAbstract.Utils.Array;
+module A = Requery.Utils.Array;
 
 module Sql = {
   // Postgres-specific syntax
-  include RequeryAbstract.Sql;
+  include Requery.Sql;
 
   // Expresses the `RETURNING` clause for inserts
   module Returning = {
@@ -12,8 +12,8 @@ module Sql = {
 };
 
 module Render = {
-  module Rules = RequeryAbstract.RenderQuery.DefaultRules;
-  module Render = RequeryAbstract.RenderQuery.WithRenderingRules(Rules);
+  module Rules = Requery.RenderQuery.DefaultRules;
+  module Render = Requery.RenderQuery.WithRenderingRules(Rules);
   include Render;
   module Returning = {
     let render: Sql.Returning.t => string =
@@ -24,7 +24,7 @@ module Render = {
 };
 
 module QueryBuilder = {
-  module QB = RequeryAbstract.QueryBuilder;
+  module QB = Requery.QueryBuilder;
   include QB;
   open Sql.Returning;
 

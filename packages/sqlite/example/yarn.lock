@@ -113,7 +113,7 @@ requery-abstract@^0.4.0:
     "@glennsl/bs-json" "^5.0.1"
     bs-platform "^5.0.6"
 
-requery-example-abstract@../../abstract/example/books:
+requery-example-abstract@../../abstract/example:
   version "1.0.0"
   dependencies:
     "@glennsl/bs-json" "^5.0.1"

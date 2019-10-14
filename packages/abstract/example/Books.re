@@ -1,5 +1,5 @@
-module Client = RequeryAbstract.Client;
-open RequeryAbstract;
+module Client = Requery.Client;
+open Requery;
 module QB = QueryBuilder;
 module RE = RowEncode;
 module Rules = RenderQuery.DefaultRules;
@@ -8,7 +8,7 @@ module P = Utils.Promise;
 module J = Utils.Json;
 module JD = Utils.Json.Decode;
 module JE = Utils.Json.Encode;
-module C = RequeryAbstract.Client;
+module C = Requery.Client;
 let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
   Utils.Promise.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 

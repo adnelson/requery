@@ -1,4 +1,4 @@
-open RequeryAbstract;
+open Requery;
 
 let (then_, resolve) = Js.Promise.(then_, resolve);
 let client = RequerySqlite.Sqlite3.(makeClient(Memory, ~onQuery=Client.logQuery));

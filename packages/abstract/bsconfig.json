@@ -4,7 +4,7 @@
     "@glennsl/bs-json"
   ],
   "bs-dev-dependencies": ["@glennsl/bs-jest"],
-  "namespace": true,
+  "namespace": "Requery",
   "package-specs": {
     "in-source": true,
     "module": "commonjs"

@@ -1,4 +1,4 @@
-open RequeryAbstract;
+open Requery;
 module Pool = RequeryPostgres.Postgres.Pool;
 
 let pool = Pool.makePool({host: "localhost", database: "requery-example", port: 5999});
