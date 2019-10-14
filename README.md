@@ -39,7 +39,7 @@ RowEncode.(
 * Query generation, query execution, and query result parsing are clearly separated at the type level.
 * Abstractions compose correctly, allowing you to avoid gotchas and write DRY code.
 
-Note that `requery` is not intended to be an ORM. It instead is intentended to provide powerful abstractions for query generation, encoding/decoding objects, and database interaction. As a user you can use as much or as little of the types as you want, whether you just want to just dump some SQL to stdout, or you want to use the `Query` functor to set up an app that interacts with a database, or maybe you want to write your queries by hand, but you want to use the `RowDecode` library to unpack the results. That said, the tools provided by `requery` could conceivably be used to implement the SQL underpinnings of an ORM.
+Note that while an ORM could be written using `requery` to structure queries, `requery` itself is not an ORM. The tools it provides -- powerful abstractions for query generation, encoding/decoding objects, and database interaction -- are designed to be modular and used as much or as little as you want. You might just want to script out database seeding for a test suite, write a client library for a database that already exists, write your queries by hand and use the `RowDecode` library to unpack the results of queries you've written by hand, or set up a web app that can work with different databases agnostic.
 
 ## Examples
 
