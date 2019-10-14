@@ -1,5 +1,5 @@
 {
-  "name": "basic-sqlite",
+  "name": "requery-example-basic-sqlite",
   "version": "1.0.0",
   "description": "An example of basic requery usage, with sqlite",
   "main": "src/SqliteBasic.bs.js",

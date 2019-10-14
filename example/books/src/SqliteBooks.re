@@ -1,3 +1,4 @@
-let client: Sqlite3.client = Sqlite3.(makeClient(Memory, ~onQuery=AbstractClient.logQuery));
+let logQuery = RequeryAbstract.AbstractClient.logQuery;
+let client = RequerySqlite.Sqlite3.(makeClient(Memory, ~onQuery=logQuery));
 
-Books.run(client, QueryBuilder.Types.int);
+Books.run(client, RequeryAbstract.QueryBuilder.Types.int);

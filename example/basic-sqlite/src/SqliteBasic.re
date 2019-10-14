@@ -3,6 +3,7 @@ let (then_, resolve) = Js.Promise.(then_, resolve);
 let client = RequerySqlite.Sqlite3.(makeClient(Memory, ~onQuery=AbstractClient.logQuery));
 let authors = QueryBuilder.tname("authors");
 
+// CREATE TABLE IF NOT EXISTS authors (first TEXT NOT NULL, last TEXT NOT NULL, UNIQUE (first, last));
 QueryBuilder.(
   [
     cdef("first", Types.text),
@@ -12,6 +13,7 @@ QueryBuilder.(
   |> createTable(authors, ~ifNotExists=true)
 )
 |> AbstractClient.createTable(client)
+// Create query: INSERT INTO authors (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen')
 |> then_(_ =>
      RowEncode.(
        [("Stephen", "King"), ("Jane", "Austen")]
@@ -21,15 +23,13 @@ QueryBuilder.(
      // Run query on database
      |> AbstractClient.insert(client)
    )
-// Create query: INSERT INTO authors (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen')
-|> then_(_
-     // SELECT first, last FROM authors
-     =>
-       QueryBuilder.([e(col("first")), e(col("last"))] |> selectFrom(table(authors)))
-       // Run query, decoding result into [|("Stephen", "King"), ("Jane", "Austen")|]
-       |> AbstractClient.select(
-            client,
-            RowDecode.(decodeEach(columns2("first", string, "last", string))),
-          )
-     )
+// SELECT first, last FROM authors
+|> then_(_ =>
+     QueryBuilder.([e(col("first")), e(col("last"))] |> selectFrom(table(authors)))
+     // Run query, decoding result into [|("Stephen", "King"), ("Jane", "Austen")|]
+     |> AbstractClient.select(
+          client,
+          RowDecode.(decodeEach(columns2("first", string, "last", string))),
+        )
+   )
 |> then_(authors => authors |> Js.log |> resolve);
