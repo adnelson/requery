@@ -1,0 +1,12 @@
+{
+  "name": "basic-sqlite",
+  "version": "1.0.0",
+  "description": "An example of basic requery usage, with sqlite",
+  "main": "src/SqliteBasic.bs.js",
+  "license": "MIT",
+  "dependencies": {
+    "bs-platform": "^5.0.6",
+    "requery-abstract": "^0.4.0",
+    "requery-sqlite": "^0.4.0"
+  }
+}

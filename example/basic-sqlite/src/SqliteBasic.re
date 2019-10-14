@@ -1,7 +1,17 @@
+open RequeryAbstract;
 let (then_, resolve) = Js.Promise.(then_, resolve);
-let client = Sqlite3.(makeClient(Memory));
+let client = RequerySqlite.Sqlite3.(makeClient(Memory, ~onQuery=AbstractClient.logQuery));
 let authors = QueryBuilder.tname("authors");
 
+    QueryBuilder.(
+      [
+        cdef("first", Types.text),
+        cdef("last", Types.text),
+        constraint_(unique([cname("first"), cname("last")])),
+      ]
+      |> createTable(authors, ~ifNotExists=true)
+    ) |> AbstractClient.createTable(client)
+|> then_(_ =>
 // Create query: INSERT INTO authors (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen')
 RowEncode.(
   [("Stephen", "King"), ("Jane", "Austen")]
@@ -9,7 +19,7 @@ RowEncode.(
   |> into(authors)
 )
 // Run query on database
-|> AbstractClient.insert(client)
+|> AbstractClient.insert(client))
 |> then_(_
      // SELECT first, last FROM authors
      =>
