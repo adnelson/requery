@@ -98,7 +98,7 @@ postgres-interval@^1.1.0:
     xtend "^4.0.0"
 
 requery-abstract@../abstract:
-  version "0.2.0"
+  version "0.5.0"
   dependencies:
     "@glennsl/bs-json" "^5.0.1"
     bs-platform "^5.0.6"

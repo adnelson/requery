@@ -1,6 +1,7 @@
 // Tools for encoding into rows
 include QueryBuilder;
-module O = Belt.Option;
+module L = Utils.List;
+module O = Utils.Option;
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), (L.amap(vs), toE));
