@@ -1,0 +1,22 @@
+{
+  "name": "requery-sqlite-basic-example",
+  "bs-dependencies": [
+    "requery-abstract",
+  ],
+  "package-specs": {
+    "in-source": true,
+    "module": "commonjs"
+  },
+  "reason": {
+    "react-jsx": 3
+  },
+  "refmt": 3,
+  "sources": [
+    "."
+  ],
+  "suffix": ".bs.js",
+  "warnings": {
+    "number": "-23-44+60",
+    "error": "+8+6+60"
+  }
+}
