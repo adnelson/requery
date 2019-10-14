@@ -1,6 +1,6 @@
 {
   "name": "requery-postgres",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "ReasonML SQL query builder and database interaction library",
   "repository": "https://github.com/adnelson/requery",
   "author": "Allen Nelson <ithinkican@gmail.com>",
