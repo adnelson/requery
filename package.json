@@ -14,7 +14,7 @@
       "prettier --write",
       "git add"
     ],
-    "packages/**/*.{re,rei}": [
+    "**/*.{re,rei}": [
       "bsrefmt --in-place --print-width 100",
       "git add"
     ]
