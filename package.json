@@ -10,11 +10,11 @@
       "prettier --write",
       "git add"
     ],
-    "src/*.{re,rei}": [
-      "bsrefmt --in-place --print-width 100",
+    "**/package.json": [
+      "prettier --write",
       "git add"
     ],
-    "example/*.{re,rei}": [
+    "packages/**/*.{re,rei}": [
       "bsrefmt --in-place --print-width 100",
       "git add"
     ]
@@ -25,14 +25,7 @@
     "printWidth": 100,
     "singleQuote": true
   },
-  "dependencies": {
-    "@glennsl/bs-json": "^5.0.1",
-    "bs-platform": "^5.0.6",
-    "bs-postgres": "^0.2.0",
-    "bs-sqlite": "git://github.com/adnelson/bs-sqlite#reasonml"
-  },
   "devDependencies": {
-    "@glennsl/bs-jest": "^0.4.9",
     "husky": "^3.0.5",
     "lerna": "^3.17.0",
     "lint-staged": "^9.3.0",
@@ -51,7 +44,10 @@
     "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
     "test": "yarn build && jest __tests__",
     "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
-    "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
+    "format": "find . -type d -name node_modules -prune -o -type f -name '*.re' -print | xargs bsrefmt --in-place --print-width 100",
     "testquery": "node example/SqliteBooks.bs.js"
+  },
+  "dependencies": {
+    "bs-platform": "^5.0.6"
   }
 }
