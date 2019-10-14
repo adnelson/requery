@@ -1,8 +1,8 @@
 {
-  "name": "@requery/postgres",
+  "name": "requery-postgres",
   "bs-dependencies": [
     "@glennsl/bs-json",
-    "@requery/abstract",
+    "requery-abstract",
     "bs-postgres"
   ],
   "namespace": true,

@@ -1,5 +1,5 @@
 {
-  "name": "@requery/abstract",
+  "name": "requery-abstract",
   "bs-dependencies": [
     "@glennsl/bs-json"
   ],

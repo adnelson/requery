@@ -1,5 +1,5 @@
 {
-  "name": "@requery/abstract",
+  "name": "requery-abstract",
   "version": "0.2.0",
   "description": "ReasonML SQL query builder and database interaction library",
   "repository": "https://github.com/adnelson/requery",
@@ -51,7 +51,7 @@
     "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
     "testquery": "node example/SqliteBooks.bs.js"
   },
-  "gitHead": "571b2e592a019817db9ab0d8c04f8ea9812f5204",
+  "gitHead": "11a49efecd6102bbc45be80e8efcdfc3fa95ac72",
   "publishConfig": {
     "access": "public"
   }

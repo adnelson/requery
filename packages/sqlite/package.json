@@ -1,14 +1,14 @@
 {
-  "name": "@requery/sqlite",
+  "name": "requery-sqlite",
   "version": "0.2.0",
   "description": "Sqlite interface for Requery",
   "repository": "https://github.com/adnelson/requery",
   "author": "Allen Nelson <ithinkican@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@requery/abstract": "^0.2.0",
     "bs-platform": "^5.0.6",
-    "bs-sqlite": "git://github.com/adnelson/bs-sqlite#reasonml"
+    "bs-sqlite": "git://github.com/adnelson/bs-sqlite#reasonml",
+    "requery-abstract": "../abstract"
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
@@ -20,7 +20,7 @@
     "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
     "testquery": "node example/SqliteBooks.bs.js"
   },
-  "gitHead": "571b2e592a019817db9ab0d8c04f8ea9812f5204",
+  "gitHead": "11a49efecd6102bbc45be80e8efcdfc3fa95ac72",
   "publishConfig": {
     "access": "public"
   }
