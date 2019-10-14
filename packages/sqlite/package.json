@@ -1,48 +1,14 @@
 {
-  "name": "requery",
+  "name": "@requery/sqlite",
   "version": "0.1.0",
-  "description": "ReasonML SQL query builder and database interaction library",
+  "description": "Sqlite interface for Requery",
   "repository": "https://github.com/adnelson/requery",
   "author": "Allen Nelson <ithinkican@gmail.com>",
   "license": "MIT",
-  "lint-staged": {
-    "package.json": [
-      "prettier --write",
-      "git add"
-    ],
-    "src/*.{re,rei}": [
-      "bsrefmt --in-place --print-width 100",
-      "git add"
-    ],
-    "example/*.{re,rei}": [
-      "bsrefmt --in-place --print-width 100",
-      "git add"
-    ]
-  },
-  "prettier": {
-    "semi": false,
-    "trailingComma": "es5",
-    "printWidth": 100,
-    "singleQuote": true
-  },
   "dependencies": {
-    "@glennsl/bs-json": "^5.0.1",
+    "@requery/abstract": "../abstract",
     "bs-platform": "^5.0.6",
-    "bs-postgres": "^0.2.0",
     "bs-sqlite": "git://github.com/adnelson/bs-sqlite#reasonml"
-  },
-  "devDependencies": {
-    "@glennsl/bs-jest": "^0.4.9",
-    "husky": "^3.0.5",
-    "lerna": "^3.17.0",
-    "lint-staged": "^9.3.0",
-    "onchange": "^6.1.0",
-    "prettier": "^1.18.2"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",

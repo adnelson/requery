@@ -1,3 +1,4 @@
+open RequeryAbstract;
 module A = Utils.Array;
 module QB = QueryBuilder;
 module RE = RowEncode;
