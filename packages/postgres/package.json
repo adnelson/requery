@@ -12,7 +12,7 @@
     "singleQuote": true
   },
   "dependencies": {
-    "@requery/abstract": "../abstract",
+    "@requery/abstract": "^0.1.0",
     "bs-platform": "^5.0.6",
     "bs-postgres": "^0.2.0"
   },
@@ -23,5 +23,9 @@
     "test": "yarn build && jest __tests__",
     "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
     "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re"
+  },
+  "gitHead": "571b2e592a019817db9ab0d8c04f8ea9812f5204",
+  "publishConfig": {
+    "access": "public"
   }
 }
