@@ -58,6 +58,8 @@ INSERT INTO authors (first_name, last_name) VALUES ('Stephen', 'King');
 INSERT INTO books (author_id, title) VALUES (1, 'The Shining'), (1, 'Carrie');
 ```
 
+Start off by adding `requery-abstract` and `requery-postgres` as dependencies. Don't forget to update your `bsconfig.json` as well.
+
 One thing you might want to do is find all of the books that an author wrote. Here's an example of how that might look:
 
 ```reason

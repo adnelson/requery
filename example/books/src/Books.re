@@ -1,3 +1,4 @@
+open RequeryAbstract;
 module QB = QueryBuilder;
 module RE = RowEncode;
 module Rules = RenderQuery.DefaultRules;
@@ -130,7 +131,5 @@ let run = (client, idType) => {
               QB.(select([e(all)]) |> from(table(Author.tableName)))
               |> Client.select(client, RowDecode.(decodeEach(Author.fromJson)))
             )
-         // Print the result as JSON
-         |> P.then_(r => J.rLog(Result.encode(JE.array(Author.toJson)), r))
        );
 };

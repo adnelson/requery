@@ -1,0 +1,25 @@
+{
+  "name": "requery-sqlite",
+  "bs-dependencies": [
+    "@glennsl/bs-json",
+    "requery-abstract",
+    "bs-sqlite"
+  ],
+  "namespace": true,
+  "package-specs": {
+    "in-source": true,
+    "module": "commonjs"
+  },
+  "reason": {
+    "react-jsx": 3
+  },
+  "refmt": 3,
+  "sources": [
+    "src"
+  ],
+  "suffix": ".bs.js",
+  "warnings": {
+    "number": "-23-44+60",
+    "error": "+8+6+60"
+  }
+}

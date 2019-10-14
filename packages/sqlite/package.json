@@ -1,0 +1,27 @@
+{
+  "name": "requery-sqlite",
+  "version": "0.5.0",
+  "description": "Sqlite interface for Requery",
+  "repository": "https://github.com/adnelson/requery",
+  "author": "Allen Nelson <ithinkican@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "bs-platform": "^5.0.6",
+    "bs-sqlite": "git://github.com/adnelson/bs-sqlite#reasonml",
+    "requery-abstract": "../abstract"
+  },
+  "scripts": {
+    "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
+    "cleanbuild": "bsb -clean-world && yarn build",
+    "watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
+    "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
+    "test": "yarn build && jest __tests__",
+    "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
+    "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
+    "testquery": "node example/SqliteBooks.bs.js"
+  },
+  "gitHead": "11a49efecd6102bbc45be80e8efcdfc3fa95ac72",
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "requery-postgres",
+  "version": "0.5.0",
+  "description": "ReasonML SQL query builder and database interaction library",
+  "repository": "https://github.com/adnelson/requery",
+  "author": "Allen Nelson <ithinkican@gmail.com>",
+  "license": "MIT",
+  "prettier": {
+    "semi": false,
+    "trailingComma": "es5",
+    "printWidth": 100,
+    "singleQuote": true
+  },
+  "dependencies": {
+    "bs-platform": "^5.0.6",
+    "bs-postgres": "^0.2.0",
+    "requery-abstract": "../abstract"
+  },
+  "scripts": {
+    "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
+    "cleanbuild": "bsb -clean-world && yarn build",
+    "watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
+    "test": "yarn build && jest __tests__",
+    "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
+    "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re"
+  },
+  "gitHead": "11a49efecd6102bbc45be80e8efcdfc3fa95ac72",
+  "publishConfig": {
+    "access": "public"
+  }
+}

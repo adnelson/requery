@@ -19,7 +19,6 @@ module DefaultRules: SqlRenderingRules = {
   let validReg = {
     let first = "[a-zA-Z_#@]";
     let rest = "[a-zA-Z0-9_$#]*";
-    Js.log("^" ++ first ++ rest ++ "$");
     Js.Re.fromString("^" ++ first ++ rest ++ "$");
   };
   let requiresEscape = n => !S.isMatch(n, validReg);
