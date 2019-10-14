@@ -1,12 +1,33 @@
 {
   "name": "requery-example-basic-sqlite",
-  "version": "1.0.0",
-  "description": "An example of basic requery usage, with sqlite",
-  "main": "src/SqliteBasic.bs.js",
+  "version": "0.6.0",
+  "description": "Example usage of the Sqlite interface for Requery",
+  "repository": "https://github.com/adnelson/requery",
+  "author": "Allen Nelson <ithinkican@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "bs-platform": "^5.0.6",
-    "requery-abstract": "^0.4.0",
-    "requery-sqlite": "^0.4.0"
+    "bs-sqlite": "git://github.com/adnelson/bs-sqlite#reasonml",
+    "requery-abstract": "^0.6.0",
+    "requery-sqlite": "^0.6.0"
+  },
+  "scripts": {
+    "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
+    "clean": "bsb -clean-world",
+    "cleanbuild": "yarn clean && yarn build",
+    "watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
+    "watch:abstract": "sh -c \"yarn watch & onchange -k -i -d 500 '../abstract/src/**/*.{re,rei}' -- yarn cleanbuild\"",
+    "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
+    "test": "yarn build && jest __tests__",
+    "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
+    "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
+    "testquery": "node example/SqliteBooks.bs.js"
+  },
+  "gitHead": "11a49efecd6102bbc45be80e8efcdfc3fa95ac72",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "onchange": "^6.1.0"
   }
 }

@@ -1,6 +1,7 @@
 open RequeryAbstract;
+
 let (then_, resolve) = Js.Promise.(then_, resolve);
-let client = RequerySqlite.Sqlite3.(makeClient(Memory, ~onQuery=AbstractClient.logQuery));
+let client = Sqlite3.(makeClient(Memory, ~onQuery=Client.logQuery));
 let authors = QueryBuilder.tname("authors");
 
 // CREATE TABLE IF NOT EXISTS authors (first TEXT NOT NULL, last TEXT NOT NULL, UNIQUE (first, last));
@@ -12,7 +13,7 @@ QueryBuilder.(
   ]
   |> createTable(authors, ~ifNotExists=true)
 )
-|> AbstractClient.createTable(client)
+|> Client.createTable(client)
 // Create query: INSERT INTO authors (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen')
 |> then_(_ =>
      RowEncode.(
@@ -21,15 +22,12 @@ QueryBuilder.(
        |> into(authors)
      )
      // Run query on database
-     |> AbstractClient.insert(client)
+     |> Client.insert(client)
    )
 // SELECT first, last FROM authors
 |> then_(_ =>
      QueryBuilder.([e(col("first")), e(col("last"))] |> selectFrom(table(authors)))
      // Run query, decoding result into [|("Stephen", "King"), ("Jane", "Austen")|]
-     |> AbstractClient.select(
-          client,
-          RowDecode.(decodeEach(columns2("first", string, "last", string))),
-        )
+     |> Client.select(client, RowDecode.(decodeEach(columns2("first", string, "last", string))))
    )
 |> then_(authors => authors |> Js.log |> resolve);

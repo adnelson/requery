@@ -2,7 +2,6 @@ open RequeryAbstract;
 module Pg = BsPostgres;
 module Rules = RenderQuery.DefaultRules;
 module Render = RenderQuery.WithRenderingRules(Rules);
-module AClient = AbstractClient;
 let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
   Utils.Promise.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 
@@ -17,7 +16,7 @@ type config = {
 type result = Pg.Result.t(Js.Json.t);
 
 // Type alias for the abstract client paramaterized for postgres
-type client = AClient.t(Pg.Client.t, result);
+type client = Client.t(Pg.Client.t, result, Sql.query);
 
 // Pooled connections
 module Pool = {
@@ -30,7 +29,7 @@ module Pool = {
     pool =>
       Pg.Pool.Promise.connect(pool)
       |> then_(client =>
-           AClient.make(
+           Client.make(
              ~handle=client,
              ~queryToSql=Render.render,
              ~queryRaw=runRaw,
@@ -46,5 +45,5 @@ module Pool = {
   let runClient: (pool, client => Js.Promise.t('a)) => Js.Promise.t('a) =
     (pool, action) =>
       makeClient(pool)
-      |> then_(client => action(client) |> finally(() => releaseClient(AClient.handle(client))));
+      |> then_(client => action(client) |> finally(() => releaseClient(Client.handle(client))));
 };
