@@ -51,7 +51,7 @@
     "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
     "testquery": "node example/SqliteBooks.bs.js"
   },
-  "gitHead": "11a49efecd6102bbc45be80e8efcdfc3fa95ac72",
+  "gitHead": "070a1c35478946515074fe0286b47121b4bbfac7",
   "publishConfig": {
     "access": "public"
   }
