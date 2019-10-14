@@ -13,10 +13,10 @@ RowEncode.(
   |> insertMany(columns2("first", string, "last", string))
   |> into(authors)
 )
-|> AbstractClient.insert(client)
+|> Client.insert(client)
 |> then_(_ =>
      QueryBuilder.([e(col("first")), e(col("last"))] |> selectFrom(table(authors)))
-     |> AbstractClient.select(
+     |> Client.select(
           client,
           RowDecode.(decodeEach(columns2("first", string, "last", string))),
         )
@@ -40,6 +40,18 @@ RowEncode.(
 * Abstractions compose correctly, allowing you to avoid gotchas and write DRY code.
 
 Note that while an ORM could be written using `requery` to structure queries, `requery` itself is not an ORM. The tools it provides -- powerful abstractions for query generation, encoding/decoding objects, and database interaction -- are designed to be modular and used as much or as little as you want. You might just want to script out database seeding for a test suite, write a client library for a database that already exists, write your queries by hand and use the `RowDecode` library to unpack the results of queries you've written by hand, or set up a web app that can work with different databases agnostic.
+
+## Libraries
+
+* `requery-abstract`: The main code base. Agnostic to different backends. Among its modules are:
+  * `Sql`: contains an abstact syntax tree for SQL. The AST is polymorphic to support DB-specific syntax. The types here are generally not used directly; instead use the functions in `QueryBuilder`.
+  * `QueryBuilder`: functions for building SQL queries in a more ergonomic way than directly constructing an AST (although you can if you want). See the interface file `QueryBuilder.rei` for documentation on the various builder functions.
+  * `RenderQuery`: Code to render the AST objects into actual SQL strings. You can use this library directly if you need access to the SQL, but if you're using the `Client` this will probably be abstracted away.
+  * `RowEncode`: functions to serialize domain objects into "rows", that is, the data that goes into an `INSERT INTO` query.
+  * `RowDecode`: functions to deserialize information returned by a query (e.g. a `SELECT` or an `INSERT` which returns data) into domain objects.
+  * `Client`: an abstraction of the actual database object. This allows you to interact with your database using the `requery` abstractions.
+* `requery-postgres`: functionality to connect to a postgres database and write construct SQL with postgres-specific syntax.
+* `requery-sqlite`: functionality to connect to a sqlite3 database (either a file or in-memory) and write construct SQL with sqlite3-specific syntax.
 
 ## Examples
 
@@ -164,7 +176,7 @@ At present, the following query types have been implemented, with the following 
 ### CREATE TABLE
 
 - `IF NOT EXISTS`
-- Per-column `PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `NOT NULL`, `CHECK` and `DEFAULT` constraints
+- Per-column `PRIMARY KEY`, `UNIQUE`, `NOT NULL`, `CHECK` and `DEFAULT` constraints
 - Per-table `PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, and `CHECK` constraints
 
 ### CREATE VIEW
