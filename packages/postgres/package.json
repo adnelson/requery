@@ -18,14 +18,24 @@
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
-    "cleanbuild": "bsb -clean-world && yarn build",
+    "cleanbuild": [
+      "bsb -clean-world && yarn build",
+      "yarn clean && yarn build"
+    ],
     "watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
     "test": "yarn build && jest __tests__",
     "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
-    "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re"
+    "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
+    "clean": "bsb -clean-world",
+    "watch:abstract": "sh -c \"yarn watch & onchange -k -i -d 500 '../abstract/src/**/*.{re,rei}' -- yarn cleanbuild\"",
+    "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
+    "testquery": "node example/SqliteBooks.bs.js"
   },
   "gitHead": "11a49efecd6102bbc45be80e8efcdfc3fa95ac72",
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "onchange": "^6.1.0"
   }
 }

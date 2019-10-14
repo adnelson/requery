@@ -15,8 +15,7 @@
   },
   "refmt": 3,
   "sources": [
-    "src",
-    "examples/basic"
+    "src"
   ],
   "suffix": ".bs.js",
   "warnings": {

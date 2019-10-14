@@ -1,9 +1,8 @@
 {
-  "name": "requery-sqlite-basic-example",
+  "name": "requery-example-abstract",
+  "namespace": "RequeryExample",
   "bs-dependencies": [
-    "requery-abstract",
-    "requery-sqlite",
-    "requery-postgres"
+    "requery-abstract"
   ],
   "package-specs": {
     "in-source": true,
@@ -14,7 +13,7 @@
   },
   "refmt": 3,
   "sources": [
-    "src"
+    "."
   ],
   "suffix": ".bs.js",
   "warnings": {

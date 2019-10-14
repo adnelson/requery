@@ -1,0 +1,20 @@
+{
+  "name": "requery-example-abstract",
+  "version": "1.0.0",
+  "description": "An example of requery usage, building backend-agnostic database code",
+  "license": "MIT",
+  "dependencies": {
+    "@glennsl/bs-json": "^5.0.1",
+    "bs-platform": "^5.0.6",
+    "requery-abstract": "^0.4.0"
+  },
+  "scripts": {
+    "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
+    "cleanbuild": "bsb -clean-world && yarn build",
+    "watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
+    "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
+    "test": "yarn build && jest __tests__",
+    "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
+    "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re"
+  }
+}

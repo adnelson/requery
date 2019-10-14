@@ -1,7 +1,7 @@
 open RequeryAbstract;
 
 let (then_, resolve) = Js.Promise.(then_, resolve);
-let client = Sqlite3.(makeClient(Memory, ~onQuery=Client.logQuery));
+let client = RequerySqlite.Sqlite3.(makeClient(Memory, ~onQuery=Client.logQuery));
 let authors = QueryBuilder.tname("authors");
 
 // CREATE TABLE IF NOT EXISTS authors (first TEXT NOT NULL, last TEXT NOT NULL, UNIQUE (first, last));

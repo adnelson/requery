@@ -1,12 +1,14 @@
 {
-  "name": "requery-example-sqlite-postgres",
+  "name": "requery-example-postgres",
   "version": "1.0.0",
-  "description": "An example of requery usage, building backend-agnostic database code",
+  "description": "An example of requery usage, building data",
   "license": "MIT",
   "dependencies": {
     "@glennsl/bs-json": "^5.0.1",
     "bs-platform": "^5.0.6",
-    "requery-abstract": "^0.4.0"
+    "requery-abstract": "*",
+    "requery-postgres": "*",
+    "requery-example-abstract": "../../../abstract/example/books"
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",

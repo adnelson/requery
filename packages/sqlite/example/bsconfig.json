@@ -1,7 +1,9 @@
 {
-  "name": "requery-sqlite-basic-example",
+  "name": "requery-example-sqlite",
   "bs-dependencies": [
     "requery-abstract",
+    "requery-sqlite",
+    "requery-example-abstract"
   ],
   "package-specs": {
     "in-source": true,

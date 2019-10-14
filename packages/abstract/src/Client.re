@@ -46,7 +46,7 @@ let make = (~handle, ~queryToSql, ~resultToRows, ~queryRaw, ~execRaw, ~onQuery=?
 let renderQuery = ({queryToSql}, query) => queryToSql(query);
 let handle = ({handle}) => handle;
 
-let query: (t('h, 'r, 'q), Sql.query) => Js.Promise.t(rows) =
+let query: (t('h, 'r, 'q), 'q) => Js.Promise.t(rows) =
   ({onQuery, onResult, handle, queryToSql, queryRaw, resultToRows} as client, query) => {
     let _ = O.map(onQuery, f => f(client, query));
     queryRaw(handle, queryToSql(query))
@@ -56,7 +56,7 @@ let query: (t('h, 'r, 'q), Sql.query) => Js.Promise.t(rows) =
        });
   };
 
-let exec: (t('h, 'r, 'q), Sql.query) => Js.Promise.t(rows) =
+let exec: (t('h, 'r, 'q), 'q) => Js.Promise.t(rows) =
   ({onQuery, onResult, handle, queryToSql, execRaw, resultToRows} as client, query) => {
     let _ = O.map(onQuery, f => f(client, query));
     execRaw(handle, queryToSql(query))

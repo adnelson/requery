@@ -16,7 +16,7 @@ type config = {
 type result = Pg.Result.t(Js.Json.t);
 
 // Type alias for the abstract client paramaterized for postgres
-type client = Client.t(Pg.Client.t, result, Sql.query);
+type client = Client.t(Pg.Client.t, result, Custom.query);
 
 // Pooled connections
 module Pool = {
@@ -31,7 +31,7 @@ module Pool = {
       |> then_(client =>
            Client.make(
              ~handle=client,
-             ~queryToSql=Render.render,
+             ~queryToSql=Custom.render,
              ~queryRaw=runRaw,
              ~execRaw=runRaw,
              ~resultToRows=(result: result) => RowDecode.toRows(result##rows),

@@ -171,8 +171,8 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     open Sql.Insert;
     exception UnequalNumberOfExpressions(list(int));
 
-    let render: t => string =
-      ({data, into, returning}) => {
+    let render: ('returning => string, t('returning)) => string =
+      (renderReturning, {data, into, returning}) => {
         "INSERT INTO "
         ++ TableName.render(into)
         ++ " "
@@ -194,12 +194,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
           | Select(sel) => Select.render(sel)
           }
         )
-        ++ O.mapString(
-             returning,
-             fun
-             | Columns(columns) =>
-               " RETURNING " ++ A.mapJoinCommasParens(columns, Column.render),
-           );
+        ++ O.mapString(returning, renderReturning);
       };
   };
 
@@ -269,15 +264,16 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
   };
 
   let select: Sql.Select.t => string = Select.render;
-  let insert: Sql.Insert.t => string = Insert.render;
+  let insert: ('r => string, Sql.Insert.t('r)) => string = r => Insert.render(r);
   let createTable: Sql.CreateTable.t => string = CreateTable.render;
   let createView: Sql.CreateView.t => string = CreateView.render;
-  let render: Sql.query => string =
-    fun
-    | Select(s) => select(s)
-    | Insert(i) => insert(i)
-    | CreateTable(ct) => createTable(ct)
-    | CreateView(cv) => createView(cv);
+  let render: ('r => string, Sql.query('r)) => string =
+    r =>
+      fun
+      | Select(s) => select(s)
+      | Insert(i) => insert(r, i)
+      | CreateTable(ct) => createTable(ct)
+      | CreateView(cv) => createView(cv);
 };
 
 module Default = WithRenderingRules(DefaultRules);
