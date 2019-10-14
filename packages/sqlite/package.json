@@ -1,6 +1,6 @@
 {
   "name": "requery-sqlite",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Sqlite interface for Requery",
   "repository": "https://github.com/adnelson/requery",
   "author": "Allen Nelson <ithinkican@gmail.com>",
