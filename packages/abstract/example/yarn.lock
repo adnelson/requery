@@ -12,10 +12,10 @@ bs-platform@^5.0.6:
   resolved "https://registry.yarnpkg.com/bs-platform/-/bs-platform-5.0.6.tgz#88c13041fb020479800de3d82c680bf971091425"
   integrity sha512-6Boa2VEcWJp2WJr38L7bp3J929nYha7gDarjxb070jWzgfPJ/WbzjipmSfnu2eqqk1MfjEIpBipbPz6n1NISwA==
 
-requery-abstract@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/requery-abstract/-/requery-abstract-0.4.0.tgz#7fbe739ed2f278ecdfcd230a18f77e10ad0bae99"
-  integrity sha512-9ivMr7CNWRl7GiZUFNfa8U651I90xsmyRoyV/MswW5Ea4prrGZasQ8pck586YCf+AuCaRE/AbyQ6tieFc2djjQ==
+requery-abstract@^0.8.1:
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/requery-abstract/-/requery-abstract-0.8.1.tgz#07c6677770eeb19eaae924b067984bb02c016b47"
+  integrity sha512-wGoODRunUVIweJ79TT+mUegBIu0olEkN85uiYeTA4RBbLxktLiZxEJvHzbf9+jMfx2LEf9BFWH9akJ6tvWXthQ==
   dependencies:
     "@glennsl/bs-json" "^5.0.1"
     bs-platform "^5.0.6"
