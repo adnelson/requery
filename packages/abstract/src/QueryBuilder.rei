@@ -60,6 +60,9 @@ let typed: (expr, typeName) => expr;
 // A single column, from a string
 let col: string => expr;
 
+// Multiple columns
+let cols: list(string) => list(expr);
+
 // A single column, from a column name
 let col_: column => expr;
 
@@ -218,7 +221,8 @@ let from: (target, select) => select;
 let limit: (expr, select) => select;
 let where: (expr, select) => select;
 let whereExists: (select, select) => select;
-let orderBy_: (list(expr), select) => select;
+// let orderByDir: (list(expr), select) => select;
+let orderBy_: (list(expr), select) => select; // alias for orderByDir
 let orderBy: (list((expr, direction)), select) => select;
 let orderBy1_: (expr, select) => select;
 let orderBy1: (expr, direction, select) => select;
@@ -226,8 +230,10 @@ let orderBy2_: (expr, expr, select) => select;
 let orderBy2: (expr, direction, expr, direction, select) => select;
 let groupBy: (~having: expr=?, list(expr), select) => select;
 let groupBy1: (~having: expr=?, expr, select) => select;
-let groupByCol: (~having: expr=?, string, select) => select;
-let groupByCols: (~having: expr=?, list(string), select) => select;
+let groupByColumn: (~having: expr=?, string, select) => select;
+let groupByCol: (~having: expr=?, string, select) => select; // alias
+let groupByColumns: (~having: expr=?, list(string), select) => select;
+let groupByCols: (~having: expr=?, list(string), select) => select; // alias
 
 /***************************
  * INSERT Queries
