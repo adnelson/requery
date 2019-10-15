@@ -152,8 +152,8 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
           switch (groupBy) {
           | ([||], _) => ""
           | (exprs, having) =>
-            let gb = "GROUP BY " ++ A.mapJoinCommas(exprs, Expression.render);
-            gb ++ O.mapWithDefault(having, "", h => "HAVING " ++ Expression.render(h));
+            let gb = " GROUP BY " ++ A.mapJoinCommas(exprs, Expression.render);
+            gb ++ O.mapWithDefault(having, "", h => " HAVING " ++ Expression.render(h));
           };
         let limit = O.mapString(limit, n => " LIMIT " ++ Expression.render(n));
         let where =
