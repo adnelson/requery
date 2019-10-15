@@ -46,6 +46,7 @@ let columns = Sql.Column.fromStringList;
 let tcolumns = l => Sql.Column.fromTupleList(L.map(l, ((t, c)) => (tname(t), c)));
 let col_ = c => E.Atom(E.Column(c));
 let col = c => E.Atom(E.Column(column(c)));
+let cols = cs => L.map(cs, col);
 let tcol = (t, c) => E.Atom(E.Column(tcolumn(t, c)));
 let all = E.(Atom(Column(Sql.Column.all)));
 let allFrom = t => E.Atom(Column(Sql.Column.allFrom(tname(t))));
@@ -143,18 +144,21 @@ let selectFrom = (target, exprs) => select(exprs) |> from(target);
 let limit = (n, s) => Select.{...s, limit: Some(n)};
 let where = (cond, s) => Select.{...s, where: Some(Sql.Select.Where(cond))};
 let whereExists = (sel, s) => Select.{...s, where: Some(Sql.Select.WhereExists(sel))};
-let orderBy = (cols, s) =>
-  Select.{...s, orderBy: L.amap(cols, ((c, dir)) => (c, Some(dir)))};
-let orderBy_ = (cols, s) => Select.{...s, orderBy: L.amap(cols, c => (c, None))};
-let orderBy1 = (col, dir, s) => Select.{...s, orderBy: [|(col, Some(dir))|]};
-let orderBy1_ = (col, s) => Select.{...s, orderBy: [|(col, None)|]};
-let orderBy2 = (col1, dir1, col2, dir2, s) =>
-  Select.{...s, orderBy: [|(col1, Some(dir1)), (col2, Some(dir2))|]};
-let orderBy2_ = (col1, col2, s) => Select.{...s, orderBy: [|(col1, None), (col2, None)|]};
+let orderBy = (exs, s) => Select.{...s, orderBy: L.amap(exs, ((c, dir)) => (c, Some(dir)))};
+let orderBy_ = (exs, s) => Select.{...s, orderBy: L.amap(exs, c => (c, None))};
+let orderBy1 = (ex, dir, s) => Select.{...s, orderBy: [|(ex, Some(dir))|]};
+let orderBy1_ = (ex, s) => Select.{...s, orderBy: [|(ex, None)|]};
+let orderBy2 = (ex1, dir1, ex2, dir2, s) =>
+  Select.{...s, orderBy: [|(ex1, Some(dir1)), (ex2, Some(dir2))|]};
+let orderBy2_ = (ex1, ex2, s) => Select.{...s, orderBy: [|(ex1, None), (ex2, None)|]};
+//let orderByCols = orderBy_(column);
 let groupBy = (~having=?, cols, s) => Select.{...s, groupBy: (L.toArray(cols), having)};
 let groupBy1 = (~having=?, col, s) => Select.{...s, groupBy: ([|col|], having)};
-let groupByCol = (~having=?, c, s) => Select.{...s, groupBy: ([|col(c)|], having)};
-let groupByCols = (~having=?, cols, s) => Select.{...s, groupBy: (L.amap(cols, col), having)};
+let groupByColumn = (~having=?, c, s) => Select.{...s, groupBy: ([|col(c)|], having)};
+let groupByCol = groupByColumn;
+let groupByColumns = (~having=?, cols, s) =>
+  Select.{...s, groupBy: (L.amap(cols, col), having)};
+let groupByCols = groupByColumns;
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), A.map(L.toArray(vs), toE));
