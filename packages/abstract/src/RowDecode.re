@@ -1,5 +1,6 @@
 include Utils.Json.Decode;
 module A = Utils.Array;
+module D = Utils.Dict;
 
 type error =
   | RowDecodeError(int, Js.Json.t, string)
@@ -128,7 +129,7 @@ let dict =
     |> Js.Dict.fromArray;
   };
 
-let nestedDict =
+let dict2d =
     (
       ~outerKeyField: string,
       ~outerKeyDecode: decoder(string)=string,
@@ -154,6 +155,45 @@ let nestedDict =
           switch (Js.Dict.get(result, outer)) {
           | None => Js.Dict.set(result, outer, Js.Dict.fromArray([|(inner, value)|]))
           | Some(values) => Js.Dict.set(values, inner, value)
+          }
+        );
+        result;
+      }
+    );
+
+let dict3d =
+    (
+      ~xKeyField: string,
+      ~xKeyDecode: decoder(string)=string,
+      ~yKeyField: string,
+      ~yKeyDecode: decoder(string)=string,
+      ~zKeyField: string,
+      ~zKeyDecode: decoder(string)=string,
+      ~valueField: string,
+      ~valueDecode: decoder('a),
+    )
+    : rowsDecoder(D.t(D.t(D.t('a)))) =>
+  jsonRows =>
+    jsonRows
+    |> decodeEach(
+         tup4(
+           field(xKeyField, xKeyDecode),
+           field(yKeyField, yKeyDecode),
+           field(zKeyField, zKeyDecode),
+           field(valueField, valueDecode),
+         ),
+       )
+    |> (
+      decoded => {
+        let result: D.t(D.t(D.t('a))) = D.empty();
+        A.forEach(decoded, ((x, y, z, value)) =>
+          switch (D.get(result, x)) {
+          | None => D.set(result, x, D.singleton(y, D.singleton(z, value)))
+          | Some(xValues) =>
+            switch (D.get(xValues, y)) {
+            | None => D.set(xValues, y, D.singleton(z, value))
+            | Some(yValues) => Js.Dict.set(yValues, z, value)
+            }
           }
         );
         result;

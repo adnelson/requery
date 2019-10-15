@@ -74,6 +74,8 @@ module type AliasedType = {
 };
 
 module Aliased: AliasedType = {
+  // TODO the alias should also be polymorphic. E.g. aliases on expressions
+  // become column names, aliases on tables become other table names, etc
   type t('a) = ('a, option(string));
   let as_ = ((x, _), alias) => (x, Some(alias));
   external toTuple: t('a) => ('a, option(string)) = "%identity";

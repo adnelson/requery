@@ -4,8 +4,6 @@ let (resolve, then_, reject) = Js.Promise.(resolve, then_, reject);
 
 type rows = array(RowDecode.Row.t(Js.Json.t));
 
-//type withResult
-
 // The most general client, parameterized by:
 // 'handle: DB abstraction (e.g. a Sqlite3 connection),
 // 'result: the type of objects the database returns on success. These
@@ -80,8 +78,12 @@ let decodeResultPromise:
 let drp = decodeResult;
 let insertReturn = (cli, decode, insert) =>
   query(cli, Sql.Insert(insert)) |> then_(decodeResultPromise(decode));
+let insertReturnUnwrap = (cli, decode, insert) =>
+  insertReturn(cli, decode, insert) |> then_(Result.unwrapPromise);
 let select = (cli, decode, select) =>
   query(cli, Sql.Select(select)) |> then_(decodeResultPromise(decode));
+let selectUnwrap = (cli, decode, select_) =>
+  select(cli, decode, select_) |> then_(Result.unwrapPromise);
 
 let createTable = (cli, ct) => exec(cli, Sql.CreateTable(ct));
 let createView = (cli, cv) => exec(cli, Sql.CreateView(cv));

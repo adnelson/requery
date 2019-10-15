@@ -284,6 +284,10 @@ module Json = {
     let tup3: (decoder('a), decoder('b), decoder('c)) => decoder(('a, 'b, 'c)) =
       (f1, f2, f3, obj) => (obj |> f1, obj |> f2, obj |> f3);
 
+    let tup4:
+      (decoder('a), decoder('b), decoder('c), decoder('d)) => decoder(('a, 'b, 'c, 'd)) =
+      (f1, f2, f3, f4, obj) => (obj |> f1, obj |> f2, obj |> f3, obj |> f4);
+
     let strMapWithKey: (string => decoder('a)) => decoder(SMap.t('a)) =
       (inner, obj) => {
         let entries = obj |> dict(x => x) |> Js.Dict.entries;
