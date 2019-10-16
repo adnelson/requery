@@ -233,21 +233,40 @@ module Types = {
 
 module New = {
   open Sql.Select.New;
-  let select =
+  let select_ =
       (
         ~from: option(target)=?,
-        ~groupBy: option((list(expr), option(expr)))=?,
+        ~groupBy: (list(expr), option(expr))=([], None),
         ~where: option(whereClause)=?,
         selections: list(aliasedExpr),
       )
-      : selectInUnion => {
-    selections: L.toArray(selections),
-    from,
-    groupBy:
-      switch (groupBy) {
-      | None => ([||], None)
-      | Some((es, having)) => (L.toArray(es), having)
-      },
-    where,
-  };
+      : selectVariant =>
+    Select({
+      selections: L.toArray(selections),
+      from,
+      groupBy: (L.toArray(fst(groupBy)), snd(groupBy)),
+      where,
+    });
+  /*
+
+   let s: selectVariant = select(
+     [x,y,z]
+     |> from(table("foo"))
+     |> where(bar)
+   )
+   |> union(
+     select(
+     [x,y,z]
+     |> from(table("foobar"))
+     |> where(baz)
+   ))
+
+   with(tbl("floop"), [a, b, c], s, )
+
+     let rec from = target => fun
+       | Select(sel) => Select({...sel, from: Some(target)})
+       | Union(s1, s2) => Union(s1 |> from(target), s2 |> from(target))
+       | UnionAll(s1, s2) => UnionAll(s1 |> from(target), s2 |> from(target))
+   //  let select:
+   */
 };
