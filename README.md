@@ -37,9 +37,20 @@ RowEncode.(
 
 * Queries will always render into valid SQL, modulo bugs and unsupported databases.
 * Query generation, query execution, and query result parsing are clearly separated at the type level.
-* Abstractions compose correctly, allowing you to avoid gotchas and write DRY code.
+* Modular abstractions which compose correctly, allowing you to avoid gotchas and write DRY code.
 
-Note that while an ORM could be written using `requery` to structure queries, `requery` itself is not an ORM. The tools it provides -- powerful abstractions for query generation, encoding/decoding objects, and database interaction -- are designed to be modular and used as much or as little as you want. You might just want to script out database seeding for a test suite, write a client library for a database that already exists, write your queries by hand and use the `RowDecode` library to unpack the results of queries you've written by hand, or set up a web app that can work with different databases agnostic.
+### Modular Design
+
+The components of `requery` are designed to be modular and each can be used in whatever capacity you need. You might use it to:
+
+* script out table and/or view creation in code, but write your queries by hand.
+* automate your infrastructure tests for some existing database.
+* seed tables for a unit or integration test suite.
+* create a REST API or CLI to which is backed by a database.
+* use the `RowDecode` library to unpack the results of queries you've written by hand
+* set up a web app that can work with different databases agnostic
+
+Note that while an ORM could be written using `requery` to structure queries, `requery` itself is not an ORM. The tools it provides -- powerful abstractions for query generation, encoding/decoding objects, and database interaction -- are designed to be modular and
 
 ## Libraries
 
@@ -195,10 +206,13 @@ There's plenty left to do, and much will likely change, but at this point the li
 Planned upcoming work includes:
 
 * Improving the abstraction of the database backend to provide an ergonomic interface, make it easy to extend, and avoid code duplication between different DBs.
-* A richer set of tools for composing database actions. For example, making it easy to insert objects which are stored across multiple tables.
+* A richer set of tools for composing database actions. For example:
+  * Higher-level abstractions for query building, enabling complex queries to be generated correctly
+  * Query orchestration tools, enabling database interactions to be scripted for things like inserting objects which are stored across multiple tables.
 * A test suite. Query generation, object encoding/decoding, SQL rendering (per DB), and query execution (per DB) should all be backed by tests.
-* `DELETE FROM` queries.
-* Pretty-printing of rendered SQL.
+* `DELETE FROM` and `DROP TABLE` queries.
+* `WITH`, `UNION` and `UNION ALL` syntax for `SELECT` queries.
+* Configurable pretty-printing of rendered SQL.
 * Error handling for when queries fail.
 
-Contributions are very much welcome!
+Contributions and issue reports are very much welcome!
