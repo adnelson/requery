@@ -149,6 +149,13 @@ module Select = {
   };
 
   module New = {
+    module Aliased = {
+      type t('t) = ('t, option('t));
+      let as_ = ((x, _), alias) => (x, Some(alias));
+      external toTuple: t('a) => ('a, option('a)) = "%identity";
+      let make = (~a=?, x) => (x, a);
+    };
+
     // What comes after the FROM of a select.
     type target =
       | Table(Aliased.t(TableName.t))
@@ -163,7 +170,7 @@ module Select = {
     and selectInUnion = {
       selections: array(Aliased.t(Expression.t)),
       from: option(target),
-      groupBy: (array(Expression.t), option(Expression.t)),
+      groupBy: option((array(Expression.t), option(Expression.t))),
       where: option(whereClause),
     }
 
@@ -172,12 +179,12 @@ module Select = {
       | Select(selectInUnion)
       | Union(selectVariant, selectVariant)
       | UnionAll(selectVariant, selectVariant)
-      | With(TableName.t, array(ColumnName.t), select, selectVariant)
 
     // Renders into a SELECT query.
     and select = {
+      with_: option((TableName.t, array(ColumnName.t), select)),
       select: selectVariant,
-      orderBy: array((Expression.t, option(direction))),
+      orderBy: option(array((Expression.t, option(direction)))),
       limit: option(Expression.t),
     };
   };

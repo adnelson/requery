@@ -230,49 +230,78 @@ module Types = {
   let int = typeName("INTEGER");
   let text = typeName("TEXT");
 };
+/*
+ module New = {
+   open Sql.Select.New;
+   let select_ =
+       (
+         ~from: option(target)=?,
+         ~groupBy: (list(expr), option(expr))=([], None),
+         ~where: option(whereClause)=?,
+         selections: list(aliasedExpr),
+       )
+       : selectInUnion => {
+     selections: L.toArray(selections),
+     from,
+     groupBy: (L.toArray(fst(groupBy)), snd(groupBy)),
+     where,
+   };
+   let from: (target, list(aliasedExpr)) => selectInUnion =
+     (target, exprs) => select_(exprs, ~from=target);
+   let where: (expr, selectInUnion) => selectInUnion =
+     (expr, sel) => {...sel, where: Some(Where(expr))};
 
-module New = {
-  open Sql.Select.New;
-  let select_ =
-      (
-        ~from: option(target)=?,
-        ~groupBy: (list(expr), option(expr))=([], None),
-        ~where: option(whereClause)=?,
-        selections: list(aliasedExpr),
-      )
-      : selectInUnion => {
-    selections: L.toArray(selections),
-    from,
-    groupBy: (L.toArray(fst(groupBy)), snd(groupBy)),
-    where,
-  };
-  let from: (target, list(aliasedExpr)) => selectInUnion =
-    (target, exprs) => select_(exprs, ~from=target);
-  let where: (expr, selectInUnion) => selectInUnion =
-    (expr, sel) => {...sel, where: Some(Where(expr))};
+   let select: selectInUnion => select = s => {
+     with_: None,
+     select: Select(s),
+     orderBy: None,
+     limit: None
+   };
 
-  // Can add ~orderBy and ~limit arguments to this, or just use functions
-  let select: selectInUnion => select = sel => {select: Select(sel), orderBy: [||], limit: None};
-  /*
+   let union: (selectVariant, select) => select = (s, sel) => {
+     ...sel,
+     select: Union(s, sel.select)
+   };
 
-   let s: selectVariant = select(
-     [x,y,z]
-     |> from(table("foo"))
-     |> where(bar)
-   )
-   |> union(
-     select(
-     [x,y,z]
-     |> from(table("foobar"))
-     |> where(baz)
-   ))
+   let unionAll: (selectVariant, select) => select = (s, sel) => {
+     ...sel,
+     select: UnionAll(s, sel.select)
+   };
 
-   with(tbl("floop"), [a, b, c], s, )
+   let with_: (TableName.t, list(ColumnName.t), select) => (select=> select) = (alias, colNames, aliasedSel, sel) => {
+     ...sel,
+     with_: Some((alias, L.toArray(colNames), aliasedSel)),
+   };
 
-     let rec from = target => fun
-       | Select(sel) => Select({...sel, from: Some(target)})
-       | Union(s1, s2) => Union(s1 |> from(target), s2 |> from(target))
-       | UnionAll(s1, s2) => UnionAll(s1 |> from(target), s2 |> from(target))
-   //  let select:
-   */
-};
+   /*
+    select([e(col("foo"))] |> from(tbl("footbl")))
+    */
+   // let withAs: (TableName.t,
+
+   // Can add ~orderBy and ~limit arguments to this, or just use functions
+   // let select: selectInUnion => select = sel => {select: Select(sel), orderBy: [||], limit: None};
+   // let limit: (expr, select) => select;
+   // let orderBy: (
+
+
+   /*
+
+    let sv: selectVariant = select(
+      [x,y,z]
+      |> from(table("foo"))
+      |> where(bar)
+    )
+    |> union(
+      select(
+      [x,y,z]
+      |> from(table("foobar"))
+      |> where(baz)
+    ));
+
+    let s: select =
+      select([a] |> from(table("bar")))
+      |> with_(tbl("floop"), [a, b, c], s |> selectAll)
+      |> orderBy1(x);
+    */
+ };
+ */
