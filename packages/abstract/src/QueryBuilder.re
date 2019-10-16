@@ -230,3 +230,24 @@ module Types = {
   let int = typeName("INTEGER");
   let text = typeName("TEXT");
 };
+
+module New = {
+  open Sql.Select.New;
+  let select =
+      (
+        ~from: option(target)=?,
+        ~groupBy: option((list(expr), option(expr)))=?,
+        ~where: option(whereClause)=?,
+        selections: list(aliasedExpr),
+      )
+      : selectInUnion => {
+    selections: L.toArray(selections),
+    from,
+    groupBy:
+      switch (groupBy) {
+      | None => ([||], None)
+      | Some((es, having)) => (L.toArray(es), having)
+      },
+    where,
+  };
+};

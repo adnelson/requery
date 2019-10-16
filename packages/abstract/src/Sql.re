@@ -147,6 +147,40 @@ module Select = {
     limit: option(Expression.t),
     where: option(whereClause),
   };
+
+  module New = {
+    // What comes after the FROM of a select.
+    type target =
+      | Table(Aliased.t(TableName.t))
+      | SubSelect(select, string)
+      | Join(joinType, target, target)
+
+    and whereClause =
+      | Where(Expression.t)
+      | WhereExists(select) // confirm this shouldn't be selectInUnion
+
+    // The parts of a SELECT query which can appear in a UNION.
+    and selectInUnion = {
+      selections: array(Aliased.t(Expression.t)),
+      from: option(target),
+      groupBy: (array(Expression.t), option(Expression.t)),
+      where: option(whereClause),
+    }
+
+    // Encapsulates, SELECTs, WITH clauses, and UNIONs.
+    and selectVariant =
+      | Select(selectInUnion)
+      | Union(selectVariant, selectVariant)
+      | UnionAll(selectVariant, selectVariant)
+      | With(TableName.t, array(ColumnName.t), select, selectVariant)
+
+    // Renders into a SELECT query.
+    and select = {
+      select: selectVariant,
+      orderBy: array((Expression.t, option(direction))),
+      limit: option(Expression.t),
+    };
+  };
 };
 
 module Insert = {
