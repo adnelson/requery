@@ -1,6 +1,7 @@
 include Utils.Json.Decode;
 module A = Utils.Array;
 module D = Utils.Dict;
+type dict('a) = D.t('a);
 
 type error =
   | RowDecodeError(int, Js.Json.t, string)
@@ -102,17 +103,6 @@ let tuple3Row:
     j |> field(columnC, decodeC),
   );
 
-/*
- let decodeResult: (rowsDecoder('a), array(Row.t(Js.Json.t))) => Result.t('a) =
-   (decode, rows) =>
-     try (Result.Success(decode(rows))) {
-     | RowDecode.Error(e) => Result.Error(RowDecodeError(e))
-     };
-
- let decodeResultPromise:
-   (rowsDecoder('a), array(Row.t(Js.Json.t))) => Js.Promise.t(Result.t('a)) =
-   (decode, rows) => rows |> decodeResult(decode) |> resolve;
- */
 // Given a way to get a (key, value) pair from a row, produce a
 // dictionary with those keys/values.
 let dict =
@@ -122,11 +112,11 @@ let dict =
       ~valueField: string,
       ~valueDecode: decoder('a),
     )
-    : rowsDecoder(Js.Dict.t('a)) =>
+    : rowsDecoder(D.t('a)) =>
   jsonRows => {
     jsonRows
     |> decodeEach(tup2(field(keyField, keyDecode), field(valueField, valueDecode)))
-    |> Js.Dict.fromArray;
+    |> D.fromArray;
   };
 
 let dict2d =
@@ -138,7 +128,7 @@ let dict2d =
       ~valueField: string,
       ~valueDecode: decoder('a),
     )
-    : rowsDecoder(Js.Dict.t(Js.Dict.t('a))) =>
+    : rowsDecoder(D.t(D.t('a))) =>
   jsonRows =>
     jsonRows
     |> decodeEach(
@@ -150,11 +140,11 @@ let dict2d =
        )
     |> (
       decoded => {
-        let result = Js.Dict.empty();
+        let result = D.empty();
         A.forEach(decoded, ((inner, outer, value)) =>
-          switch (Js.Dict.get(result, outer)) {
-          | None => Js.Dict.set(result, outer, Js.Dict.fromArray([|(inner, value)|]))
-          | Some(values) => Js.Dict.set(values, inner, value)
+          switch (D.get(result, outer)) {
+          | None => D.set(result, outer, D.fromArray([|(inner, value)|]))
+          | Some(values) => D.set(values, inner, value)
           }
         );
         result;
@@ -163,36 +153,83 @@ let dict2d =
 
 let dict3d =
     (
-      ~xKeyField: string,
-      ~xKeyDecode: decoder(string)=string,
-      ~yKeyField: string,
-      ~yKeyDecode: decoder(string)=string,
-      ~zKeyField: string,
-      ~zKeyDecode: decoder(string)=string,
+      ~keyField1: string,
+      ~keyDecode1: decoder(string)=string,
+      ~keyField2: string,
+      ~keyDecode2: decoder(string)=string,
+      ~keyField3: string,
+      ~keyDecode3: decoder(string)=string,
       ~valueField: string,
       ~valueDecode: decoder('a),
     )
-    : rowsDecoder(D.t(D.t(D.t('a)))) =>
+    : rowsDecoder(dict(dict(dict('a)))) =>
   jsonRows =>
     jsonRows
     |> decodeEach(
          tup4(
-           field(xKeyField, xKeyDecode),
-           field(yKeyField, yKeyDecode),
-           field(zKeyField, zKeyDecode),
+           field(keyField1, keyDecode1),
+           field(keyField2, keyDecode2),
+           field(keyField3, keyDecode3),
            field(valueField, valueDecode),
          ),
        )
     |> (
       decoded => {
-        let result: D.t(D.t(D.t('a))) = D.empty();
+        let result: dict(dict(dict('a))) = D.empty();
         A.forEach(decoded, ((x, y, z, value)) =>
           switch (D.get(result, x)) {
           | None => D.set(result, x, D.singleton(y, D.singleton(z, value)))
           | Some(xValues) =>
             switch (D.get(xValues, y)) {
             | None => D.set(xValues, y, D.singleton(z, value))
-            | Some(yValues) => Js.Dict.set(yValues, z, value)
+            | Some(yValues) => D.set(yValues, z, value)
+            }
+          }
+        );
+        result;
+      }
+    );
+
+// TODO there might be a way to DRY this up
+let dict4d =
+    (
+      ~keyField1: string,
+      ~keyDecode1: decoder(string)=string,
+      ~keyField2: string,
+      ~keyDecode2: decoder(string)=string,
+      ~keyField3: string,
+      ~keyDecode3: decoder(string)=string,
+      ~keyField4: string,
+      ~keyDecode4: decoder(string)=string,
+      ~valueField: string,
+      ~valueDecode: decoder('a),
+    )
+    : rowsDecoder(dict(dict(dict(dict('a))))) =>
+  jsonRows =>
+    jsonRows
+    |> decodeEach(
+         tup5(
+           field(keyField1, keyDecode1),
+           field(keyField2, keyDecode2),
+           field(keyField3, keyDecode3),
+           field(keyField4, keyDecode4),
+           field(valueField, valueDecode),
+         ),
+       )
+    |> (
+      decoded => {
+        let result: dict(dict(dict(dict('a)))) = D.empty();
+        A.forEach(decoded, ((k1, k2, k3, k4, value)) =>
+          switch (D.get(result, k1)) {
+          | None => D.set(result, k1, D.singleton(k2, D.singleton(k3, D.singleton(k4, value))))
+          | Some(values1) =>
+            switch (D.get(values1, k2)) {
+            | None => D.set(values1, k2, D.singleton(k3, D.singleton(k4, value)))
+            | Some(values2) =>
+              switch (D.get(values2, k3)) {
+              | None => D.set(values2, k3, D.singleton(k4, value))
+              | Some(values3) => D.set(values3, k4, value)
+              }
             }
           }
         );

@@ -134,7 +134,7 @@ module Dict = {
 
   let getExn = (d, k) =>
     switch (Js.Dict.get(d, k)) {
-    | None => throw("No such key '" ++ k ++ "'")
+    | None => throw("No such key '" ++ k ++ "' in ")
     | Some(v) => v
     };
 
@@ -287,6 +287,11 @@ module Json = {
     let tup4:
       (decoder('a), decoder('b), decoder('c), decoder('d)) => decoder(('a, 'b, 'c, 'd)) =
       (f1, f2, f3, f4, obj) => (obj |> f1, obj |> f2, obj |> f3, obj |> f4);
+
+    let tup5:
+      (decoder('a), decoder('b), decoder('c), decoder('d), decoder('e)) =>
+      decoder(('a, 'b, 'c, 'd, 'e)) =
+      (f1, f2, f3, f4, f5, obj) => (obj |> f1, obj |> f2, obj |> f3, obj |> f4, obj |> f5);
 
     let strMapWithKey: (string => decoder('a)) => decoder(SMap.t('a)) =
       (inner, obj) => {
