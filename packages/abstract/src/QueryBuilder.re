@@ -240,13 +240,19 @@ module New = {
         ~where: option(whereClause)=?,
         selections: list(aliasedExpr),
       )
-      : selectVariant =>
-    Select({
-      selections: L.toArray(selections),
-      from,
-      groupBy: (L.toArray(fst(groupBy)), snd(groupBy)),
-      where,
-    });
+      : selectInUnion => {
+    selections: L.toArray(selections),
+    from,
+    groupBy: (L.toArray(fst(groupBy)), snd(groupBy)),
+    where,
+  };
+  let from: (target, list(aliasedExpr)) => selectInUnion =
+    (target, exprs) => select_(exprs, ~from=target);
+  let where: (expr, selectInUnion) => selectInUnion =
+    (expr, sel) => {...sel, where: Some(Where(expr))};
+
+  // Can add ~orderBy and ~limit arguments to this, or just use functions
+  let select: selectInUnion => select = sel => {select: Select(sel), orderBy: [||], limit: None};
   /*
 
    let s: selectVariant = select(
