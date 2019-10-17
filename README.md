@@ -48,9 +48,9 @@ The components of `requery` are designed to be modular and each can be used in w
 * seed tables for a unit or integration test suite.
 * create a REST API or CLI to which is backed by a database.
 * use the `RowDecode` library to unpack the results of queries you've written by hand
-* set up a web app that can work with different databases agnostic
+* set up a web app that can be configured to work with different databases (currently sqlite or postgres).
 
-Note that while an ORM could be written using `requery` to structure queries, `requery` itself is not an ORM. The tools it provides -- powerful abstractions for query generation, encoding/decoding objects, and database interaction -- are designed to be modular and
+Note that while an ORM could be written using `requery` to structure queries, `requery` itself is not an ORM. It does not enforce or encourage any particular framework for how you structure your tables or do migrations; instead it (hopefully) provides you with the ability to build SQL however you'd like.
 
 ## Libraries
 
