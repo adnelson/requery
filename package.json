@@ -4,7 +4,7 @@
   "description": "ReasonML SQL query builder and database interaction library",
   "repository": "https://github.com/adnelson/requery",
   "author": "Allen Nelson <ithinkican@gmail.com>",
-  "license": "BSD 3-Clause",
+  "license": "BSD-3-Clause",
   "lint-staged": {
     "package.json": [
       "prettier --write",

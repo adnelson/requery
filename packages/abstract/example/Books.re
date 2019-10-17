@@ -10,7 +10,7 @@ module JD = Utils.Json.Decode;
 module JE = Utils.Json.Encode;
 module C = Requery.Client;
 let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
-  Utils.Promise.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
+  P.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 
 module Author = {
   let tableName = QB.tname("author");
@@ -73,6 +73,7 @@ module Book = {
     QueryBuilder.(
       [
         cdef("id", idType, ~primaryKey=true),
+        // Note: can have spaces in column name
         cdef("author id", idType),
         cdef("title", Types.text),
         constraint_(foreignKey(cname("author id"), (tname("author"), cname("id")))),
@@ -81,23 +82,28 @@ module Book = {
     );
 };
 
-// View of books written by each author
-let authorBooksView =
+let authorBooksSelect =
   QueryBuilder.(
-    select([e(all)])
-    |> from(
-         table(Author.tableName, ~a="a")
-         |> innerJoin(table(Book.tableName, ~a="b"), tcol("a", "id") == tcol("b", "author id")),
-       )
-    |> createView(tname("author_books"))
+    select(
+      [e(tcol("a", "id"), ~a="author id")]
+      |> from(
+           table(Author.tableName, ~a="a")
+           |> innerJoin(
+                table(Book.tableName, ~a="b"),
+                tcol("a", "id") == tcol("b", "author id"),
+              ),
+         ),
+    )
   );
 
 let run = (client, idType) => {
   C.createTable(client, Author.createTable(idType))
   |> then_(_ => C.createTable(client, Book.createTable(idType)))
-  |> then_(_ => C.createView(client, authorBooksView))
+  // TODO when figure out ifNotExists problem
+  //  |> then_(_ => C.createView(client, authorBooksSelect |> createView(tname("author_books"))))
   |> then_(_
-       // Inserting with an explicit query, using columns2 to define the encoding on the fly
+       // Inserting with an explicit query, using columns2 to define the
+       // encoding on the fly
        =>
          QB.(
            [("Stephen", "King"), ("Jane", "Austen")]
@@ -120,17 +126,32 @@ let run = (client, idType) => {
             )
          // Selecting author rows, decoding as tuples
          |> then_(_ =>
-              QB.(select([e(all)]) |> from(table(Author.tableName)))
+              QB.(select([e(all)] |> from(table(Author.tableName))))
               |> C.select(
                    client,
                    RowDecode.(decodeEach(columns3("id", int, "first", string, "last", string))),
                  )
             )
-         |> P.then_(r => P.rLog(r))
+         // Log them to console
+         |> then_(rows => rLog(rows))
          // Selecting author rows, decoding as Author objects
          |> then_(_ =>
-              QB.(select([e(all)]) |> from(table(Author.tableName)))
+              QB.(select([e(all)] |> from(table(Author.tableName))))
               |> C.select(client, RowDecode.(decodeEach(Author.fromJson)))
             )
+         |> then_(rows => rLog(rows))
+         // Use a WITH query (CTE)
+         |> then_(_ =>
+              QB.(
+                with_(
+                  tname("author_ids"),
+                  [cname("id")],
+                  authorBooksSelect,
+                  select([e(all)] |> from(table(tname("author_ids")))),
+                )
+              )
+              |> C.select(client, RowDecode.(decodeEach(field("id", int))))
+            )
+         |> then_(rows => rLog(rows))
        );
 };

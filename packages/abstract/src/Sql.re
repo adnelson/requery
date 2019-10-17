@@ -127,26 +127,39 @@ module Select = {
     | Right(Expression.t)
     | Full(Expression.t)
     | Cross;
-
   // What comes after the FROM of a select.
   type target =
     | Table(Aliased.t(TableName.t))
-    | SubSelect(t, string)
+    | SubSelect(select, string)
     | Join(joinType, target, target)
 
   and whereClause =
     | Where(Expression.t)
-    | WhereExists(t)
+    | WhereExists(select) // confirm this shouldn't be selectInUnion
 
-  // Renders into a SELECT query.
-  and t = {
+  // The parts of a SELECT query which can appear in a UNION.
+  and selectInUnion = {
     selections: array(Aliased.t(Expression.t)),
     from: option(target),
-    groupBy: (array(Expression.t), option(Expression.t)),
-    orderBy: array((Expression.t, option(direction))),
-    limit: option(Expression.t),
+    groupBy: option((array(Expression.t), option(Expression.t))),
     where: option(whereClause),
+  }
+
+  // Encapsulates SELECTs, WITH clauses, and UNIONs.
+  and selectVariant =
+    | Select(selectInUnion)
+    | Union(selectVariant, selectVariant)
+    | UnionAll(selectVariant, selectVariant)
+
+  // Renders into a SELECT query.
+  and select = {
+    with_: option((TableName.t, array(ColumnName.t), select)),
+    select: selectVariant,
+    orderBy: option(array((Expression.t, option(direction)))),
+    limit: option(Expression.t),
   };
+
+  type t = select;
 };
 
 module Insert = {
@@ -256,4 +269,3 @@ type query('returning) =
   | Insert(Insert.t('returning))
   | CreateTable(CreateTable.t)
   | CreateView(CreateView.t);
-// let renderSelect = Select.render;

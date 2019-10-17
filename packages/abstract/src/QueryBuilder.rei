@@ -5,7 +5,9 @@ type tableConstraint = Sql.CreateTable.tableConstraint;
 type column = Sql.Column.t;
 type typeName = Sql.TypeName.t;
 type target = Sql.Select.target;
-type select = Sql.Select.t;
+type selectInUnion = Sql.Select.selectInUnion;
+type selectVariant = Sql.Select.selectVariant;
+type select = Sql.Select.select;
 type expr = Sql.Expression.t;
 type aliasedExpr = Sql.Aliased.t(expr);
 type direction = Sql.Select.direction;
@@ -194,46 +196,42 @@ let desc: direction;
 // Modify or add an alias to a target.
 let as_: (string, target) => target;
 
-// The top-level select statement.
-let select:
-  (
-    ~from: target=?,
-    ~groupBy: (list(expr), option(expr))=?,
-    ~orderBy: list((expr, option(direction)))=?,
-    ~limit: expr=?,
-    ~where: whereClause=?,
-    list(aliasedExpr)
-  ) =>
-  select;
+// Creates a top-level select statement.
+let select: selectInUnion => select;
 
-// Change what's being selected.
-let selecting: (list(aliasedExpr), select) => select;
+// Used to select from a table or another target. For example:
+// select([e(col("x")), e(col("y"))] |> from(tableNamed(tname("points"))))
+//   ==> SELECT x, y FROM points;
+let from: (target, list(aliasedExpr)) => selectInUnion;
 
-/*
- Allows the items being selected to be put first.
+// Used to select static values or constants. For example
+// select([e(int(1) + int(2))] |> fromNone)
+//   ==> SELECT 1 + 2;
+let fromNone: list(aliasedExpr) => selectInUnion;
 
- let sql =
-   [e(col("first") ++ string(" ") ++ col("last"))]
-   |> selectFrom(tableNamed("authors"));
- */
-let selectFrom: (target, list(aliasedExpr)) => select;
-let from: (target, select) => select;
-let limit: (expr, select) => select;
-let where: (expr, select) => select;
-let whereExists: (select, select) => select;
+let where: (expr, selectInUnion) => selectInUnion;
+let whereExists: (select, selectInUnion) => selectInUnion;
+
+let groupBy: (~having: expr=?, list(expr), selectInUnion) => selectInUnion;
+let groupBy1: (~having: expr=?, expr, selectInUnion) => selectInUnion;
+let groupByColumn: (~having: expr=?, string, selectInUnion) => selectInUnion;
+let groupByCol: (~having: expr=?, string, selectInUnion) => selectInUnion; // alias
+let groupByColumns: (~having: expr=?, list(string), selectInUnion) => selectInUnion;
+let groupByCols: (~having: expr=?, list(string), selectInUnion) => selectInUnion; // alias
+
+let union1: (selectInUnion, select) => select;
+let union: (selectVariant, select) => select;
+let unionAll: (selectVariant, select) => select;
+let with_: (tableName, list(columnName), select, select) => select;
+
 // let orderByDir: (list(expr), select) => select;
+let limit: (expr, select) => select;
 let orderBy_: (list(expr), select) => select; // alias for orderByDir
 let orderBy: (list((expr, direction)), select) => select;
 let orderBy1_: (expr, select) => select;
 let orderBy1: (expr, direction, select) => select;
 let orderBy2_: (expr, expr, select) => select;
 let orderBy2: (expr, direction, expr, direction, select) => select;
-let groupBy: (~having: expr=?, list(expr), select) => select;
-let groupBy1: (~having: expr=?, expr, select) => select;
-let groupByColumn: (~having: expr=?, string, select) => select;
-let groupByCol: (~having: expr=?, string, select) => select; // alias
-let groupByColumns: (~having: expr=?, list(string), select) => select;
-let groupByCols: (~having: expr=?, list(string), select) => select; // alias
 
 /***************************
  * INSERT Queries

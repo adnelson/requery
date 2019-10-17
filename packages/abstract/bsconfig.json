@@ -14,11 +14,15 @@
   },
   "refmt": 3,
   "sources": [
-    "src"
+    "src",
+    {
+      "dir": "__tests__",
+      "type": "dev"
+    }
   ],
   "suffix": ".bs.js",
   "warnings": {
     "number": "-23-44+60",
-    "error": "+8+6+60"
+    "error": "+8+6+60+49"
   }
 }

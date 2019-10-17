@@ -30,7 +30,7 @@ module DefaultRules: SqlRenderingRules = {
 module WithRenderingRules = (S: SqlRenderingRules) => {
   // Wrap a table/column/etc name in quotes
   module RenderWrapped = (String: Sql.OpaqueString) => {
-    type t = String.t;
+    include String;
     let render = s => S.escapeName(String.toString(s));
   };
 
@@ -62,7 +62,10 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       (renderInner, aliased) =>
         switch (toTuple(aliased)) {
         | (x, None) => renderInner(x)
-        | (x, Some(alias)) => renderInner(x) ++ " AS " ++ alias
+        // TODO eventually aliases should be typed. For now just wrap
+        // them as if they were column names
+        | (x, Some(alias)) =>
+          renderInner(x) ++ " AS " ++ ColumnName.(render(fromString(alias)))
         };
   };
 
@@ -140,30 +143,55 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
           renderTarget(t1) ++ " " ++ keyword ++ " " ++ renderTarget(t2) ++ " ON " ++ on
         }
 
-    and render: t => string =
-      ({selections, from, orderBy, groupBy, limit, where}) => {
-        let selections = A.mapJoinCommas(selections, Aliased.render(Expression.render));
-        let from = O.mapString(from, t => " FROM " ++ renderTarget(t));
-        let orderBy =
-          A.mapJoinIfNonEmpty(orderBy, ~prefix=" ORDER BY ", ", ", ((c, optDir)) =>
-            Expression.render(c) ++ O.mapString(optDir, dir => " " ++ renderDirection(dir))
-          );
-        let groupBy =
+    and renderSelectInUnion: selectInUnion => string =
+      ({selections, from, groupBy, where}) => {
+        let selections' = A.mapJoinCommas(selections, Aliased.render(Expression.render));
+        let from' = O.mapString(from, t => " FROM " ++ renderTarget(t));
+        let groupBy' =
           switch (groupBy) {
-          | ([||], _) => ""
-          | (exprs, having) =>
+          | Some((exprs, having)) when A.length(exprs) > 0 =>
             let gb = " GROUP BY " ++ A.mapJoinCommas(exprs, Expression.render);
             gb ++ O.mapWithDefault(having, "", h => " HAVING " ++ Expression.render(h));
+          | _ => ""
           };
-        let limit = O.mapString(limit, n => " LIMIT " ++ Expression.render(n));
-        let where =
+        let where' =
           O.mapString(
             where,
             fun
             | Where(e) => " WHERE " ++ Expression.render(e)
             | WhereExists(select) => " WHERE EXISTS (" ++ render(select) ++ ")",
           );
-        "SELECT " ++ selections ++ from ++ where ++ groupBy ++ orderBy ++ limit;
+        "SELECT " ++ selections' ++ from' ++ where' ++ groupBy';
+      }
+
+    and renderSelectVariant =
+      fun
+      | Select(siu) => renderSelectInUnion(siu)
+      | Union(s1, s2) => renderSelectVariant(s1) ++ " UNION " ++ renderSelectVariant(s2)
+      | UnionAll(s1, s2) => renderSelectVariant(s1) ++ " UNION ALL " ++ renderSelectVariant(s2)
+
+    and render: t => string =
+      ({with_, select, orderBy, limit}) => {
+        let with_' =
+          O.mapString(with_, ((table_, columns_, innerSelect)) =>
+            " WITH "
+            ++ TableName.render(table_)
+            ++ A.mapJoinCommasParens(columns_, ColumnName.render)
+            ++ " AS ("
+            ++ render(innerSelect)
+            ++ ")"
+          );
+        let orderBy' =
+          switch (orderBy) {
+          | Some(cols) =>
+            A.mapJoinIfNonEmpty(cols, ~prefix=" ORDER BY ", ", ", ((c, optDir)) =>
+              Expression.render(c) ++ O.mapString(optDir, dir => " " ++ renderDirection(dir))
+            )
+          | _ => ""
+          };
+        let limit' = O.mapString(limit, n => " LIMIT " ++ Expression.render(n));
+
+        with_' ++ renderSelectVariant(select) ++ orderBy' ++ limit';
       };
   };
 
@@ -255,9 +283,11 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
 
   module CreateView = {
     open Sql.CreateView;
-    let render = ({name, query, ifNotExists}) =>
+    let render = ({name, query}) =>
       "CREATE VIEW "
-      ++ (ifNotExists ? "IF NOT EXISTS " : "")
+      // TODO sqlite and postgres have different ways of rendering this.
+      // SQLite uses `IF NOT EXISTS` while postgres uses `OR REPLACE`
+      // ++ (ifNotExists ? "IF NOT EXISTS " : "")
       ++ TableName.render(name)
       ++ " AS "
       ++ Select.render(query);

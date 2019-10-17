@@ -7,18 +7,12 @@
     "@glennsl/bs-json": "^5.0.1",
     "bs-platform": "^5.0.6",
     "requery-abstract": "^0.8.1",
-    "requery-sqlite": "^0.8.1",
-    "requery-example-abstract": "../../abstract/example"
+    "requery-example-abstract": "../../abstract/example",
+    "requery-sqlite": "^0.8.1"
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
-    "cleanbuild": [
-      "bsb -clean-world && yarn build",
-      [
-        "bsb -clean-world && yarn build",
-        "yarn clean && yarn build"
-      ]
-    ],
+    "cleanbuild": "yarn clean && yarn build",
     "watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
     "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
     "test": "yarn build && jest __tests__",
@@ -26,6 +20,9 @@
     "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
     "clean": "bsb -clean-world",
     "watch:abstract": "sh -c \"yarn watch & onchange -k -i -d 500 '../abstract/src/**/*.{re,rei}' -- yarn cleanbuild\"",
-    "testquery": "node example/SqliteBooks.bs.js"
+    "testquery": "node SqliteBooks.bs.js"
+  },
+  "devDependencies": {
+    "onchange": "^6.1.0"
   }
 }
