@@ -140,30 +140,46 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
           renderTarget(t1) ++ " " ++ keyword ++ " " ++ renderTarget(t2) ++ " ON " ++ on
         }
 
-    and render: t => string =
-      ({selections, from, orderBy, groupBy, limit, where}) => {
-        let selections = A.mapJoinCommas(selections, Aliased.render(Expression.render));
-        let from = O.mapString(from, t => " FROM " ++ renderTarget(t));
-        let orderBy =
-          A.mapJoinIfNonEmpty(orderBy, ~prefix=" ORDER BY ", ", ", ((c, optDir)) =>
-            Expression.render(c) ++ O.mapString(optDir, dir => " " ++ renderDirection(dir))
-          );
-        let groupBy =
+    and renderSelectInUnion: selectInUnion => string =
+      ({selections, from, groupBy, where}) => {
+        let selections' = A.mapJoinCommas(selections, Aliased.render(Expression.render));
+        let from' = O.mapString(from, t => " FROM " ++ renderTarget(t));
+        let groupBy' =
           switch (groupBy) {
-          | ([||], _) => ""
-          | (exprs, having) =>
+          | Some((exprs, having)) when A.length(exprs) > 0 =>
             let gb = " GROUP BY " ++ A.mapJoinCommas(exprs, Expression.render);
             gb ++ O.mapWithDefault(having, "", h => " HAVING " ++ Expression.render(h));
+          | _ => ""
           };
-        let limit = O.mapString(limit, n => " LIMIT " ++ Expression.render(n));
-        let where =
+        let where' =
           O.mapString(
             where,
             fun
             | Where(e) => " WHERE " ++ Expression.render(e)
             | WhereExists(select) => " WHERE EXISTS (" ++ render(select) ++ ")",
           );
-        "SELECT " ++ selections ++ from ++ where ++ groupBy ++ orderBy ++ limit;
+        "SELECT " ++ selections' ++ from' ++ where' ++ groupBy';
+      }
+
+    and renderSelectVariant =
+      fun
+      | Select(siu) => renderSelectInUnion(siu)
+      | Union(s1, s2) => renderSelectVariant(s1) ++ " UNION " ++ renderSelectVariant(s2)
+      | UnionAll(s1, s2) => renderSelectVariant(s1) ++ " UNION ALL " ++ renderSelectVariant(s2)
+
+    and render: t => string =
+      ({select, orderBy, limit}) => {
+        let orderBy' =
+          switch (orderBy) {
+          | Some(cols) =>
+            A.mapJoinIfNonEmpty(cols, ~prefix=" ORDER BY ", ", ", ((c, optDir)) =>
+              Expression.render(c) ++ O.mapString(optDir, dir => " " ++ renderDirection(dir))
+            )
+          | _ => ""
+          };
+        let limit' = O.mapString(limit, n => " LIMIT " ++ Expression.render(n));
+
+        "";
       };
   };
 

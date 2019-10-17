@@ -9,10 +9,13 @@ type constraintName = Sql.ConstraintName.t;
 type tableConstraint = Sql.CreateTable.tableConstraint;
 type typeName = Sql.TypeName.t;
 type target = Sql.Select.target;
+type selectInUnion = Sql.Select.selectInUnion;
+type selectVariant = Sql.Select.selectVariant;
+type select = Sql.Select.select;
+
 type expr = Sql.Expression.t;
 type aliasedExpr = Sql.Aliased.t(expr);
 type direction = Sql.Select.direction;
-type select = Sql.Select.t;
 type insert('r) = Sql.Insert.t('r);
 type statement = Sql.CreateTable.statement;
 type createTable = Sql.CreateTable.t;
@@ -116,48 +119,96 @@ let selectAs = (alias, select) => Select.SubSelect(select, alias);
 
 let (asc, desc) = Select.(ASC, DESC);
 
-let select = (~from=?, ~groupBy=([], None), ~orderBy=[], ~limit=?, ~where=?, selections) =>
-  Select.{
-    selections: L.toArray(selections),
-    from,
-    limit,
-    groupBy:
-      switch (groupBy) {
-      | ([], _) => ([||], None)
-      | (es, h) => (L.toArray(es), h)
-      },
-    orderBy: L.toArray(orderBy),
-    where,
+/*
+ let select = (~from=?, ~groupBy=([], None), ~orderBy=[], ~limit=?, ~where=?, selections) =>
+   Select.{
+     selections: L.toArray(selections),
+     from,
+     limit,
+     groupBy:
+       switch (groupBy) {
+       | ([], _) => ([||], None)
+       | (es, h) => (L.toArray(es), h)
+       },
+     orderBy: L.toArray(orderBy),
+     where,
+   };
+
+ let selecting = (sels, s) => Select.{...s, selections: L.toArray(sels)};
+ let from = (t, s) => Select.{...s, from: Some(t)};
+ let selectFrom = (target, exprs) => select(exprs) |> from(target);
+ let where = (cond, s) => Select.{...s, where: Some(Sql.Select.Where(cond))};
+ let whereExists = (sel, s) => Select.{...s, where: Some(Sql.Select.WhereExists(sel))};
+ */
+
+/*
+ let select =
+     (
+       ~from: option(target)=?,
+       ~groupBy: option((list(expr), option(expr)))=?,
+       ~where: option(whereClause)=?,
+       selections: list(aliasedExpr),
+     )
+     : selectInUnion => {
+   selections: L.toArray(selections),
+   from,
+   groupBy: O.map(groupBy, ((exprs, having)) => (L.toArray(exprs), having)),
+   where,
+ };
+ */
+let from: (target, list(aliasedExpr)) => selectInUnion =
+  (target, exprs) => {
+    selections: L.toArray(exprs),
+    from: Some(target),
+    groupBy: None,
+    where: None,
   };
+
+let where: (expr, selectInUnion) => selectInUnion =
+  (expr, sel) => {...sel, where: Some(Where(expr))};
+let whereExists: (select, selectInUnion) => selectInUnion =
+  (exists, sel) => {...sel, where: Some(WhereExists(exists))};
+
+let select: selectInUnion => select =
+  s => {with_: None, select: Select(s), orderBy: None, limit: None};
 
 let as_ = alias =>
   Select.(
     fun
     | Table(tname) => Table(Aliased.as_(tname, alias))
     | SubSelect(q, _) => SubSelect(q, alias)
-    | target => SubSelect(select([e(all)], ~from=target), alias)
+    | target => SubSelect(select([e(all)] |> from(target)), alias)
   );
 
-let selecting = (sels, s) => Select.{...s, selections: L.toArray(sels)};
-let from = (t, s) => Select.{...s, from: Some(t)};
-let selectFrom = (target, exprs) => select(exprs) |> from(target);
-let limit = (n, s) => Select.{...s, limit: Some(n)};
-let where = (cond, s) => Select.{...s, where: Some(Sql.Select.Where(cond))};
-let whereExists = (sel, s) => Select.{...s, where: Some(Sql.Select.WhereExists(sel))};
-let orderBy = (exs, s) => Select.{...s, orderBy: L.amap(exs, ((c, dir)) => (c, Some(dir)))};
-let orderBy_ = (exs, s) => Select.{...s, orderBy: L.amap(exs, c => (c, None))};
-let orderBy1 = (ex, dir, s) => Select.{...s, orderBy: [|(ex, Some(dir))|]};
-let orderBy1_ = (ex, s) => Select.{...s, orderBy: [|(ex, None)|]};
+let union: (selectVariant, select) => select =
+  (s, sel) => {...sel, select: Union(s, sel.select)};
+
+let unionAll: (selectVariant, select) => select =
+  (s, sel) => {...sel, select: UnionAll(s, sel.select)};
+
+let with_: (TableName.t, list(ColumnName.t), select, select) => select =
+  (alias, colNames, aliasedSel, sel) => {
+    ...sel,
+    with_: Some((alias, L.toArray(colNames), aliasedSel)),
+  };
+
+let orderBy = (exs, s) =>
+  Select.{...s, orderBy: Some(L.amap(exs, ((c, dir)) => (c, Some(dir))))};
+let orderBy_ = (exs, s) => Select.{...s, orderBy: Some(L.amap(exs, c => (c, None)))};
+let orderBy1 = (ex, dir, s) => Select.{...s, orderBy: Some([|(ex, Some(dir))|])};
+let orderBy1_ = (ex, s) => Select.{...s, orderBy: Some([|(ex, None)|])};
 let orderBy2 = (ex1, dir1, ex2, dir2, s) =>
-  Select.{...s, orderBy: [|(ex1, Some(dir1)), (ex2, Some(dir2))|]};
-let orderBy2_ = (ex1, ex2, s) => Select.{...s, orderBy: [|(ex1, None), (ex2, None)|]};
+  Select.{...s, orderBy: Some([|(ex1, Some(dir1)), (ex2, Some(dir2))|])};
+let orderBy2_ = (ex1, ex2, s) => Select.{...s, orderBy: Some([|(ex1, None), (ex2, None)|])};
+let limit = (n, s) => Select.{...s, limit: Some(n)};
+
 //let orderByCols = orderBy_(column);
-let groupBy = (~having=?, cols, s) => Select.{...s, groupBy: (L.toArray(cols), having)};
-let groupBy1 = (~having=?, col, s) => Select.{...s, groupBy: ([|col|], having)};
-let groupByColumn = (~having=?, c, s) => Select.{...s, groupBy: ([|col(c)|], having)};
+let groupBy = (~having=?, cols, s) => Select.{...s, groupBy: Some((L.toArray(cols), having))};
+let groupBy1 = (~having=?, col, s) => Select.{...s, groupBy: Some(([|col|], having))};
+let groupByColumn = (~having=?, c, s) => Select.{...s, groupBy: Some(([|col(c)|], having))};
 let groupByCol = groupByColumn;
 let groupByColumns = (~having=?, cols, s) =>
-  Select.{...s, groupBy: (L.amap(cols, col), having)};
+  Select.{...s, groupBy: Some((L.amap(cols, col), having))};
 let groupByCols = groupByColumns;
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));

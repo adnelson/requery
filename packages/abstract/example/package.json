@@ -10,13 +10,7 @@
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
-    "cleanbuild": [
-      "bsb -clean-world && yarn build",
-      [
-        "bsb -clean-world && yarn build",
-        "yarn clean && yarn build"
-      ]
-    ],
+    "cleanbuild": "bsb -clean-world && yarn build",
     "watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
     "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
     "test": "yarn build && jest __tests__",
