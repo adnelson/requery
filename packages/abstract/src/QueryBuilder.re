@@ -127,6 +127,13 @@ let from: (target, list(aliasedExpr)) => selectInUnion =
     where: None,
   };
 
+let fromNone = exprs => {
+  Select.selections: L.toArray(exprs),
+  from: None,
+  groupBy: None,
+  where: None,
+};
+
 let where: (expr, selectInUnion) => selectInUnion =
   (expr, sel) => {...sel, where: Some(Where(expr))};
 let whereExists: (select, selectInUnion) => selectInUnion =

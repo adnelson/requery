@@ -199,7 +199,16 @@ let as_: (string, target) => target;
 // Creates a top-level select statement.
 let select: selectInUnion => select;
 
+// Used to select from a table or another target. For example:
+// select([e(col("x")), e(col("y"))] |> from(tableNamed(tname("points"))))
+//   ==> SELECT x, y FROM points;
 let from: (target, list(aliasedExpr)) => selectInUnion;
+
+// Used to select static values or constants. For example
+// select([e(int(1) + int(2))] |> fromNone)
+//   ==> SELECT 1 + 2;
+let fromNone: list(aliasedExpr) => selectInUnion;
+
 let where: (expr, selectInUnion) => selectInUnion;
 let whereExists: (select, selectInUnion) => selectInUnion;
 
