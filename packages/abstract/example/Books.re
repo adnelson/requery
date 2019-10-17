@@ -84,11 +84,16 @@ module Book = {
 // View of books written by each author
 let authorBooksView =
   QueryBuilder.(
-    select([e(all)])
-    |> from(
-         table(Author.tableName, ~a="a")
-         |> innerJoin(table(Book.tableName, ~a="b"), tcol("a", "id") == tcol("b", "author id")),
-       )
+    select(
+      [e(all)]
+      |> from(
+           table(Author.tableName, ~a="a")
+           |> innerJoin(
+                table(Book.tableName, ~a="b"),
+                tcol("a", "id") == tcol("b", "author id"),
+              ),
+         ),
+    )
     |> createView(tname("author_books"))
   );
 
@@ -120,7 +125,7 @@ let run = (client, idType) => {
             )
          // Selecting author rows, decoding as tuples
          |> then_(_ =>
-              QB.(select([e(all)]) |> from(table(Author.tableName)))
+              QB.(select([e(all)] |> from(table(Author.tableName))))
               |> C.select(
                    client,
                    RowDecode.(decodeEach(columns3("id", int, "first", string, "last", string))),
@@ -129,7 +134,7 @@ let run = (client, idType) => {
          |> P.then_(r => P.rLog(r))
          // Selecting author rows, decoding as Author objects
          |> then_(_ =>
-              QB.(select([e(all)]) |> from(table(Author.tableName)))
+              QB.(select([e(all)] |> from(table(Author.tableName))))
               |> C.select(client, RowDecode.(decodeEach(Author.fromJson)))
             )
        );

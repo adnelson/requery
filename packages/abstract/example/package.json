@@ -19,5 +19,8 @@
     "clean": "bsb -clean-world",
     "watch:abstract": "sh -c \"yarn watch & onchange -k -i -d 500 '../abstract/src/**/*.{re,rei}' -- yarn cleanbuild\"",
     "testquery": "node example/SqliteBooks.bs.js"
+  },
+  "devDependencies": {
+    "onchange": "^6.1.0"
   }
 }
