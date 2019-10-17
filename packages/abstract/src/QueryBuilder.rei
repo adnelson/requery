@@ -210,6 +210,10 @@ let groupByCol: (~having: expr=?, string, selectInUnion) => selectInUnion; // al
 let groupByColumns: (~having: expr=?, list(string), selectInUnion) => selectInUnion;
 let groupByCols: (~having: expr=?, list(string), selectInUnion) => selectInUnion; // alias
 
+let union: (selectVariant, select) => select;
+let unionAll: (selectVariant, select) => select;
+let with_: (tableName, list(columnName), select, select) => select;
+
 // let orderByDir: (list(expr), select) => select;
 let limit: (expr, select) => select;
 let orderBy_: (list(expr), select) => select; // alias for orderByDir
