@@ -85,7 +85,7 @@ module Book = {
 let authorBooksView =
   QueryBuilder.(
     select(
-      [e(all)]
+      [e(tcol("a", "id"), ~a="author_id")]
       |> from(
            table(Author.tableName, ~a="a")
            |> innerJoin(
@@ -102,7 +102,8 @@ let run = (client, idType) => {
   |> then_(_ => C.createTable(client, Book.createTable(idType)))
   |> then_(_ => C.createView(client, authorBooksView))
   |> then_(_
-       // Inserting with an explicit query, using columns2 to define the encoding on the fly
+       // Inserting with an explicit query, using columns2 to define the
+       // encoding on the fly
        =>
          QB.(
            [("Stephen", "King"), ("Jane", "Austen")]
@@ -131,7 +132,7 @@ let run = (client, idType) => {
                    RowDecode.(decodeEach(columns3("id", int, "first", string, "last", string))),
                  )
             )
-         |> P.then_(r => P.rLog(r))
+         |> then_(r => P.rLog(r))
          // Selecting author rows, decoding as Author objects
          |> then_(_ =>
               QB.(select([e(all)] |> from(table(Author.tableName))))

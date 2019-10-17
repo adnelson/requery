@@ -30,7 +30,7 @@ module DefaultRules: SqlRenderingRules = {
 module WithRenderingRules = (S: SqlRenderingRules) => {
   // Wrap a table/column/etc name in quotes
   module RenderWrapped = (String: Sql.OpaqueString) => {
-    type t = String.t;
+    include String;
     let render = s => S.escapeName(String.toString(s));
   };
 
@@ -62,7 +62,10 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       (renderInner, aliased) =>
         switch (toTuple(aliased)) {
         | (x, None) => renderInner(x)
-        | (x, Some(alias)) => renderInner(x) ++ " AS " ++ alias
+        // TODO eventually aliases should be typed. For now just wrap
+        // them as if they were column names
+        | (x, Some(alias)) =>
+          renderInner(x) ++ " AS " ++ ColumnName.(render(fromString(alias)))
         };
   };
 
@@ -271,9 +274,11 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
 
   module CreateView = {
     open Sql.CreateView;
-    let render = ({name, query, ifNotExists}) =>
+    let render = ({name, query}) =>
       "CREATE VIEW "
-      ++ (ifNotExists ? "IF NOT EXISTS " : "")
+      // TODO sqlite and postgres have different ways of rendering this.
+      // SQLite uses `IF NOT EXISTS` while postgres uses `OR REPLACE`
+      // ++ (ifNotExists ? "IF NOT EXISTS " : "")
       ++ TableName.render(name)
       ++ " AS "
       ++ Select.render(query);
