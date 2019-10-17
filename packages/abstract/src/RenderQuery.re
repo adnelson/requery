@@ -171,7 +171,16 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       | UnionAll(s1, s2) => renderSelectVariant(s1) ++ " UNION ALL " ++ renderSelectVariant(s2)
 
     and render: t => string =
-      ({select, orderBy, limit}) => {
+      ({with_, select, orderBy, limit}) => {
+        let with_' =
+          O.mapString(with_, ((table_, columns_, innerSelect)) =>
+            " WITH "
+            ++ TableName.render(table_)
+            ++ A.mapJoinCommasParens(columns_, ColumnName.render)
+            ++ " AS ("
+            ++ render(innerSelect)
+            ++ ")"
+          );
         let orderBy' =
           switch (orderBy) {
           | Some(cols) =>
@@ -182,7 +191,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
           };
         let limit' = O.mapString(limit, n => " LIMIT " ++ Expression.render(n));
 
-        renderSelectVariant(select) ++ orderBy' ++ limit';
+        with_' ++ renderSelectVariant(select) ++ orderBy' ++ limit';
       };
   };
 

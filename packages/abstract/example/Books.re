@@ -147,20 +147,17 @@ let run = (client, idType) => {
             )
          |> then_(rows => rLog(rows))
          // Use a WITH query (CTE)
-         |> then_(_ => {
-              Js.log("yo");
-              let q =
-                QB.(
-                  with_(
-                    tname("author_names"),
-                    [cname("name")],
-                    authorBooksSelect,
-                    select([e(all)] |> from(table(Author.tableName))),
-                  )
-                );
-              Client.logQuery(q);
-              q |> C.select(client, RowDecode.(decodeEach(Author.fromJson)));
-            })
+         |> then_(_ =>
+              QB.(
+                with_(
+                  tname("author_names"),
+                  [cname("name")],
+                  authorBooksSelect,
+                  select([e(all)] |> from(table(Author.tableName))),
+                )
+              )
+              |> C.select(client, RowDecode.(decodeEach(Author.fromJson)))
+            )
          |> then_(rows => rLog(rows))
        );
 };
