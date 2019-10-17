@@ -4,16 +4,26 @@ let (then_, resolve, catch) = Js.Promise.(then_, resolve, catch);
 let client = RequerySqlite.Sqlite3.(makeClient(Memory, ~onQuery=Client.logQuery));
 let authors = QueryBuilder.tname("authors");
 
-// CREATE TABLE IF NOT EXISTS authors (first TEXT NOT NULL, last TEXT NOT NULL, UNIQUE (first, last));
+// SELECT 1 AS x UNION SELECT 2 as x
 QueryBuilder.(
-  [
-    cdef("first", Types.text),
-    cdef("last", Types.text),
-    constraint_(unique([cname("first"), cname("last")])),
-  ]
-  |> createTable(authors, ~ifNotExists=true)
+  select([e(int(1), ~a="x")] |> fromNone) |> union1([e(int(2), ~a="x")] |> fromNone)
 )
-|> Client.createTable(client)
+|> Client.select(client, RowDecode.(decodeEach(field("x", int))))
+|> then_(Result.unwrapPromise)
+|> then_(xs => Js.log(xs) |> resolve)
+|> then_(_
+     =>
+       QueryBuilder.(
+         [
+           cdef("first", Types.text),
+           cdef("last", Types.text),
+           constraint_(unique([cname("first"), cname("last")])),
+         ]
+         |> createTable(authors, ~ifNotExists=true)
+       )
+       |> Client.createTable(client)
+     )
+     // CREATE TABLE IF NOT EXISTS authors (first TEXT NOT NULL, last TEXT NOT NULL, UNIQUE (first, last));
 // INSERT INTO authors (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen')
 |> then_(_ =>
      RowEncode.(

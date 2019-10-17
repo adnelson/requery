@@ -219,6 +219,7 @@ let groupByCol: (~having: expr=?, string, selectInUnion) => selectInUnion; // al
 let groupByColumns: (~having: expr=?, list(string), selectInUnion) => selectInUnion;
 let groupByCols: (~having: expr=?, list(string), selectInUnion) => selectInUnion; // alias
 
+let union1: (selectInUnion, select) => select;
 let union: (selectVariant, select) => select;
 let unionAll: (selectVariant, select) => select;
 let with_: (tableName, list(columnName), select, select) => select;

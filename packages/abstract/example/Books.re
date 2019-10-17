@@ -96,12 +96,6 @@ let authorBooksSelect =
     )
   );
 
-// View of books written by each author
-//let authorBooksView =
-//  QueryBuilder.(
-//    |> createView(tname("author_books"))
-//  );
-
 let run = (client, idType) => {
   C.createTable(client, Author.createTable(idType))
   |> then_(_ => C.createTable(client, Book.createTable(idType)))
@@ -150,13 +144,13 @@ let run = (client, idType) => {
          |> then_(_ =>
               QB.(
                 with_(
-                  tname("author_names"),
-                  [cname("name")],
+                  tname("author_ids"),
+                  [cname("id")],
                   authorBooksSelect,
-                  select([e(all)] |> from(table(Author.tableName))),
+                  select([e(all)] |> from(table(tname("author_ids")))),
                 )
               )
-              |> C.select(client, RowDecode.(decodeEach(Author.fromJson)))
+              |> C.select(client, RowDecode.(decodeEach(field("id", int))))
             )
          |> then_(rows => rLog(rows))
        );

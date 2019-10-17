@@ -142,6 +142,9 @@ let whereExists: (select, selectInUnion) => selectInUnion =
 let select: selectInUnion => select =
   s => {with_: None, select: Select(s), orderBy: None, limit: None};
 
+//let union_: (selectInUnion, selectInUnion) => select =
+//  (s1, s2) => {with_: None, select: Union(s1, s2)
+//
 let as_ = alias =>
   Select.(
     fun
@@ -150,11 +153,15 @@ let as_ = alias =>
     | target => SubSelect(select([e(all)] |> from(target)), alias)
   );
 
+// Still figuring out the ideal api for this...
+let union1: (selectInUnion, select) => select =
+  (siu, sel) => {...sel, select: Union(sel.select, Select(siu))};
+
 let union: (selectVariant, select) => select =
-  (s, sel) => {...sel, select: Union(s, sel.select)};
+  (s, sel) => {...sel, select: Union(sel.select, s)};
 
 let unionAll: (selectVariant, select) => select =
-  (s, sel) => {...sel, select: UnionAll(s, sel.select)};
+  (s, sel) => {...sel, select: UnionAll(sel.select, s)};
 
 let with_: (TableName.t, list(ColumnName.t), select, select) => select =
   (alias, colNames, aliasedSel, sel) => {
