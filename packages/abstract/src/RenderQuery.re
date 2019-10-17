@@ -179,7 +179,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
           };
         let limit' = O.mapString(limit, n => " LIMIT " ++ Expression.render(n));
 
-        "";
+        renderSelectVariant(select) ++ orderBy' ++ limit';
       };
   };
 
