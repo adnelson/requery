@@ -145,7 +145,7 @@ module Select = {
     where: option(whereClause),
   }
 
-  // Encapsulates, SELECTs, WITH clauses, and UNIONs.
+  // Encapsulates SELECTs, WITH clauses, and UNIONs.
   and selectVariant =
     | Select(selectInUnion)
     | Union(selectVariant, selectVariant)
@@ -269,4 +269,3 @@ type query('returning) =
   | Insert(Insert.t('returning))
   | CreateTable(CreateTable.t)
   | CreateView(CreateView.t);
-// let renderSelect = Select.render;
