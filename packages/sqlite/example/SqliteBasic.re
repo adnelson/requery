@@ -26,7 +26,7 @@ QueryBuilder.(
    )
 // SELECT first, last FROM authors
 |> then_(_ =>
-     QueryBuilder.([e(col("first")), e(col("last"))] |> selectFrom(table(authors)))
+     QueryBuilder.(select([e(col("first")), e(col("last"))] |> from(table(authors))))
      // Run query, decoding result into [|("Stephen", "King"), ("Jane", "Austen")|]
      |> Client.select(client, RowDecode.(decodeEach(columns2("first", string, "last", string))))
    )
