@@ -5,6 +5,7 @@ module L = Utils.List;
 type columnName = Sql.ColumnName.t;
 type column = Sql.Column.t;
 type tableName = Sql.TableName.t;
+type aliased('t) = Sql.Aliased.t('t);
 type constraintName = Sql.ConstraintName.t;
 type tableConstraint = Sql.CreateTable.tableConstraint;
 type typeName = Sql.TypeName.t;
@@ -14,7 +15,6 @@ type selectVariant = Sql.Select.selectVariant;
 type select = Sql.Select.select;
 
 type expr = Sql.Expression.t;
-type aliasedExpr = Sql.Aliased.t(expr);
 type direction = Sql.Select.direction;
 type insert('r) = Sql.Insert.t('r);
 type statement = Sql.CreateTable.statement;
@@ -40,9 +40,11 @@ let string = s => E.Atom(E.String(s));
 let bigint = i => typed(int(i), typeName("BigInt"));
 let tuple = exprs => E.Tuple(L.toArray(exprs));
 let tuple2 = (f, g, (a, b)) => tuple([f(a), g(b)]);
+let tupleOf = (toExpr: toExpr('a), xs) => tuple(L.map(xs, toExpr));
 
 let tname = Sql.TableName.fromString;
 let cname = Sql.ColumnName.fromString;
+let cnames = l => L.map(l, Sql.ColumnName.fromString);
 let column = Sql.Column.fromString;
 let tcolumn = (t, c) => Sql.Column.fromStringWithTable(tname(t), c);
 let columns = Sql.Column.fromStringList;
@@ -105,7 +107,7 @@ let sum = e => E.Call("SUM", [|e|]);
 let coalesce = (e1, e2) => E.Call("COALESCE", [|e1, e2|]);
 let call = (name, args) => E.Call(name, L.toArray(args));
 
-let e = (~a=?, expr): aliasedExpr => Aliased.make(expr, ~a?);
+let e = (~a=?, expr): aliased(expr) => Aliased.make(expr, ~a?);
 
 let table = (~a=?, t) => Select.Table(Aliased.make(t, ~a?));
 let tableNamed = (~a=?, name) => Select.Table(Aliased.make(tname(name), ~a?));
@@ -119,7 +121,7 @@ let selectAs = (alias, select) => Select.SubSelect(select, alias);
 
 let (asc, desc) = Select.(ASC, DESC);
 
-let from: (target, list(aliasedExpr)) => selectInUnion =
+let from: (target, list(aliased(expr))) => selectInUnion =
   (target, exprs) => {
     selections: L.toArray(exprs),
     from: Some(target),
@@ -136,11 +138,40 @@ let fromNone = exprs => {
 
 let where: (expr, selectInUnion) => selectInUnion =
   (expr, sel) => {...sel, where: Some(Where(expr))};
+
+let andWhere: (expr, selectInUnion) => selectInUnion =
+  (expr, sel) =>
+    sel
+    |> (
+      switch (sel.where) {
+      | Some(Where(cond)) => where(expr && cond)
+      | _ => where(expr)
+      }
+    );
+
+let orWhere: (expr, selectInUnion) => selectInUnion =
+  (expr, sel) =>
+    sel
+    |> (
+      switch (sel.where) {
+      | Some(Where(cond)) => where(expr || cond)
+      | _ => where(expr)
+      }
+    );
+
 let whereExists: (select, selectInUnion) => selectInUnion =
   (exists, sel) => {...sel, where: Some(WhereExists(exists))};
 
-let select: selectInUnion => select =
-  s => {with_: None, select: Select(s), orderBy: None, limit: None};
+let select = s => {Select.with_: None, select: Select(s), orderBy: None, limit: None};
+
+let selectN = (n, s) => {
+  Select.with_: None,
+  select: Select(s),
+  orderBy: None,
+  limit: Some(int(n)),
+};
+
+let select1 = selectN(1);
 
 //let union_: (selectInUnion, selectInUnion) => select =
 //  (s1, s2) => {with_: None, select: Union(s1, s2)
@@ -169,6 +200,13 @@ let with_: (TableName.t, list(ColumnName.t), select, select) => select =
     with_: Some((alias, L.toArray(colNames), aliasedSel)),
   };
 
+// TODO rewrite tail-recursive
+let rec withs = defs =>
+  switch (defs) {
+  | [] => (select => select)
+  | [(t, cols, sel), ...defs] => (select => with_(t, cols, sel, withs(defs, select)))
+  };
+
 let orderBy = (exs, s) =>
   Select.{...s, orderBy: Some(L.amap(exs, ((c, dir)) => (c, Some(dir))))};
 let orderBy_ = (exs, s) => Select.{...s, orderBy: Some(L.amap(exs, c => (c, None)))};
@@ -178,6 +216,7 @@ let orderBy2 = (ex1, dir1, ex2, dir2, s) =>
   Select.{...s, orderBy: Some([|(ex1, Some(dir1)), (ex2, Some(dir2))|])};
 let orderBy2_ = (ex1, ex2, s) => Select.{...s, orderBy: Some([|(ex1, None), (ex2, None)|])};
 let limit = (n, s) => Select.{...s, limit: Some(n)};
+let limit1 = s => Select.{...s, limit: Some(int(1))};
 
 //let orderByCols = orderBy_(column);
 let groupBy = (~having=?, cols, s) => Select.{...s, groupBy: Some((L.toArray(cols), having))};

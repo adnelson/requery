@@ -2,15 +2,27 @@ open Requery;
 module Pg = BsPostgres;
 module Rules = RenderQuery.DefaultRules;
 module Render = RenderQuery.WithRenderingRules(Rules);
+module JE = Json.Encode;
+module JD = Json.Decode;
 let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
   Utils.Promise.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 
-// Connection config
+// Connection config. TODO many more options to support
 type config = {
   host: string,
   database: string,
   port: int,
 };
+
+let configToJson: JE.encoder(config) =
+  ({host, database, port}) =>
+    JE.(
+      object_([
+        ("host", host |> string),
+        ("database", database |> string),
+        ("port", port |> int),
+      ])
+    );
 
 type query = Custom.query;
 
@@ -24,8 +36,8 @@ type client = Client.t(Pg.Client.t, result, query);
 module Pool = {
   type pool = Pg.Pool.t;
   type result = Pg.Result.t(Js.Json.t);
-  let makePool = ({host, database, port}) => Pg.Pool.make(~host, ~database, ~port, ());
   let runRaw = (client, text) => Pg.Client.Promise.query'(Pg.Query.make(~text, ()), client);
+  let makePool = ({host, database, port}) => Pg.Pool.make(~host, ~database, ~port, ());
 
   let makeClient = (~onQuery=?, ~onResult=?, pool) =>
     Pg.Pool.Promise.connect(pool)
@@ -45,8 +57,7 @@ module Pool = {
 
   let releaseClient = Pg.Pool.Pool_Client.release;
   let releasePool = Pg.Pool.Promise.end_;
-  let runClient = // : (pool, client => Js.Promise.t('a)) => Js.Promise.t('a) =
-      (~onQuery=?, ~onResult=?, pool, action) =>
+  let runClient = (~onQuery=?, ~onResult=?, pool, action) =>
     makeClient(~onQuery?, ~onResult?, pool)
     |> then_(client => action(client) |> finally(() => releaseClient(Client.handle(client))));
 

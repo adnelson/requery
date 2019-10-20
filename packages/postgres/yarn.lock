@@ -257,8 +257,10 @@ readdirp@~3.1.3:
   dependencies:
     picomatch "^2.0.4"
 
-requery-abstract@../abstract:
-  version "0.6.0"
+requery-abstract@^0.10.0:
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/requery-abstract/-/requery-abstract-0.10.0.tgz#ad9c83b52240a19d733ba05e1159adb77a510418"
+  integrity sha512-AVCdwOEaGF6DiqEGc10fFUFgRLkL+btGLBhreAj4BF86IlyT6p/asJYRtsTGm3T0okpI79VIEaZLhe/1d5IhYw==
   dependencies:
     "@glennsl/bs-json" "^5.0.1"
     bs-platform "^5.0.6"
