@@ -55,10 +55,16 @@ let getFirst: array(Row.t('a)) => Row.t('a) =
   | [||] => raise(Error(EmptyRows))
   | rows => rows[0];
 
-let decodeFirst: decoder('t) => rowsDecoder('t) =
+// Decode the first row with the given JSON decoder.
+let decodeOne: decoder('t) => rowsDecoder('t) =
   (decode, rows) => Row.decodeJson(rows |> getFirst, decode);
 
-let decodeOne: decoder('t) => rowsDecoder('t) = decodeFirst;
+// Map a JSON decoder over the rows, collecting the result for each row.
+let decodeEach: (decoder('a), array(Row.t(Js.Json.t))) => array('a) =
+  (d, arr) => A.map(arr, row => Row.decodeJson(row, d));
+
+let decodeReduce: (decoder('a), 'b, ('a, 'b) => 'b) => rowsDecoder('b) =
+  (dec, start, f, rows) => A.reduce(decodeEach(dec, rows), start, f);
 
 let optColumn: (string, decoder('t)) => rowsDecoder(option('t)) =
   (col, dec) =>
@@ -66,8 +72,9 @@ let optColumn: (string, decoder('t)) => rowsDecoder(option('t)) =
     | [||] => None
     | rows => Some(Row.decodeJson(rows[0], field(col, dec)));
 
-let column: (string, decoder('t)) => rowsDecoder('t) =
-  (col, dec) => decodeFirst(field(col, dec));
+// Get one column, with the given name and with the given decoder.
+// Alias for `Json.Decode.field`
+let column1: (string, decoder('t)) => decoder('t) = field;
 
 let columns2: (string, decoder('a), string, decoder('b)) => decoder(('a, 'b)) =
   (columnA, decodeA, columnB, decodeB, j) => (
@@ -89,10 +96,6 @@ let columns3:
 let withId =
     (~idField: string, ~idDecode: decoder('id), decode: decoder('t)): decoder(('id, 't)) =>
   tup2(field(idField, idDecode), decode);
-
-// Map a JSON decoder over the rows, collecting the result for each row.
-let decodeEach: (decoder('a), array(Row.t(Js.Json.t))) => array('a) =
-  (d, arr) => A.map(arr, row => Row.decodeJson(row, d));
 
 // Decode a row into a 3-tuple.
 let tuple3Row:
