@@ -4,6 +4,7 @@ module QB = QueryBuilder;
 module RE = RowEncode;
 module Rules = RenderQuery.DefaultRules;
 module Render = RenderQuery.WithRenderingRules(Rules);
+module L = Utils.List;
 module P = Utils.Promise;
 module J = Utils.Json;
 module JD = Utils.Json.Decode;
@@ -38,16 +39,27 @@ module Author = {
       last: j |> field("last", string),
     };
 
-  let createTable = idType =>
+  // This type and its use to create the table, is a conceptual work in progress.
+  type fields('id, 'first, 'last) =
+    | Id('id)
+    | First('first)
+    | Last('last);
+
+  let fieldToColumnDef = idType =>
+    QB.(
+      fun
+      | Id () => cdef("id", idType, ~primaryKey=true)
+      | First () => cdef("first", Types.text)
+      | Last () => cdef("last", Types.text)
+    );
+
+  let createTable = idType => {
+    let cdefs = [Id(), First(), Last()]->(L.map(fieldToColumnDef(idType)));
     QueryBuilder.(
-      [
-        cdef("id", idType, ~primaryKey=true),
-        cdef("first", Types.text),
-        cdef("last", Types.text),
-        constraint_(unique([cname("first"), cname("last")])),
-      ]
+      L.concat(cdefs, [QB.(constraint_(unique([cname("first"), cname("last")])))])
       |> createTable(tableName, ~ifNotExists=true)
     );
+  };
 };
 
 module Book = {
