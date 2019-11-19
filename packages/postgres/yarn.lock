@@ -257,10 +257,10 @@ readdirp@~3.1.3:
   dependencies:
     picomatch "^2.0.4"
 
-requery-abstract@^0.10.0:
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/requery-abstract/-/requery-abstract-0.10.0.tgz#ad9c83b52240a19d733ba05e1159adb77a510418"
-  integrity sha512-AVCdwOEaGF6DiqEGc10fFUFgRLkL+btGLBhreAj4BF86IlyT6p/asJYRtsTGm3T0okpI79VIEaZLhe/1d5IhYw==
+requery-abstract@^0.11.0:
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/requery-abstract/-/requery-abstract-0.11.0.tgz#657701a5ea481e065463fb8cc322e57d04bb7de9"
+  integrity sha512-rHH2//BMTAY34pZy1zwY8T6JCRl5yA+PNYY8lk7SFnhbJqOXsYirh5wRnK7Hja9YhwGBdFJx+zarZYRIo6c5iQ==
   dependencies:
     "@glennsl/bs-json" "^5.0.1"
     bs-platform "^5.0.6"

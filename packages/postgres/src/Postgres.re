@@ -8,21 +8,35 @@ let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
   Utils.Promise.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 
 // Connection config. TODO many more options to support
-type config = {
-  host: string,
-  database: string,
-  port: int,
-};
+module Config = {
+  type t = {
+    host: string,
+    database: string,
+    port: int,
+    user: option(string),
+    password: option(string),
+  };
 
-let configToJson: JE.encoder(config) =
-  ({host, database, port}) =>
-    JE.(
-      object_([
-        ("host", host |> string),
-        ("database", database |> string),
-        ("port", port |> int),
-      ])
-    );
+  let toJson: JE.encoder(t) =
+    ({host, database, port, user}) =>
+      JE.(
+        object_([
+          ("host", host |> string),
+          ("database", database |> string),
+          ("port", port |> int),
+          ("user", user |> nullable(string)),
+          // err on the side of caution, not rendering password
+        ])
+      );
+
+  let make = (~host, ~database, ~port, ~user=?, ~password=?, ()) => {
+    host,
+    database,
+    port,
+    user,
+    password,
+  };
+};
 
 type query = Custom.query;
 
@@ -37,7 +51,7 @@ module Pool = {
   type pool = Pg.Pool.t;
   type result = Pg.Result.t(Js.Json.t);
   let runRaw = (client, text) => Pg.Client.Promise.query'(Pg.Query.make(~text, ()), client);
-  let makePool = ({host, database, port}) => Pg.Pool.make(~host, ~database, ~port, ());
+  let makePool = ({Config.host, database, port, user, password}) => Pg.Pool.make(~host, ~database, ~port, ~user?, ~password?, ());
 
   let makeClient = (~onQuery=?, ~onResult=?, pool) =>
     Pg.Pool.Promise.connect(pool)
@@ -61,7 +75,7 @@ module Pool = {
     makeClient(~onQuery?, ~onResult?, pool)
     |> then_(client => action(client) |> finally(() => releaseClient(Client.handle(client))));
 
-  let runPool: (config, pool => Js.Promise.t('a)) => Js.Promise.t('a) =
+  let runPool: (Config.t, pool => Js.Promise.t('a)) => Js.Promise.t('a) =
     (config, action) => {
       let pool = makePool(config);
       action(pool) |> finally(() => releasePool(pool));
