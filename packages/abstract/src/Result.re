@@ -1,6 +1,3 @@
-// The result of decoding a database response. Uses Belt.Result under the hood.
-open Belt.Result;
-
 let (resolve, then_, reject) = Js.Promise.(resolve, then_, reject);
 type error =
   | RowDecodeError(RowDecode.error);
@@ -13,32 +10,32 @@ let encodeError: Utils.Json.encoder(error) =
 
 exception Error(error);
 
-type t('a) = Belt.Result.t(error, 'a);
-let ok = x => Ok(x);
-let error = e => Error(e);
+type t('a) =
+  | Error(error)
+  | Success('a);
 
 module Enc = Utils.Json.Encode;
 
 let encode: Utils.Json.encoder('a) => Utils.Json.encoder(t('a)) =
   Enc.(
-    encodeOk =>
+    encodeSuccess =>
       fun
       | Error(e) => e |> object1("Error", encodeError)
-      | Ok(x) => x |> object1("Ok", encodeOk)
+      | Success(x) => x |> object1("Success", encodeSuccess)
   );
 
 let unwrap: t('a) => 'a =
   fun
-  | Ok(x) => x
+  | Success(x) => x
   | Error(err) => raise(Error(err));
 
 let unwrapPromise: t('a) => Js.Promise.t('a) =
   fun
-  | Ok(x) => resolve(x)
+  | Success(x) => resolve(x)
   | Error(err) => reject(Error(err));
 
 let unwrapPromise2: ((t('a), t('b))) => Js.Promise.t(('a, 'b)) =
   fun
-  | (Ok(x), Ok(y)) => resolve((x, y))
+  | (Success(x), Success(y)) => resolve((x, y))
   | (Error(err), _) => reject(Error(err))
   | (_, Error(err)) => reject(Error(err));

@@ -68,8 +68,8 @@ let insert = (cli, insert) => exec(cli, Sql.Insert(insert));
 let decodeResult:
   (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) => Result.t('a) =
   (decode, rows) =>
-    try (Belt.Result.Ok(decode(rows))) {
-    | RowDecode.Error(e) => Belt.Result.Error(RowDecodeError(e))
+    try (Result.Success(decode(rows))) {
+    | RowDecode.Error(e) => Result.Error(RowDecodeError(e))
     };
 let decodeResultPromise:
   (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) => Js.Promise.t(Result.t('a)) =
