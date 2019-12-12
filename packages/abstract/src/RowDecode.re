@@ -122,6 +122,21 @@ let dict =
     |> D.fromArray;
   };
 
+// Like `dict` but also returns an array of keys in the order encountered.
+let dictWithOrder =
+    (
+      ~keyField: string,
+      ~keyDecode: decoder(string)=string,
+      ~valueField: string,
+      ~valueDecode: decoder('a),
+    )
+    : rowsDecoder((D.t('a), array(string))) =>
+  jsonRows => {
+    jsonRows
+    |> decodeEach(tup2(field(keyField, keyDecode), field(valueField, valueDecode)))
+    |> (entries => (D.fromArray(entries), A.map(entries, fst)));
+  };
+
 let dict2d =
     (
       ~outerKeyField: string,
