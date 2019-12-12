@@ -110,7 +110,7 @@ let tuple3Row:
 // This can be nested, although it's not particularly efficient
 // since each nested call will need to iterate over all rows.
 let dictOf =
-    (~keyField: string, ~keyDecode: decoder(string)=string, ~inner: rowsDecoder('a))
+    (~keyField: string, ~keyDecode: decoder(string)=string, inner: rowsDecoder('a))
     : rowsDecoder(D.t('a)) =>
   rows => {
     let agg = D.empty();
@@ -275,4 +275,27 @@ let dictWithOrder =
     jsonRows
     |> decodeEach(tup2(field(keyField, keyDecode), field(valueField, valueDecode)))
     |> (entries => (D.fromArray(entries), S.dedupeArray(A.map(entries, fst))));
+  };
+
+// Given a way to get a (key, value) pair from a row, produce a dictionary
+// with those keys/values and an array of keys in the order encountered.
+let dictOfWithOrder =
+    (~keyField: string, ~keyDecode: decoder(string)=string, inner: rowsDecoder('a))
+    : rowsDecoder((D.t('a), array(string))) =>
+  rows => {
+    let agg = D.empty();
+    let keys = [||];
+    A.forEach(
+      rows,
+      row => {
+        let key = row |> Row.decodeJson(field(keyField, keyDecode));
+        switch (D.get(agg, key)) {
+        | None =>
+          D.set(agg, key, [|row|]) |> ignore;
+          A.pushMut(keys, key);
+        | Some(rows') => A.pushMut(rows', row)
+        };
+      },
+    );
+    (D.map(agg, inner), keys);
   };

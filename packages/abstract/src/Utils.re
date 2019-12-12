@@ -116,12 +116,10 @@ module String = {
     let seen = Dict.empty();
     let uniques = [||];
     A.forEach(strings, s =>
-      Dict.has(seen, s)
-        ? ()
-        : {
-          Js.Array.push(s, uniques) |> ignore;
-          Dict.set(seen, s, true) |> ignore;
-        }
+      if (!Dict.has(seen, s)) {
+        Js.Array.push(s, uniques) |> ignore;
+        Dict.set(seen, s, true) |> ignore;
+      }
     );
     uniques;
   };

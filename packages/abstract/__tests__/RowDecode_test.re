@@ -11,13 +11,43 @@ module Dict = {
   let rows = RD.toRows(jsonRows);
 
   describe("dictOf", () => {
-    let byFirstName: D.t(array(string)) =
-      rows
-      |> RD.dictOf(~keyField="first_name", ~inner=RD.(decodeEach(field("last_name", string))));
-    test("Bob", () =>
-      expect(D.get(byFirstName, "Bob")) |> toEqual(Some([|"Blob"|]))
-    );
+    describe("one-dimensional dictionary", () => {
+      let byFirstName: D.t(array(string)) =
+        rows |> RD.(dictOf(~keyField="first_name", decodeEach(field("last_name", string))));
+      test("Bob", () =>
+        expect(D.get(byFirstName, "Bob")) |> toEqual(Some([|"Blooperman"|]))
+      );
+    });
+
+    describe("nested dictionary", () => {
+      let firstLastId: D.t(D.t(int)) =
+        rows
+        |> RD.(
+             dictOf(
+               ~keyField="last_name",
+               dictOf(~keyField="first_name", decodeOne(field("id", int))),
+             )
+           );
+      test("Blooperman", () =>
+        expect(D.get(firstLastId, "Blooperman"))
+        |> toEqual(Some(D.fromArray([|("Bob", 1), ("Billy", 5)|])))
+      );
+    });
   });
+
+  describe("dictOfWithOrder", () =>
+    describe("one-dimensional dictionary", () => {
+      let (byFirstName: D.t(array(string)), firstNames) =
+        rows
+        |> RD.(dictOfWithOrder(~keyField="first_name", decodeEach(field("last_name", string))));
+      test("Bob", () =>
+        expect(D.get(byFirstName, "Bob")) |> toEqual(Some([|"Blooperman"|]))
+      );
+      test("names", () =>
+        expect(firstNames) |> toEqual([|"Bob", "Biff", "Barnabus", "Bertrand", "Billy"|])
+      );
+    })
+  );
 
   describe("flat dict", () => {
     describe("unordered", () => {
@@ -48,7 +78,7 @@ module Dict = {
                ~valueDecode=RD.int,
              );
         test("Bob's ID", () =>
-          expect(D.get(D.getExn(dict, "Blob"), "Bob")) |> toEqual(Some(1))
+          expect(D.get(D.getExn(dict, "Blooperman"), "Bob")) |> toEqual(Some(1))
         );
         test("Biff's ID", () =>
           expect(D.get(D.getExn(dict, "Bofferton"), "Biff")) |> toEqual(Some(2))
