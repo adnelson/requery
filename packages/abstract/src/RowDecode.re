@@ -1,6 +1,7 @@
 include Utils.Json.Decode;
 module A = Utils.Array;
 module D = Utils.Dict;
+module S = Utils.String;
 type dict('a) = D.t('a);
 
 type error =
@@ -134,7 +135,7 @@ let dictWithOrder =
   jsonRows => {
     jsonRows
     |> decodeEach(tup2(field(keyField, keyDecode), field(valueField, valueDecode)))
-    |> (entries => (D.fromArray(entries), A.map(entries, fst)));
+    |> (entries => (D.fromArray(entries), S.dedupeArray(A.map(entries, fst))));
   };
 
 let dict2d =

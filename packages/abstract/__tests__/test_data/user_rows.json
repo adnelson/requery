@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "first_name": "Bob",
+    "last_name": "Blob"
+  },
+  {
+    "id": 2,
+    "first_name": "Biff",
+    "last_name": "Bofferton"
+  },
+  {
+    "id": 3,
+    "first_name": "Barnabus",
+    "last_name": "Bofferton"
+  },
+  {
+    "id": 4,
+    "first_name": "Bertrand",
+    "last_name": "Bofferton"
+  },
+  {
+    "id": 5,
+    "first_name": "Billy",
+    "last_name": "Blooperman"
+  }
+]
