@@ -1,8 +1,13 @@
 // This is a kitchen sink for various functions that I've written
 // and used in multiple places.
 module SMap = Belt.Map.String;
+module SSet = Belt.Set.String;
 module O_ = Belt.Option;
 module A = Belt.Array;
+
+// Throw an exception as a native javascript error. Acts like failwith but
+// will have a stack trace if triggered.
+let throw: string => 'a = [%raw message => {| throw new Error(message); |}];
 
 external id: 'a => 'a = "%identity";
 
@@ -16,6 +21,48 @@ let curry: ((('a, 'b)) => 'c, 'a, 'b) => 'c = (f, a, b) => f((a, b));
 let curry3: ((('a, 'b, 'c)) => 'd, 'a, 'b, 'c) => 'd = (f, a, b, c) => f((a, b, c));
 let curry4: ((('a, 'b, 'c, 'd)) => 'd, 'a, 'b, 'c, 'd) => 'd =
   (f, a, b, c, d) => f((a, b, c, d));
+
+module Dict = {
+  include Js.Dict;
+
+  // Map a function over the values in a dict.
+  let map: (t('a), 'a => 'b) => t('b) =
+    (dict, f) => {
+      let entries = entries(dict);
+      fromArray(A.map(entries, ((k, v)) => (k, f(v))));
+    };
+
+  // Map a function over the key/value pairs in a dict.
+  let mapWithKeys: (t('a), (string, 'a) => 'b) => t('b) =
+    (dict, f) => {
+      let entries = entries(dict);
+      fromArray(A.map(entries, ((k, v)) => (k, f(k, v))));
+    };
+
+  let fromMap: SMap.t('a) => t('a) = map => fromArray(SMap.toArray(map));
+  let toMap: t('a) => SMap.t('a) = dict => SMap.fromArray(entries(dict));
+
+  // Set a key in a dictionary, producing a new dictionary.
+  let setPure: (t('a), string, 'a) => t('a) =
+    (dict, k, v) => {
+      fromArray(A.concat(entries(dict), [|(k, v)|]));
+    };
+
+  let singleton: (string, 'a) => t('a) = (k, v) => fromArray([|(k, v)|]);
+
+  let getExn = (d, k) =>
+    switch (Js.Dict.get(d, k)) {
+    | None => throw("No such key '" ++ k ++ "' in ")
+    | Some(v) => v
+    };
+
+  // Construct from an array of keys, applying a function to each key.
+  let fromKeys = (ks: array(string), f: string => 'a): Js.Dict.t('a) =>
+    Js.Dict.fromArray(A.map(ks, k => (k, f(k))));
+
+  // I really shouldn't have to be implementing this myself but ohhhh wellll
+  let has = (dict, key) => Belt.Option.isSome(get(dict, key));
+};
 
 module String = {
   let contains = (~substring, str) => Js.String.indexOf(substring, str) >= 0;
@@ -62,6 +109,31 @@ module String = {
       | [||] => onEmpty
       | _ => mapJoin(arr, ~prefix, ~suffix, sep, f)
       };
+
+  // Deduplicate strings in an array, preserving order.
+  let dedupeArray = (strings: array(string)): array(string) => {
+    // Doing this super imperative style cuz why not
+    let seen = Dict.empty();
+    let uniques = [||];
+    A.forEach(strings, s =>
+      if (!Dict.has(seen, s)) {
+        Js.Array.push(s, uniques) |> ignore;
+        Dict.set(seen, s, true) |> ignore;
+      }
+    );
+    uniques;
+  };
+
+  // Deduplicate strings in a list, preserving order.
+  let dedupeList = (strings: list(string)): list(string) => {
+    let (_, reversed) =
+      Belt.List.reduce(strings, (SSet.empty, []), ((seen, uniques), s) =>
+        SSet.has(seen, s) ? (seen, uniques) : (SSet.add(seen, s), Belt.List.add(uniques, s))
+      );
+    // Since we're pushing to the front of the list, the order will be reversed, so
+    // reverse it before returning
+    Belt.List.reverse(reversed);
+  };
 };
 
 module Log = {
@@ -70,8 +142,6 @@ module Log = {
   [@bs.val] external error3: ('a, 'b, 'c) => unit = "console.error";
   [@bs.val] external error4: ('a, 'b, 'c, 'd) => unit = "console.error";
 };
-
-let throw: string => 'a = [%raw message => {| throw new Error(message); |}];
 
 module Promise = {
   include Js.Promise;
@@ -102,45 +172,6 @@ module Promise = {
            Js.log(err);
            reject(Error(err));
          });
-};
-
-module Dict = {
-  include Js.Dict;
-
-  // Map a function over the values in a dict.
-  let map: (t('a), 'a => 'b) => t('b) =
-    (dict, f) => {
-      let entries = entries(dict);
-      fromArray(A.map(entries, ((k, v)) => (k, f(v))));
-    };
-
-  // Map a function over the key/value pairs in a dict.
-  let mapWithKeys: (t('a), (string, 'a) => 'b) => t('b) =
-    (dict, f) => {
-      let entries = entries(dict);
-      fromArray(A.map(entries, ((k, v)) => (k, f(k, v))));
-    };
-
-  let fromMap: SMap.t('a) => t('a) = map => fromArray(SMap.toArray(map));
-  let toMap: t('a) => SMap.t('a) = dict => SMap.fromArray(entries(dict));
-
-  // Set a key in a dictionary, producing a new dictionary.
-  let setPure: (t('a), string, 'a) => t('a) =
-    (dict, k, v) => {
-      fromArray(A.concat(entries(dict), [|(k, v)|]));
-    };
-
-  let singleton: (string, 'a) => t('a) = (k, v) => fromArray([|(k, v)|]);
-
-  let getExn = (d, k) =>
-    switch (Js.Dict.get(d, k)) {
-    | None => throw("No such key '" ++ k ++ "' in ")
-    | Some(v) => v
-    };
-
-  // Construct from an array of keys, applying a function to each key.
-  let fromKeys = (ks: array(string), f: string => 'a): Js.Dict.t('a) =>
-    Js.Dict.fromArray(A.map(ks, k => (k, f(k))));
 };
 
 module Option = {
@@ -212,6 +243,8 @@ module Array = {
       | None => throw("No matching element in array")
       | Some(m) => m
       };
+
+  let pushMut = (arr: array('a), elem: 'a): unit => Js.Array.push(elem, arr) |> ignore;
 
   // Mutates arr, adding each element of arr' to it.
   let extend = (arr: array('a), arr': array('a)): unit =>

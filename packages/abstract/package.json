@@ -48,7 +48,7 @@
     "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
     "test": "yarn build && jest __tests__",
     "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
-    "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
+    "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} __tests__/*.re example/*.re",
     "testquery": "node example/SqliteBooks.bs.js"
   },
   "gitHead": "070a1c35478946515074fe0286b47121b4bbfac7",
