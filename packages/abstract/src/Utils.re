@@ -246,6 +246,8 @@ module Array = {
       | Some(m) => m
       };
 
+  let pushMut = (arr: array('a), elem: 'a): unit => Js.Array.push(elem, arr) |> ignore;
+
   // Mutates arr, adding each element of arr' to it.
   let extend = (arr: array('a), arr': array('a)): unit =>
     A.forEach(arr', elem => Js.Array.push(elem, arr) |> ignore);

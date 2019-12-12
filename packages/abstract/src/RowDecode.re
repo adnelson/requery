@@ -1,6 +1,7 @@
 include Utils.Json.Decode;
 module A = Utils.Array;
 module D = Utils.Dict;
+module O = Utils.Option;
 module S = Utils.String;
 type dict('a) = D.t('a);
 
@@ -18,8 +19,8 @@ module Row = {
   let map = (row, f) => {...row, contents: f(row.contents)};
   let mapGet = (row, f) => f(row.contents);
 
-  let decodeJson: (t(Js.Json.t), decoder('a)) => 'a =
-    (row, decode) =>
+  let decodeJson: (decoder('a), t(Js.Json.t)) => 'a =
+    (decode, row) =>
       try (mapGet(row, decode)) {
       | DecodeError(err) => raise(Error(RowDecodeError(row.index, row.contents, err)))
       };
@@ -58,20 +59,17 @@ let getFirst: array(Row.t('a)) => Row.t('a) =
 
 // Decode the first row with the given JSON decoder.
 let decodeOne: decoder('t) => rowsDecoder('t) =
-  (decode, rows) => Row.decodeJson(rows |> getFirst, decode);
+  (decode, rows) => rows |> getFirst |> Row.decodeJson(decode);
 
 // Map a JSON decoder over the rows, collecting the result for each row.
 let decodeEach: (decoder('a), array(Row.t(Js.Json.t))) => array('a) =
-  (d, arr) => A.map(arr, row => Row.decodeJson(row, d));
+  (d, arr) => A.map(arr, Row.decodeJson(d));
 
 let decodeReduce: (decoder('a), 'b, ('a, 'b) => 'b) => rowsDecoder('b) =
   (dec, start, f, rows) => A.reduce(decodeEach(dec, rows), start, f);
 
 let optColumn: (string, decoder('t)) => rowsDecoder(option('t)) =
-  (col, dec) =>
-    fun
-    | [||] => None
-    | rows => Some(Row.decodeJson(rows[0], field(col, dec)));
+  (col, dec, rows) => O.map(A.head(rows), Row.decodeJson(field(col, dec)));
 
 // Get one column, with the given name and with the given decoder.
 // Alias for `Json.Decode.field`
@@ -107,6 +105,28 @@ let tuple3Row:
     j |> field(columnC, decodeC),
   );
 
+// Aggregate all rows by a particular field, and apply the inner
+// decoder to each resulting row array, returning a dictionary.
+// This can be nested, although it's not particularly efficient
+// since each nested call will need to iterate over all rows.
+let dictOf =
+    (~keyField: string, ~keyDecode: decoder(string)=string, ~inner: rowsDecoder('a))
+    : rowsDecoder(D.t('a)) =>
+  rows => {
+    let agg = D.empty();
+    A.forEach(
+      rows,
+      row => {
+        let key = row |> Row.decodeJson(field(keyField, keyDecode));
+        switch (D.get(agg, key)) {
+        | None => D.set(agg, key, [|row|]) |> ignore
+        | Some(rows') => A.pushMut(rows', row)
+        };
+      },
+    );
+    D.map(agg, inner);
+  };
+
 // Given a way to get a (key, value) pair from a row, produce a
 // dictionary with those keys/values.
 let dict =
@@ -121,21 +141,6 @@ let dict =
     jsonRows
     |> decodeEach(tup2(field(keyField, keyDecode), field(valueField, valueDecode)))
     |> D.fromArray;
-  };
-
-// Like `dict` but also returns an array of keys in the order encountered.
-let dictWithOrder =
-    (
-      ~keyField: string,
-      ~keyDecode: decoder(string)=string,
-      ~valueField: string,
-      ~valueDecode: decoder('a),
-    )
-    : rowsDecoder((D.t('a), array(string))) =>
-  jsonRows => {
-    jsonRows
-    |> decodeEach(tup2(field(keyField, keyDecode), field(valueField, valueDecode)))
-    |> (entries => (D.fromArray(entries), S.dedupeArray(A.map(entries, fst))));
   };
 
 let dict2d =
@@ -255,3 +260,19 @@ let dict4d =
         result;
       }
     );
+
+// Given a way to get a (key, value) pair from a row, produce a dictionary
+// with those keys/values and an array of keys in the order encountered.
+let dictWithOrder =
+    (
+      ~keyField: string,
+      ~keyDecode: decoder(string)=string,
+      ~valueField: string,
+      ~valueDecode: decoder('a),
+    )
+    : rowsDecoder((D.t('a), array(string))) =>
+  jsonRows => {
+    jsonRows
+    |> decodeEach(tup2(field(keyField, keyDecode), field(valueField, valueDecode)))
+    |> (entries => (D.fromArray(entries), S.dedupeArray(A.map(entries, fst))));
+  };
