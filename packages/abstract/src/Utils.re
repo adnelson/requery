@@ -292,6 +292,12 @@ module Array = {
     let _ = set(arr', i, x);
     arr';
   };
+
+  // Convenient alias, get first elements from a tuple array
+  let firsts: array(('a, 'b)) => array('a) = arr => map(arr, fst);
+
+  // Convenient alias, get second elements from a tuple array
+  let seconds: array(('a, 'b)) => array('b) = arr => map(arr, snd);
 };
 
 // Extra functions on lists

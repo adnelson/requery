@@ -105,28 +105,6 @@ let tuple3Row:
     j |> field(columnC, decodeC),
   );
 
-// Aggregate all rows by a particular field, and apply the inner
-// decoder to each resulting row array, returning a dictionary.
-// This can be nested, although it's not particularly efficient
-// since each nested call will need to iterate over all rows.
-let dictOf =
-    (~keyField: string, ~keyDecode: decoder(string)=string, inner: rowsDecoder('a))
-    : rowsDecoder(D.t('a)) =>
-  rows => {
-    let agg = D.empty();
-    A.forEach(
-      rows,
-      row => {
-        let key = row |> Row.decodeJson(field(keyField, keyDecode));
-        switch (D.get(agg, key)) {
-        | None => D.set(agg, key, [|row|]) |> ignore
-        | Some(rows') => A.pushMut(rows', row)
-        };
-      },
-    );
-    D.map(agg, inner);
-  };
-
 // Given a way to get a (key, value) pair from a row, produce a
 // dictionary with those keys/values.
 let dict =
@@ -277,11 +255,32 @@ let dictWithOrder =
     |> (entries => (D.fromArray(entries), S.dedupeArray(A.map(entries, fst))));
   };
 
-// Given a way to get a (key, value) pair from a row, produce a dictionary
-// with those keys/values and an array of keys in the order encountered.
-let dictOfWithOrder =
+// Aggregate all rows by a particular field, and apply the inner
+// decoder to each resulting row array, returning a dictionary.
+// This can be nested, although it's not particularly efficient
+// since each nested call will need to iterate over all rows.
+let dictOf =
     (~keyField: string, ~keyDecode: decoder(string)=string, inner: rowsDecoder('a))
-    : rowsDecoder((D.t('a), array(string))) =>
+    : rowsDecoder(D.t('a)) =>
+  rows => {
+    let agg = D.empty();
+    A.forEach(
+      rows,
+      row => {
+        let key = row |> Row.decodeJson(field(keyField, keyDecode));
+        switch (D.get(agg, key)) {
+        | None => D.set(agg, key, [|row|]) |> ignore
+        | Some(rows') => A.pushMut(rows', row)
+        };
+      },
+    );
+    D.map(agg, inner);
+  };
+
+// Like dictOf, but returns ordered key/value pairs.
+let tuples =
+    (~keyField: string, ~keyDecode: decoder(string)=string, inner)
+    : rowsDecoder(array((string, 'a))) =>
   rows => {
     let agg = D.empty();
     let keys = [||];
@@ -297,5 +296,6 @@ let dictOfWithOrder =
         };
       },
     );
-    (D.map(agg, inner), keys);
+    // Get the values from the dictionary and apply the inner decoder
+    A.map(keys, k => (k, D.getExn(agg, k) |> inner));
   };

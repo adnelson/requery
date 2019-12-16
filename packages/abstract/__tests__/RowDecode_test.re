@@ -35,11 +35,16 @@ module Dict = {
     });
   });
 
-  describe("dictOfWithOrder", () =>
-    describe("one-dimensional dictionary", () => {
-      let (byFirstName: D.t(array(string)), firstNames) =
-        rows
-        |> RD.(dictOfWithOrder(~keyField="first_name", decodeEach(field("last_name", string))));
+  describe("tuples", () =>
+    describe("one-dimensional", () => {
+      let keyField = "first_name";
+      let inner = RD.(decodeEach(field("last_name", string)));
+      let tuples: array((string, array(string))) = rows |> RD.tuples(~keyField, inner);
+      let (byFirstName: D.t(array(string)), firstNames) = (
+        D.fromArray(tuples),
+        A.firsts(tuples),
+      );
+
       test("Bob", () =>
         expect(D.get(byFirstName, "Bob")) |> toEqual(Some([|"Blooperman"|]))
       );
