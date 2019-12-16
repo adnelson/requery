@@ -277,9 +277,15 @@ let dictOf =
     D.map(agg, inner);
   };
 
-// Similar to dictOf, but returns ordered key/value pairs.
+// Similar to dictOf, but returns ordered key/value pairs. The restriction is that
+// the key must be able to be converted to a string (to achieve the aggregation)
 let tuples =
-    (keyField: string, keyDecode: decoder('k), inner: rowsDecoder('v))
+    (
+      keyField: string,
+      keyDecode: decoder('k),
+      keyToString: 'k => string,
+      inner: rowsDecoder('v),
+    )
     : rowsDecoder(array(('k, 'v))) =>
   rows => {
     let agg = D.empty();
@@ -288,14 +294,15 @@ let tuples =
       rows,
       row => {
         let key = row |> Row.decodeJson(field(keyField, keyDecode));
-        switch (D.get(agg, key)) {
+        let keyString = key |> keyToString;
+        switch (D.get(agg, keyString)) {
         | None =>
-          D.set(agg, key, [|row|]) |> ignore;
+          D.set(agg, keyString, [|row|]) |> ignore;
           A.pushMut(keys, key);
         | Some(rows') => A.pushMut(rows', row)
         };
       },
     );
     // Get the values from the dictionary and apply the inner decoder
-    A.map(keys, k => (k, D.getExn(agg, k) |> inner));
+    A.map(keys, k => (k, D.getExn(agg, k |> keyToString) |> inner));
   };
