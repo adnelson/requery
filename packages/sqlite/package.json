@@ -1,6 +1,6 @@
 {
   "name": "requery-sqlite",
-  "version": "0.15.0-alpha.2",
+  "version": "0.15.0-alpha.3",
   "description": "Sqlite interface for Requery",
   "repository": "https://github.com/adnelson/requery",
   "author": "Allen Nelson <ithinkican@gmail.com>",
@@ -8,7 +8,7 @@
   "dependencies": {
     "bs-platform": "^5.0.6",
     "bs-sqlite": "git://github.com/adnelson/bs-sqlite#reasonml",
-    "requery-abstract": "^0.15.0-alpha.2"
+    "requery-abstract": "^0.15.0-alpha.3"
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
