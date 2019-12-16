@@ -39,7 +39,8 @@ module Dict = {
     describe("one-dimensional", () => {
       let keyField = "first_name";
       let inner = RD.(decodeEach(field("last_name", string)));
-      let tuples: array((string, array(string))) = rows |> RD.tuples(~keyField, inner);
+      let tuples: array((string, array(string))) =
+        rows |> RD.tuples(keyField, RD.string, inner);
       let (byFirstName: D.t(array(string)), firstNames) = (
         D.fromArray(tuples),
         A.firsts(tuples),

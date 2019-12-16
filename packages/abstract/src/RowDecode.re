@@ -277,10 +277,10 @@ let dictOf =
     D.map(agg, inner);
   };
 
-// Like dictOf, but returns ordered key/value pairs.
+// Similar to dictOf, but returns ordered key/value pairs.
 let tuples =
-    (~keyField: string, ~keyDecode: decoder(string)=string, inner)
-    : rowsDecoder(array((string, 'a))) =>
+    (keyField: string, keyDecode: decoder('k), inner: rowsDecoder('v))
+    : rowsDecoder(array(('k, 'v))) =>
   rows => {
     let agg = D.empty();
     let keys = [||];
