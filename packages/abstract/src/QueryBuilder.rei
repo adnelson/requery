@@ -166,6 +166,9 @@ let tuple2: (toExpr('a), toExpr('b)) => toExpr(('a, 'b));
 // Convert a list to a tuple, given a way to convert each item in the list.
 let tupleOf: toExpr('a) => toExpr(list('a));
 
+// Check if the first argument is a member of the second argument tuple.
+let inTuple: (expr, list(expr)) => expr;
+
 /*********************************************/
 
 // Aliased expressions (appear after a SELECT, can have an alias)

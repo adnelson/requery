@@ -106,6 +106,7 @@ let avg = e => E.Call("AVG", [|e|]);
 let sum = e => E.Call("SUM", [|e|]);
 let coalesce = (e1, e2) => E.Call("COALESCE", [|e1, e2|]);
 let call = (name, args) => E.Call(name, L.toArray(args));
+let inTuple = (e, es) => in_(e, tuple(es));
 
 let e = (~a=?, expr): aliased(expr) => Aliased.make(expr, ~a?);
 
