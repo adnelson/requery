@@ -1,6 +1,6 @@
 {
   "name": "requery-abstract",
-  "version": "0.15.0-alpha.1",
+  "version": "0.15.0-alpha.2",
   "description": "ReasonML SQL query builder and database interaction library (DB-agnostic)",
   "repository": "https://github.com/adnelson/requery",
   "author": "Allen Nelson <ithinkican@gmail.com>",
