@@ -39,3 +39,24 @@ let unwrapPromise2: ((t('a), t('b))) => Js.Promise.t(('a, 'b)) =
   | (Success(x), Success(y)) => resolve((x, y))
   | (Error(err), _) => reject(Error(err))
   | (_, Error(err)) => reject(Error(err));
+
+// Map a function over a result, if it's a success.
+let map = f =>
+  fun
+  | Success(x) => Success(f(x))
+  | Error(e) => Error(e);
+
+// Same as map but takes a 2-tuple.
+let map2 = f =>
+  fun
+  | (Success(x), Success(y)) => Success(f(x, y))
+  | (Error(e), _) => Error(e)
+  | (_, Error(e)) => Error(e);
+
+// Same as map but takes a 3-tuple.
+let map3 = f =>
+  fun
+  | (Success(x), Success(y), Success(z)) => Success(f(x, y, z))
+  | (Error(e), _, _) => Error(e)
+  | (_, Error(e), _) => Error(e)
+  | (_, _, Error(e)) => Error(e);
