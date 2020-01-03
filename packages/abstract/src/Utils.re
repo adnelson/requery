@@ -136,6 +136,94 @@ module String = {
   };
 };
 
+module Result = {
+  include Belt.Result;
+
+  // Map a function over a result, if it's a success.
+  let map = f =>
+    fun
+    | Ok(x) => Ok(f(x))
+    | Error(e) => Error(e);
+
+  // Same as map but takes a 2-tuple.
+  let map2 = f =>
+    fun
+    | (Ok(x), Ok(y)) => Ok(f(x, y))
+    | (Error(e), _) => Error(e)
+    | (_, Error(e)) => Error(e);
+
+  // Same as map but takes a 3-tuple.
+  let map3 = f =>
+    fun
+    | (Ok(x), Ok(y), Ok(z)) => Ok(f(x, y, z))
+    | (Error(e), _, _) => Error(e)
+    | (_, Error(e), _) => Error(e)
+    | (_, _, Error(e)) => Error(e);
+
+  // Same as map but takes a 4-tuple.
+  let map4 = f =>
+    fun
+    | (Ok(a), Ok(b), Ok(c), Ok(d)) => Ok(f(a, b, c, d))
+    | (Error(e), _, _, _) => Error(e)
+    | (_, Error(e), _, _) => Error(e)
+    | (_, _, Error(e), _) => Error(e)
+    | (_, _, _, Error(e)) => Error(e);
+
+  // Same as map but takes a 5-tuple.
+  let map5 = f =>
+    fun
+    | (Ok(a), Ok(b), Ok(c), Ok(d), Ok(e)) => Ok(f(a, b, c, d, e))
+    | (Error(e), _, _, _, _) => Error(e)
+    | (_, Error(e), _, _, _) => Error(e)
+    | (_, _, Error(e), _, _) => Error(e)
+    | (_, _, _, Error(e), _) => Error(e)
+    | (_, _, _, _, Error(e)) => Error(e);
+
+  // Same as map but takes a 6-tuple.
+  let map6 = fn =>
+    fun
+    | (Ok(a), Ok(b), Ok(c), Ok(d), Ok(e), Ok(f)) => Ok(fn(a, b, c, d, e, f))
+    | (Error(e), _, _, _, _, _) => Error(e)
+    | (_, Error(e), _, _, _, _) => Error(e)
+    | (_, _, Error(e), _, _, _) => Error(e)
+    | (_, _, _, Error(e), _, _) => Error(e)
+    | (_, _, _, _, Error(e), _) => Error(e)
+    | (_, _, _, _, _, Error(e)) => Error(e);
+
+  // Same as map but takes a 7-tuple.
+  let map7 = fn =>
+    fun
+    | (Ok(a), Ok(b), Ok(c), Ok(d), Ok(e), Ok(f), Ok(g)) => Ok(fn(a, b, c, d, e, f, g))
+    | (Error(e), _, _, _, _, _, _) => Error(e)
+    | (_, Error(e), _, _, _, _, _) => Error(e)
+    | (_, _, Error(e), _, _, _, _) => Error(e)
+    | (_, _, _, Error(e), _, _, _) => Error(e)
+    | (_, _, _, _, Error(e), _, _) => Error(e)
+    | (_, _, _, _, _, Error(e), _) => Error(e)
+    | (_, _, _, _, _, _, Error(e)) => Error(e);
+
+  let unwrap: t('a, exn) => 'a =
+    fun
+    | Ok(x) => x
+    | Error(err) => raise(err);
+
+  let unwrapPromise: t('a, exn) => Js.Promise.t('a) =
+    fun
+    | Ok(x) => Js.Promise.resolve(x)
+    | Error(err) => Js.Promise.reject(err);
+
+  let unwrapPromise2: ((t('a, exn), t('b, exn))) => Js.Promise.t(('a, 'b)) =
+    fun
+    | (Ok(x), Ok(y)) => Js.Promise.resolve((x, y))
+    | (Error(err), _) => Js.Promise.reject(err)
+    | (_, Error(err)) => Js.Promise.reject(err);
+
+  let mapError = f =>
+    fun
+    | Ok(_) as result => result
+    | Error(e) => Error(f(e));
+};
+
 module Log = {
   [@bs.val] external error: 'a => unit = "console.error";
   [@bs.val] external error2: ('a, 'b) => unit = "console.error";

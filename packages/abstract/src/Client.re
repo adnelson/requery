@@ -1,6 +1,43 @@
 module O = Utils.Option;
+module R = Utils.Result;
 let (resolve, then_, reject) = Js.Promise.(resolve, then_, reject);
-//module QB = QueryBuilder;
+
+module QueryResult = {
+  // Various errors that can occur. TODO add a connection error type
+  type error =
+    | RowDecodeError(RowDecode.error);
+
+  let errorToExn: error => exn =
+    fun
+    | RowDecodeError(e) => RowDecode.Error(e);
+
+  let encodeError: Utils.Json.encoder(error) =
+    Utils.Json.Encode.(
+      fun
+      | RowDecodeError(e) => e |> object1("RowDecodeError", RowDecode.encodeError)
+    );
+
+  exception Error(error);
+
+  type t('a) = R.t('a, error);
+
+  let ok: 'a => t('a) = res => R.Ok(res);
+  let error: error => t('a) = err => R.Error(err);
+
+  module Enc = Utils.Json.Encode;
+
+  let encode: Utils.Json.encoder('a) => Utils.Json.encoder(t('a)) =
+    Enc.(
+      encodeSuccess =>
+        fun
+        | Error(e) => e |> object1("Error", encodeError)
+        | R.Ok(x) => x |> object1("Success", encodeSuccess)
+    );
+
+  let unwrap: t('a) => 'a = r => r |> R.mapError(errorToExn) |> R.unwrap;
+  let unwrapPromise: t('a) => Js.Promise.t('a) =
+    r => r |> R.mapError(errorToExn) |> R.unwrapPromise;
+};
 
 type rows = array(RowDecode.Row.t(Js.Json.t));
 
@@ -65,25 +102,26 @@ let exec: (t('h, 'r, 'q), 'q) => Js.Promise.t(rows) =
   };
 
 let insert = (cli, insert) => exec(cli, Sql.Insert(insert));
+
 let decodeResult:
-  (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) => Result.t('a) =
+  (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) => R.t(QueryResult.error, 'a) =
   (decode, rows) =>
-    try (Result.Success(decode(rows))) {
-    | RowDecode.Error(e) => Result.Error(RowDecodeError(e))
+    try (Belt.Result.Ok(decode(rows))) {
+    | RowDecode.Error(e) => Belt.Result.Error(RowDecodeError(e))
     };
 let decodeResultPromise:
-  (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) => Js.Promise.t(Result.t('a)) =
+  (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) =>
+  Js.Promise.t(QueryResult.t('a)) =
   (decode, rows) => rows |> decodeResult(decode) |> resolve;
 
-let drp = decodeResult;
 let insertReturn = (cli, decode, insert) =>
   query(cli, Sql.Insert(insert)) |> then_(decodeResultPromise(decode));
 let insertReturnUnwrap = (cli, decode, insert) =>
-  insertReturn(cli, decode, insert) |> then_(Result.unwrapPromise);
+  insertReturn(cli, decode, insert) |> then_(QueryResult.unwrapPromise);
 let select = (cli, decode, select) =>
   query(cli, Sql.Select(select)) |> then_(decodeResultPromise(decode));
 let selectUnwrap = (cli, decode, select_) =>
-  select(cli, decode, select_) |> then_(Result.unwrapPromise);
+  select(cli, decode, select_) |> then_(QueryResult.unwrapPromise);
 
 let createTable = (cli, ct) => exec(cli, Sql.CreateTable(ct));
 let createView = (cli, cv) => exec(cli, Sql.CreateView(cv));
