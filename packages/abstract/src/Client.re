@@ -101,29 +101,46 @@ let exec: (t('h, 'r, 'q), 'q) => Js.Promise.t(rows) =
        });
   };
 
-let insert = (cli, insert) => exec(cli, Sql.Insert(insert));
-
 let decodeResult:
-  (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) => R.t(QueryResult.error, 'a) =
+  (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) => QueryResult.t('a) =
   (decode, rows) =>
     try (Belt.Result.Ok(decode(rows))) {
     | RowDecode.Error(e) => Belt.Result.Error(RowDecodeError(e))
     };
+
 let decodeResultPromise:
   (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) =>
   Js.Promise.t(QueryResult.t('a)) =
   (decode, rows) => rows |> decodeResult(decode) |> resolve;
 
-let insertReturn = (cli, decode, insert) =>
-  query(cli, Sql.Insert(insert)) |> then_(decodeResultPromise(decode));
-let insertReturnUnwrap = (cli, decode, insert) =>
-  insertReturn(cli, decode, insert) |> then_(QueryResult.unwrapPromise);
-let select = (cli, decode, select) =>
+////////////////////////////////////////////////////////////////////////////////
+///// Selects
+////////////////////////////////////////////////////////////////////////////////
+
+let select = (cli, decode: RowDecode.rowsDecoder('a), select): Js.Promise.t(QueryResult.t('a)) =>
   query(cli, Sql.Select(select)) |> then_(decodeResultPromise(decode));
 let selectUnwrap = (cli, decode, select_) =>
   select(cli, decode, select_) |> then_(QueryResult.unwrapPromise);
 
+////////////////////////////////////////////////////////////////////////////////
+///// Inserts
+////////////////////////////////////////////////////////////////////////////////
+
+let insert = (cli, insert) => exec(cli, Sql.Insert(insert));
+let insertReturn = (cli, decode, insert) =>
+  query(cli, Sql.Insert(insert)) |> then_(decodeResultPromise(decode));
+let insertReturnUnwrap = (cli, decode, insert) =>
+  insertReturn(cli, decode, insert) |> then_(QueryResult.unwrapPromise);
+
+////////////////////////////////////////////////////////////////////////////////
+///// Creation
+////////////////////////////////////////////////////////////////////////////////
+
 let createTable = (cli, ct) => exec(cli, Sql.CreateTable(ct));
 let createView = (cli, cv) => exec(cli, Sql.CreateView(cv));
+
+////////////////////////////////////////////////////////////////////////////////
+///// Raw SQL
+////////////////////////////////////////////////////////////////////////////////
 
 let execRaw = ({handle, execRaw}, sql) => execRaw(handle, sql);
