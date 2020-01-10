@@ -38,8 +38,8 @@ module type ColumnType = {
   let fromStringArray: array(string) => array(t);
   let fromStringList: list(string) => list(t);
   let toTuple: t => (option(TableName.t), col);
-  //let toTupleArray: array((t, 'a)) => array((string, 'a));
-  // let toString: t => string;
+  let colEq: (col, col) => bool;
+  let eq: (t, t) => bool;
 };
 
 module Column: ColumnType = {
@@ -64,6 +64,15 @@ module Column: ColumnType = {
   let fromStringArray: array(string) => array(t) = a => A.map(a, fromString);
   let fromStringList: list(string) => list(t) = l => L.map(l, fromString);
   external toTuple: t => (option(TableName.t), col) = "%identity";
+
+  let colEq = (c1, c2) =>
+    switch (c1, c2) {
+    | (All, All) => true
+    | (Named(cn1), Named(cn2)) => cn1 == cn2
+    | _ => false
+    };
+
+  let eq = ((t1, c1), (t2, c2)) => t1 == t2 && colEq(c1, c2);
 };
 
 module type AliasedType = {

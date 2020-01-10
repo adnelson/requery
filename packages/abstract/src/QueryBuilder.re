@@ -59,33 +59,20 @@ let allFrom = t => E.Atom(Column(Sql.Column.allFrom(tname(t))));
 let between = (e, lo, hi) => E.Between(e, lo, hi);
 let in_ = (e1, e2) => E.In(e1, e2);
 let concat = (e1, e2) => E.Concat(e1, e2);
-let (++) = concat;
 let add = (e1, e2) => E.Add(e1, e2);
-let (+) = add;
 let subtract = (e1, e2) => E.Subtract(e1, e2);
-let (-) = subtract;
 let multiply = (e1, e2) => E.Multiply(e1, e2);
-let ( * ) = multiply;
 let divide = (e1, e2) => E.Divide(e1, e2);
-let (/) = divide;
 
 let eq = (e1, e2) => E.Eq(e1, e2);
-let (==) = eq;
 let neq = (e1, e2) => E.Neq(e1, e2);
-let (!=) = neq;
 let lt = (e1, e2) => E.Lt(e1, e2);
-let (<) = lt;
 let leq = (e1, e2) => E.Leq(e1, e2);
-let (<=) = leq;
 let gt = (e1, e2) => E.Gt(e1, e2);
-let (>) = gt;
 let geq = (e1, e2) => E.Geq(e1, e2);
-let (>=) = geq;
 let like = (e1, e2) => E.Like(e1, e2);
 let and_ = (e1, e2) => E.And(e1, e2);
-let (&&) = and_;
 let or_ = (e1, e2) => E.Or(e1, e2);
-let (||) = or_;
 let not = e => E.Not(e);
 let ands =
   fun
@@ -98,6 +85,22 @@ let ors =
 let isNotNull = e => E.IsNotNull(e);
 let isNull = e => E.IsNull(e);
 
+module Op = {
+  let (++) = concat;
+  let (+) = add;
+  let (-) = subtract;
+  let ( * ) = multiply;
+  let (/) = divide;
+  let (==) = eq;
+  let (!=) = neq;
+  let (<) = lt;
+  let (<=) = leq;
+  let (>) = gt;
+  let (>=) = geq;
+  let (&&) = and_;
+  let (||) = or_;
+};
+
 let count = e => E.Call("COUNT", [|e|]);
 let distinct = e => E.Call("DISTINCT", [|e|]);
 let max = e => E.Call("MAX", [|e|]);
@@ -107,6 +110,7 @@ let sum = e => E.Call("SUM", [|e|]);
 let coalesce = (e1, e2) => E.Call("COALESCE", [|e1, e2|]);
 let call = (name, args) => E.Call(name, L.toArray(args));
 let inTuple = (e, es) => in_(e, tuple(es));
+let inTupleOf = (toExpr, e, items) => inTuple(e, L.map(items, toExpr));
 
 let e = (~a=?, expr): aliased(expr) => Aliased.make(expr, ~a?);
 
@@ -145,7 +149,7 @@ let andWhere: (expr, selectInUnion) => selectInUnion =
     sel
     |> (
       switch (sel.where) {
-      | Some(Where(cond)) => where(expr && cond)
+      | Some(Where(cond)) => where(Op.(expr && cond))
       | _ => where(expr)
       }
     );
@@ -155,7 +159,7 @@ let orWhere: (expr, selectInUnion) => selectInUnion =
     sel
     |> (
       switch (sel.where) {
-      | Some(Where(cond)) => where(expr || cond)
+      | Some(Where(cond)) => where(Op.(expr || cond))
       | _ => where(expr)
       }
     );

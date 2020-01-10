@@ -123,20 +123,23 @@ let and_: (expr, expr) => expr;
 let or_: (expr, expr) => expr;
 let not: expr => expr;
 
-// Symbolic versions of binary operators
-let (++): (expr, expr) => expr;
-let (+): (expr, expr) => expr;
-let (-): (expr, expr) => expr;
-let ( * ): (expr, expr) => expr;
-let (/): (expr, expr) => expr;
-let (==): (expr, expr) => expr;
-let (!=): (expr, expr) => expr;
-let (<): (expr, expr) => expr;
-let (<=): (expr, expr) => expr;
-let (>): (expr, expr) => expr;
-let (>=): (expr, expr) => expr;
-let (&&): (expr, expr) => expr;
-let (||): (expr, expr) => expr;
+// Symbolic versions of binary operators. Put into their own module
+// because they clash with operators from pervasives.
+module Op: {
+  let (++): (expr, expr) => expr;
+  let (+): (expr, expr) => expr;
+  let (-): (expr, expr) => expr;
+  let ( * ): (expr, expr) => expr;
+  let (/): (expr, expr) => expr;
+  let (==): (expr, expr) => expr;
+  let (!=): (expr, expr) => expr;
+  let (<): (expr, expr) => expr;
+  let (<=): (expr, expr) => expr;
+  let (>): (expr, expr) => expr;
+  let (>=): (expr, expr) => expr;
+  let (&&): (expr, expr) => expr;
+  let (||): (expr, expr) => expr;
+};
 
 // AND all of the expressions in the list (true if empty)
 let ands: list(expr) => expr;
@@ -168,6 +171,9 @@ let tupleOf: toExpr('a) => toExpr(list('a));
 
 // Check if the first argument is a member of the second argument tuple.
 let inTuple: (expr, list(expr)) => expr;
+
+// Check if the first argument is a member of the second argument tuple, after converting the tuple.
+let inTupleOf: (toExpr('a), expr, list('a)) => expr;
 
 /*********************************************/
 
