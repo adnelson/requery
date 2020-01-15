@@ -1,6 +1,6 @@
 {
   "name": "requery-postgres",
-  "version": "0.17.0-alpha.0",
+  "version": "0.17.0",
   "description": "ReasonML SQL query builder and database interaction library",
   "repository": "https://github.com/adnelson/requery",
   "author": "Allen Nelson <ithinkican@gmail.com>",
@@ -15,7 +15,7 @@
     "@glennsl/bs-json": "^5.0.1",
     "bs-platform": "^5.0.6",
     "bs-postgres": "^0.2.0",
-    "requery-abstract": "^0.17.0-alpha.0"
+    "requery-abstract": "^0.17.0"
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
