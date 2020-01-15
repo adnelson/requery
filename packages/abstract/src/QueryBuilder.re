@@ -47,12 +47,14 @@ let cname = Sql.ColumnName.fromString;
 let cnames = l => L.map(l, Sql.ColumnName.fromString);
 let column = Sql.Column.fromString;
 let tcolumn = (t, c) => Sql.Column.fromStringWithTable(tname(t), c);
+let tcolumn_ = (t, c) => Sql.Column.fromColumnNameWithTable(t, c);
 let columns = Sql.Column.fromStringList;
 let tcolumns = l => Sql.Column.fromTupleList(L.map(l, ((t, c)) => (tname(t), c)));
 let col_ = c => E.Atom(E.Column(c));
 let col = c => E.Atom(E.Column(column(c)));
 let cols = cs => L.map(cs, col);
 let tcol = (t, c) => E.Atom(E.Column(tcolumn(t, c)));
+let tcol_ = (t, c) => E.Atom(E.Column(tcolumn_(t, c)));
 let all = E.(Atom(Column(Sql.Column.all)));
 let allFrom = t => E.Atom(Column(Sql.Column.allFrom(tname(t))));
 

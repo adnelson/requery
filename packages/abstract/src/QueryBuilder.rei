@@ -68,8 +68,11 @@ let cols: list(string) => list(expr);
 // A single column, from a column name
 let col_: column => expr;
 
-// A single column from a table name and column name
+// A single column from a string table name and string column name
 let tcol: (string, string) => expr;
+
+// A single column from a table name and column name
+let tcol_: (tableName, columnName) => expr;
 
 // Make a `tableName` from a string
 let tname: string => tableName;
@@ -91,6 +94,9 @@ let column: string => column;
 // Make a `column` with a table name, e.g. `fruits.color`. Table name
 // comes first.
 let tcolumn: (string, string) => column;
+
+// Make a `column` object from a table name and column name.
+let tcolumn_: (tableName, columnName) => column;
 
 // Make multiple `column`s from strings.
 let columns: list(string) => list(column);
@@ -263,8 +269,6 @@ let union: (selectVariant, select) => select;
 let unionAll: (selectVariant, select) => select;
 let with_: (tableName, list(columnName), select, select) => select;
 let withs: (list((tableName, list(columnName), select)), select) => select;
-
-// let orderByDir: (list(expr), select) => select;
 
 // Apply a limit
 let limit: (expr, select) => select;

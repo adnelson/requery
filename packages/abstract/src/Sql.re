@@ -7,12 +7,18 @@ module type OpaqueString = {
   type t;
   let fromString: string => t;
   let toString: t => string;
+  let eq: (t, t) => bool;
+  let appendString: (t, string) => t;
+  let prependString: (string, t) => t;
 };
 
 module MakeOpaqueString = (()) : OpaqueString => {
   type t = string;
   external fromString: string => t = "%identity";
   external toString: t => string = "%identity";
+  let eq = (==);
+  let appendString = (++);
+  let prependString = (++);
 };
 
 module TableName =
@@ -31,6 +37,7 @@ module type ColumnType = {
   type t;
   let fromString: string => t;
   let fromStringWithTable: (TableName.t, string) => t;
+  let fromColumnNameWithTable: (TableName.t, ColumnName.t) => t;
   let all: t;
   let allFrom: TableName.t => t;
   let fromTuples: array((TableName.t, string)) => array(t);
@@ -43,18 +50,21 @@ module type ColumnType = {
 };
 
 module Column: ColumnType = {
-  module CN = ColumnName;
   // `*` or `some_column`
   type col =
     | All
-    | Named(CN.t);
+    | Named(ColumnName.t);
 
-  let named: string => col = s => Named(CN.fromString(s));
+  let named: string => col = s => Named(ColumnName.fromString(s));
+  let colFromString: string => col =
+    fun
+    | "*" => All
+    | c => named(c);
 
   // e.g. 'foo' or 'mytable.foo'
   type t = (option(TableName.t), col);
-  let fromString: string => t = c => (None, named(c));
-  let fromStringWithTable: (TableName.t, string) => t = (t, c) => (Some(t), named(c));
+  let fromString: string => t = c => (None, colFromString(c));
+  let fromStringWithTable: (TableName.t, string) => t = (t, c) => (Some(t), colFromString(c));
   let all: t = (None, All);
   let allFrom: TableName.t => t = t => (Some(t), All);
   let fromTuples: array((TableName.t, string)) => array(t) =
@@ -64,6 +74,7 @@ module Column: ColumnType = {
   let fromStringArray: array(string) => array(t) = a => A.map(a, fromString);
   let fromStringList: list(string) => list(t) = l => L.map(l, fromString);
   external toTuple: t => (option(TableName.t), col) = "%identity";
+  let fromColumnNameWithTable = (tn, cn) => (Some(tn), Named(cn));
 
   let colEq = (c1, c2) =>
     switch (c1, c2) {
@@ -80,6 +91,7 @@ module type AliasedType = {
   let make: (~a: string=?, 'a) => t('a);
   let as_: (t('a), string) => t('a);
   let toTuple: t('a) => ('a, option(string));
+  let eq: (('a, 'a) => bool, t('a), t('a)) => bool;
 };
 
 module Aliased: AliasedType = {
@@ -89,6 +101,7 @@ module Aliased: AliasedType = {
   let as_ = ((x, _), alias) => (x, Some(alias));
   external toTuple: t('a) => ('a, option(string)) = "%identity";
   let make = (~a=?, x) => (x, a);
+  let eq = (inner, (x, a), (y, b)) => a == b && inner(x) == inner(y);
 };
 
 module Expression = {
@@ -99,6 +112,18 @@ module Expression = {
     | Float(float)
     | String(string)
     | Bool(bool);
+
+  let atomEq: (atom, atom) => bool =
+    (a1, a2) =>
+      switch (a1, a2) {
+      | (Null, Null) => true
+      | (Column(a), Column(b)) => Column.eq(a, b)
+      | (Int(a), Int(b)) => a == b
+      | (Float(a), Float(b)) => a == b
+      | (String(a), String(b)) => a == b
+      | (Bool(a), Bool(b)) => a == b
+      | _ => false
+      };
 
   type t =
     | Atom(atom)
