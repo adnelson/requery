@@ -64,8 +64,13 @@ type t('handle, 'result, 'query) = {
   onResult: option((t('handle, 'result, 'query), 'query, 'result) => unit),
 };
 
-// Can be passed to a `onQuery` argument, logs each query before it's made.
-let logQuery = ({queryToSql}, q) => Js.log(queryToSql(q) ++ ";");
+// Can be passed to a `onQuery` argument, given some string conversion. Invokes
+// `f` on each query before it's executed.
+let logQueryWith: (string => unit, t('h, 'r, 'q), 'q) => unit =
+  (f, {queryToSql}, q) => f(queryToSql(q) ++ ";");
+
+// Logs a query to stdout via Js.log.
+let logQuery: (t('h, 'r, 'q), 'q) => unit = (c, q) => logQueryWith(Js.log, c, q);
 
 // Create a client.
 let make = (~handle, ~queryToSql, ~resultToRows, ~queryRaw, ~execRaw, ~onQuery=?, ~onResult=?, ()) => {

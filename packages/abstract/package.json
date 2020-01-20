@@ -32,7 +32,7 @@
   "devDependencies": {
     "@glennsl/bs-jest": "^0.4.9",
     "@glennsl/bs-json": "^5.0.1",
-    "bs-platform": "^5.0.6",
+    "bs-platform": "5.2.1",
     "husky": "^3.0.5",
     "lint-staged": "^9.3.0",
     "onchange": "^6.1.0",
@@ -47,7 +47,7 @@
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
     "clean": "bsb -clean-world",
     "cleanbuild": "yarn clean && yarn build",
-    "watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
+    "watch": "yarn clean && onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
     "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
     "test": "yarn build && jest __tests__",
     "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
