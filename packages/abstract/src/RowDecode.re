@@ -32,7 +32,7 @@ type rowsDecoder('t) = array(Row.t(Js.Json.t)) => 't;
 // A do-nothing decoder, used for queries which don't return information.
 let unit: rowsDecoder(unit) = _ => ();
 
-let encodeError =
+let errorToJson =
   Utils.Json.Encode.(
     fun
     | RowDecodeError(num, rowJson, message) =>
@@ -52,6 +52,23 @@ let errorToString: error => string =
 
 let toRows: array('a) => array(Row.t('a)) = rs => A.mapWithIndex(rs, Row.make);
 
+// Apply two rows decoders to the same rows to parse multiple things.
+let two: (rowsDecoder('a), rowsDecoder('b)) => rowsDecoder(('a, 'b)) =
+  (rd1, rd2, rows) => {
+    let res1 = rows |> rd1;
+    let res2 = rows |> rd2;
+    (res1, res2);
+  };
+
+// Apply three rows decoders to the same rows to parse multiple things.
+let three: (rowsDecoder('a), rowsDecoder('b), rowsDecoder('c)) => rowsDecoder(('a, 'b, 'c)) =
+  (rd1, rd2, rd3, rows) => {
+    let res1 = rows |> rd1;
+    let res2 = rows |> rd2;
+    let res3 = rows |> rd3;
+    (res1, res2, res3);
+  };
+
 let getFirst: array(Row.t('a)) => Row.t('a) =
   fun
   | [||] => raise(Error(EmptyRows))
@@ -65,6 +82,10 @@ let decodeOne: decoder('t) => rowsDecoder('t) =
 let decodeEach: (decoder('a), array(Row.t(Js.Json.t))) => array('a) =
   (d, arr) => A.map(arr, Row.decodeJson(d));
 
+// A decoder which just returns the json rows.
+let jsonRows: rowsDecoder(array(Js.Json.t)) = decodeEach(j => j);
+
+// Decode each row and reduce the result to some value.
 let decodeReduce: (decoder('a), 'b, ('a, 'b) => 'b) => rowsDecoder('b) =
   (dec, start, f, rows) => A.reduce(decodeEach(dec, rows), start, f);
 

@@ -152,8 +152,6 @@ let ands: list(expr) => expr;
 // OR all of the expressions in the list (false if empty)
 let ors: list(expr) => expr;
 
-// Given
-
 // Functions
 let count: expr => expr;
 let distinct: expr => expr;
@@ -179,7 +177,7 @@ let tupleOf: toExpr('a) => toExpr(list('a));
 let inTuple: (expr, list(expr)) => expr;
 
 // Check if the first argument is a member of the second argument tuple, after converting the tuple.
-let inTupleOf: (toExpr('a), expr, list('a)) => expr;
+let inTupleOf: (expr, toExpr('a), list('a)) => expr;
 
 /*********************************************/
 

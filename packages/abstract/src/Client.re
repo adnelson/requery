@@ -11,10 +11,10 @@ module QueryResult = {
     fun
     | RowDecodeError(e) => RowDecode.Error(e);
 
-  let encodeError: Utils.Json.encoder(error) =
+  let errorToJson: Utils.Json.encoder(error) =
     Utils.Json.Encode.(
       fun
-      | RowDecodeError(e) => e |> object1("RowDecodeError", RowDecode.encodeError)
+      | RowDecodeError(e) => e |> object1("RowDecodeError", RowDecode.errorToJson)
     );
 
   exception Error(error);
@@ -30,7 +30,7 @@ module QueryResult = {
     Enc.(
       encodeSuccess =>
         fun
-        | Error(e) => e |> object1("Error", encodeError)
+        | Error(e) => e |> object1("Error", errorToJson)
         | R.Ok(x) => x |> object1("Success", encodeSuccess)
     );
 

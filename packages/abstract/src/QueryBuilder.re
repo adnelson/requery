@@ -112,7 +112,7 @@ let sum = e => E.Call("SUM", [|e|]);
 let coalesce = (e1, e2) => E.Call("COALESCE", [|e1, e2|]);
 let call = (name, args) => E.Call(name, L.toArray(args));
 let inTuple = (e, es) => in_(e, tuple(es));
-let inTupleOf = (toExpr, e, items) => inTuple(e, L.map(items, toExpr));
+let inTupleOf = (e, toExpr, items) => inTuple(e, L.map(items, toExpr));
 
 let e = (~a=?, expr): aliased(expr) => Aliased.make(expr, ~a?);
 
