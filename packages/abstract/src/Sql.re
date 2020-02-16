@@ -7,6 +7,8 @@ module type OpaqueString = {
   type t;
   let fromString: string => t;
   let toString: t => string;
+  let toJson: Json.Encode.encoder(t);
+  let fromJson: Json.Decode.decoder(t);
   let eq: (t, t) => bool;
   let appendString: (t, string) => t;
   let prependString: (string, t) => t;
@@ -16,6 +18,8 @@ module MakeOpaqueString = (()) : OpaqueString => {
   type t = string;
   external fromString: string => t = "%identity";
   external toString: t => string = "%identity";
+  let toJson = Json.Encode.string;
+  let fromJson = Json.Decode.string;
   let eq = (==);
   let appendString = (++);
   let prependString = (++);
