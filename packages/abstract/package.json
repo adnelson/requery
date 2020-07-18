@@ -32,7 +32,7 @@
   "devDependencies": {
     "@glennsl/bs-jest": "^0.4.9",
     "@glennsl/bs-json": "^5.0.1",
-    "bs-platform": "5.2.1",
+    "bs-platform": "file:///nix/store/lzfrmlflab90yz60rrnqcql5qz6n930h-bs-platform-7.3.1",
     "husky": "^3.0.5",
     "lint-staged": "^9.3.0",
     "onchange": "^6.1.0",
@@ -49,13 +49,21 @@
     "cleanbuild": "yarn clean && yarn build",
     "watch": "yarn clean && onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
     "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
-    "test": "yarn build && jest __tests__",
-    "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
+    "test": "jest __tests__",
+    "test:watch": "jest __tests__ --watch",
     "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} __tests__/*.re example/*.re",
-    "testquery": "node example/SqliteBooks.bs.js"
+    "testquery": "node example/SqliteBooks.bs.js",
+    "re:clean": "bsb -clean-world",
+    "re:build": "bsb -make-world",
+    "re:watch": "bsb -make-world -w",
+    "re:formatall": "find src testlib __tests__ -name '*.re' | xargs npx bsrefmt --in-place",
+    "re:formatchanged": "git diff --name-only --diff-filter=d HEAD -- '*.re' | xargs -I{} realpath --relative-to=. $(git rev-parse --show-toplevel)/'{}' | while read f; do npx bsrefmt --in-place \"$f\"; done"
   },
   "gitHead": "070a1c35478946515074fe0286b47121b4bbfac7",
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "re-opaque": "^1.1.0"
   }
 }

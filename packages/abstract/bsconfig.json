@@ -1,7 +1,8 @@
 {
   "name": "requery-abstract",
   "bs-dependencies": [
-    "@glennsl/bs-json"
+    "@glennsl/bs-json",
+    "re-opaque"
   ],
   "bs-dev-dependencies": ["@glennsl/bs-jest"],
   "namespace": "Requery",

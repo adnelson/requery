@@ -65,6 +65,7 @@ module Dict = {
                ~keyDecode=j => j |> RD.int |> string_of_int,
                ~valueField="first_name",
                ~valueDecode=RD.string,
+              ()
              );
         test("ID 1 is Bob", () =>
           expect(D.get(dict, "1")) |> toEqual(Some("Bob"))
@@ -82,6 +83,7 @@ module Dict = {
                ~innerKeyField="first_name",
                ~valueField="id",
                ~valueDecode=RD.int,
+()
              );
         test("Bob's ID", () =>
           expect(D.get(D.getExn(dict, "Blooperman"), "Bob")) |> toEqual(Some(1))
@@ -109,6 +111,7 @@ module Dict = {
                ~keyDecode=j => j |> RD.int |> string_of_int,
                ~valueField="first_name",
                ~valueDecode=RD.string,
+()
              );
         test("ID 1 is Bob", () =>
           expect(D.get(dict, "1")) |> toEqual(Some("Bob"))

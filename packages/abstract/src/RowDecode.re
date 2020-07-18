@@ -21,7 +21,7 @@ module Row = {
 
   let decodeJson: (decoder('a), t(Js.Json.t)) => 'a =
     (decode, row) =>
-      try (mapGet(row, decode)) {
+      try(mapGet(row, decode)) {
       | DecodeError(err) => raise(Error(RowDecodeError(row.index, row.contents, err)))
       };
 };
@@ -134,6 +134,7 @@ let dict =
       ~keyDecode: decoder(string)=string,
       ~valueField: string,
       ~valueDecode: decoder('a),
+      (),
     )
     : rowsDecoder(D.t('a)) =>
   jsonRows => {
@@ -150,6 +151,7 @@ let dict2d =
       ~innerKeyDecode: decoder(string)=string,
       ~valueField: string,
       ~valueDecode: decoder('a),
+      (),
     )
     : rowsDecoder(D.t(D.t('a))) =>
   jsonRows =>
@@ -184,6 +186,7 @@ let dict3d =
       ~keyDecode3: decoder(string)=string,
       ~valueField: string,
       ~valueDecode: decoder('a),
+      (),
     )
     : rowsDecoder(dict(dict(dict('a)))) =>
   jsonRows =>
@@ -226,6 +229,7 @@ let dict4d =
       ~keyDecode4: decoder(string)=string,
       ~valueField: string,
       ~valueDecode: decoder('a),
+      (),
     )
     : rowsDecoder(dict(dict(dict(dict('a))))) =>
   jsonRows =>
@@ -268,6 +272,7 @@ let dictWithOrder =
       ~keyDecode: decoder(string)=string,
       ~valueField: string,
       ~valueDecode: decoder('a),
+      (),
     )
     : rowsDecoder((D.t('a), array(string))) =>
   jsonRows => {
