@@ -3433,9 +3433,9 @@ rc@^1.2.7:
     strip-json-comments "~2.0.1"
 
 re-opaque@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/re-opaque/-/re-opaque-1.1.0.tgz#e3c2a020cd762135aed7d3e17ef2beaf31fed2fe"
-  integrity sha512-Feuc8KusANQj4N2fIRC53Sex2G58qiQaXbZq/WvwNBsV1NDFih8IHwdFwwxda+FOmNRPOMbP2RJoavOxxf0Jaw==
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/re-opaque/-/re-opaque-1.2.0.tgz#a07792f37696d184826a1483278727455dc3096e"
+  integrity sha512-nJDTEG7vkmC+0oT/R6SDD/G1uI5wtp1ZTYlJM8kcXU2WbspWNx/drZMrZb11yTTUZbfyafKhs35IOzQJiBTVvg==
 
 react-is@^16.8.4:
   version "16.10.2"

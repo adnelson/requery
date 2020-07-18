@@ -29,7 +29,7 @@ module DefaultRules: SqlRenderingRules = {
 
 module WithRenderingRules = (S: SqlRenderingRules) => {
   // Wrap a table/column/etc name in quotes
-  module RenderWrapped = (String: Sql.OpaqueString) => {
+  module RenderWrapped = (String: Opaque.String.StringType) => {
     include String;
     let render = s => S.escapeName(String.toString(s));
   };
@@ -38,7 +38,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
   module ColumnName = RenderWrapped(Sql.ColumnName);
   module ConstraintName = RenderWrapped(Sql.ConstraintName);
 
-  module RenderString = (String: Sql.OpaqueString) => {
+  module RenderString = (String: Opaque.String.StringType) => {
     type t = String.t;
     let render = s => String.toString(s);
   };

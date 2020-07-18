@@ -3,36 +3,27 @@ module L = Utils.List;
 module O = Utils.Option;
 module SMap = Belt.Map.String;
 
-module type OpaqueString = {
-  type t;
-  let fromString: string => t;
-  let toString: t => string;
-  let toJson: Json.Encode.encoder(t);
-  let fromJson: Json.Decode.decoder(t);
-  let eq: (t, t) => bool;
-  let appendString: (t, string) => t;
-  let prependString: (string, t) => t;
-};
-
-module MakeOpaqueString = (()) : OpaqueString => {
-  type t = string;
-  external fromString: string => t = "%identity";
-  external toString: t => string = "%identity";
-  let toJson = Json.Encode.string;
-  let fromJson = Json.Decode.string;
-  let eq = (==);
-  let appendString = (++);
-  let prependString = (++);
-};
-
+// TODO validation
 module TableName =
-  MakeOpaqueString({});
+  Opaque.String.Make(
+    Opaque.String.Validation.NoValidation,
+    {},
+  );
 module ColumnName =
-  MakeOpaqueString({});
+  Opaque.String.Make(
+    Opaque.String.Validation.NoValidation,
+    {},
+  );
 module TypeName =
-  MakeOpaqueString({});
+  Opaque.String.Make(
+    Opaque.String.Validation.NoValidation,
+    {},
+  );
 module ConstraintName =
-  MakeOpaqueString({});
+  Opaque.String.Make(
+    Opaque.String.Validation.NoValidation,
+    {},
+  );
 
 module type ColumnType = {
   type col =
