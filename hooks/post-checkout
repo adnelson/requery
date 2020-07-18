@@ -1,0 +1,12 @@
+#!/bin/sh
+prev_ref=$1
+next_ref=$2
+
+diff="$(git diff --name-only $prev_ref $next_ref)"
+if grep -Pq 'builder/yarn.lock' <<< "$diff"; then
+  (set -x; cd builder && yarn)
+fi
+
+if grep -Pq 'server/yarn.lock' <<< "$diff" ; then
+  (set -x; cd server && yarn)
+fi

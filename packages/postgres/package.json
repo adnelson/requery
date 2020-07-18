@@ -11,16 +11,26 @@
     "printWidth": 100,
     "singleQuote": true
   },
-  "dependencies": {
-    "bs-postgres": "^0.2.0",
-    "requery-abstract": "^0.21.0"
-  },
   "peerDependencies": {
     "@glennsl/bs-json": ">=5",
-    "bs-platform": ">=5"
+    "bs-platform": ">=5",
+    "bs-postgres": "^0.2.0"
   },
   "devDependencies": {
-    "onchange": "^6.1.0"
+    "bs-platform": "7.3.1",
+    "bs-postgres": "^0.2.0",
+    "lint-staged": "^10.2.11",
+    "onchange": "^6.1.0",
+    "prettier": "^2.0.5",
+    "requery-abstract": "^0.21.0"
+  },
+  "lint-staged": {
+    "*.{md,scss,css,js,json}": [
+      "prettier --write"
+    ],
+    "*.{re,rei}": [
+      "bsrefmt --in-place"
+    ]
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
@@ -37,5 +47,6 @@
   "gitHead": "070a1c35478946515074fe0286b47121b4bbfac7",
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "dependencies": {}
 }

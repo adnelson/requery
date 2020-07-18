@@ -6,9 +6,23 @@
   "author": "Allen Nelson <ithinkican@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "bs-platform": "^5.0.6",
-    "bs-sqlite": "git://github.com/adnelson/bs-sqlite#reasonml",
+    "bs-sqlite": "git://github.com/adnelson/bs-sqlite#reasonml"
+  },
+  "peerDependencies": {
+    "bs-platform": "^5 || ^7",
     "requery-abstract": "^0.21.0"
+  },
+  "devDependencies": {
+    "bs-platform": "^7",
+    "requery-abstract": "^0.21.0"
+  },
+  "lint-staged": {
+    "*.{md,scss,css,js,json}": [
+      "prettier --write"
+    ],
+    "*.{re,rei}": [
+      "bsrefmt --in-place"
+    ]
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",

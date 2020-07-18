@@ -9,7 +9,8 @@ module String = {
       expect(dedupeArray(input)) |> toEqual([|"a", "b", "c"|])
     );
     test("list", () =>
-      expect(dedupeList(Belt.List.fromArray(input))) |> toEqual(["a", "b", "c"])
+      expect(dedupeList(Belt.List.fromArray(input)))
+      |> toEqual(["a", "b", "c"])
     );
   });
 };

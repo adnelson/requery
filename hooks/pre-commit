@@ -1,0 +1,37 @@
+#!/bin/sh
+set -ex
+
+# This is due to some of the hacks required to get bs-platform working with nixos.
+function fix_bs_platform() {
+  node <<EOF
+var fs = require('fs');
+var packageJson = require('./package.json');
+var bsPlatform = packageJson.devDependencies['bs-platform'];
+var match = bsPlatform.match(/\d+\.\d+\.\d+$/);
+if (match && match[0] && match[0] !== bsPlatform) {
+  var version = match[0];
+  console.log(\`Setting bs-platform version to \${version}\`)
+  packageJson.devDependencies['bs-platform'] = version;
+  fs.writeFileSync('./package.json', JSON.stringify(packageJson, null, indent=2));
+}
+EOF
+}
+
+
+(
+  cd packages/abstract
+  fix_bs_platform
+  yarn lint-staged
+)
+
+(
+  cd packages/postgres
+  fix_bs_platform
+  yarn lint-staged
+)
+
+(
+  cd packages/postgres
+  fix_bs_platform
+  yarn lint-staged
+)
