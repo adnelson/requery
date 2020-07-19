@@ -6,17 +6,11 @@
   "author": "Allen Nelson <ithinkican@gmail.com>",
   "license": "MIT",
   "lint-staged": {
-    "package.json": [
-      "prettier --write",
-      "git add"
+    "*.{md,scss,css,js,json}": [
+      "prettier --write"
     ],
-    "src/*.{re,rei}": [
-      "bsrefmt --in-place --print-width 100",
-      "git add"
-    ],
-    "example/*.{re,rei}": [
-      "bsrefmt --in-place --print-width 100",
-      "git add"
+    "*.{re,rei}": [
+      "bsrefmt --in-place"
     ]
   },
   "prettier": {
@@ -33,7 +27,7 @@
     "@glennsl/bs-jest": "^0.4.9",
     "@glennsl/bs-json": "^5.0.1",
     "bs-platform": "7.3.1",
-    "lint-staged": "^9.3.0",
+    "lint-staged": "^10.2.11",
     "onchange": "^6.1.0",
     "prettier": "^1.18.2"
   },
@@ -41,14 +35,6 @@
     "hooks": {
       "pre-commit": "lint-staged"
     }
-  },
-  "lint-staged": {
-    "*.{md,scss,css,js,json}": [
-      "prettier --write"
-    ],
-    "*.{re,rei}": [
-      "bsrefmt --in-place"
-    ]
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
@@ -72,6 +58,7 @@
     "access": "public"
   },
   "dependencies": {
-    "re-opaque": "^1.1.0"
+    "re-opaque": "^1.1.0",
+    "reason-jest": "^1.2.0"
   }
 }

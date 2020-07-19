@@ -1,4 +1,5 @@
 type columnName = Sql.ColumnName.t;
+type databaseName = Sql.DatabaseName.t;
 type tableName = Sql.TableName.t;
 type aliased('t) = Sql.Aliased.t('t);
 type constraintName = Sql.ConstraintName.t;
@@ -240,6 +241,13 @@ let from: (target, list(aliased(expr))) => selectInUnion;
 //   ==> SELECT 1 + 2;
 let fromNone: list(aliased(expr)) => selectInUnion;
 
+// Adds an `INTO` clause to the select, inserting the result into another table
+// within the same database. To specify a different database, use `intoIn`.
+let into: (tableName, selectInUnion) => selectInUnion;
+
+// Like `into` but specifies a different database to put the table in.
+let intoIn: (tableName, databaseName, selectInUnion) => selectInUnion;
+
 // Add a WHERE clause to a selectInUnion.
 let where: (expr, selectInUnion) => selectInUnion;
 
@@ -259,8 +267,10 @@ let groupBy: (~having: expr=?, list(expr), selectInUnion) => selectInUnion;
 let groupBy1: (~having: expr=?, expr, selectInUnion) => selectInUnion;
 let groupByColumn: (~having: expr=?, string, selectInUnion) => selectInUnion;
 let groupByCol: (~having: expr=?, string, selectInUnion) => selectInUnion; // alias
-let groupByColumns: (~having: expr=?, list(string), selectInUnion) => selectInUnion;
-let groupByCols: (~having: expr=?, list(string), selectInUnion) => selectInUnion; // alias
+let groupByColumns:
+  (~having: expr=?, list(string), selectInUnion) => selectInUnion;
+let groupByCols:
+  (~having: expr=?, list(string), selectInUnion) => selectInUnion; // alias
 
 let union1: (selectInUnion, select) => select;
 let union: (selectVariant, select) => select;
@@ -301,9 +311,12 @@ let insertRows: toInsert('r, list(list((column, expr))));
 let insertRow: toInsert('r, list((column, expr)));
 
 // Apply a conversion function to create columns and expressions.
-let insertRowsWith: (toColumn('a), toExpr('b)) => toInsert('r, list(list(('a, 'b))));
-let insertRowWith: ('a => column, 'b => expr) => toInsert('r, list(('a, 'b)));
-let insertColumnsWith: (toColumn('a), toExpr('b)) => toInsert('r, list(('a, list('b))));
+let insertRowsWith:
+  (toColumn('a), toExpr('b)) => toInsert('r, list(list(('a, 'b))));
+let insertRowWith:
+  ('a => column, 'b => expr) => toInsert('r, list(('a, 'b)));
+let insertColumnsWith:
+  (toColumn('a), toExpr('b)) => toInsert('r, list(('a, list('b))));
 
 // Given a function to convert an object to a row, insert one or more objects.
 let insertOne: toRow('t) => toInsert('r, 't);
@@ -359,7 +372,8 @@ let unique: list(columnName) => tableConstraint;
 let check: expr => tableConstraint;
 
 // Creating a table
-let createTable: (~ifNotExists: bool=?, tableName, list(statement)) => createTable;
+let createTable:
+  (~ifNotExists: bool=?, tableName, list(statement)) => createTable;
 
 // Creating a view
 let createView: (~ifNotExists: bool=?, tableName, select) => createView;

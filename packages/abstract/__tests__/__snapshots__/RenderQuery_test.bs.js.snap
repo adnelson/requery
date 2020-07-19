@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`createTable author 1`] = `"CREATE TABLE IF NOT EXISTS author (id INTEGER PRIMARY KEY NOT NULL, first TEXT NOT NULL, last TEXT NOT NULL, UNIQUE (first, last))"`;
+
+exports[`createTable book 1`] = `"CREATE TABLE IF NOT EXISTS book (id INTEGER PRIMARY KEY NOT NULL, \\"author id\\" INTEGER NOT NULL, title TEXT NOT NULL, FOREIGN KEY (\\"author id\\") REFERENCES author(id))"`;
+
+exports[`insert authors 1`] = `"INSERT INTO author (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen')"`;
+
+exports[`select author books 1`] = `"SELECT a.id AS \\"author id\\" FROM author AS a INNER JOIN book AS b ON a.id = b.\\"author id\\""`;
+
+exports[`select author books CTE 1`] = `" WITH author_ids(id) AS (SELECT a.id AS \\"author id\\" FROM author AS a INNER JOIN book AS b ON a.id = b.\\"author id\\")SELECT * FROM author_ids"`;

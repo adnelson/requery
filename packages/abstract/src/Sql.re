@@ -4,6 +4,11 @@ module O = Utils.Option;
 module SMap = Belt.Map.String;
 
 // TODO validation
+module DatabaseName =
+  Opaque.String.Make(
+    Opaque.String.Validation.NoValidation,
+    {},
+  );
 module TableName =
   Opaque.String.Make(
     Opaque.String.Validation.NoValidation,
@@ -59,14 +64,16 @@ module Column: ColumnType = {
   // e.g. 'foo' or 'mytable.foo'
   type t = (option(TableName.t), col);
   let fromString: string => t = c => (None, colFromString(c));
-  let fromStringWithTable: (TableName.t, string) => t = (t, c) => (Some(t), colFromString(c));
+  let fromStringWithTable: (TableName.t, string) => t =
+    (t, c) => (Some(t), colFromString(c));
   let all: t = (None, All);
   let allFrom: TableName.t => t = t => (Some(t), All);
   let fromTuples: array((TableName.t, string)) => array(t) =
     a => A.map(a, Utils.uncurry(fromStringWithTable));
   let fromTupleList: list((TableName.t, string)) => list(t) =
     l => L.map(l, Utils.uncurry(fromStringWithTable));
-  let fromStringArray: array(string) => array(t) = a => A.map(a, fromString);
+  let fromStringArray: array(string) => array(t) =
+    a => A.map(a, fromString);
   let fromStringList: list(string) => list(t) = l => L.map(l, fromString);
   external toTuple: t => (option(TableName.t), col) = "%identity";
   let fromColumnNameWithTable = (tn, cn) => (Some(tn), Named(cn));
@@ -169,6 +176,7 @@ module Select = {
   // The parts of a SELECT query which can appear in a UNION.
   and selectInUnion = {
     selections: array(Aliased.t(Expression.t)),
+    into: option((TableName.t, option(DatabaseName.t))),
     from: option(target),
     groupBy: option((array(Expression.t), option(Expression.t))),
     where: option(whereClause),
@@ -222,7 +230,10 @@ module Insert = {
             A.mapWithIndex(rows, (rowIndex, row) =>
               switch (A.get(row, colIndex)) {
               | Some((c, e)) when c == col => e
-              | _ => raise(Error(RowIsMissingColumn(rowIndex, row, colIndex, col)))
+              | _ =>
+                raise(
+                  Error(RowIsMissingColumn(rowIndex, row, colIndex, col)),
+                )
               }
             ),
           )
@@ -264,7 +275,11 @@ module CreateTable = {
     constraints: columnConstraints,
   };
 
-  let makeColumnDef = (~name, type_, constraints) => {name, type_, constraints};
+  let makeColumnDef = (~name, type_, constraints) => {
+    name,
+    type_,
+    constraints,
+  };
 
   type tableConstraint =
     | PrimaryKey(array(ColumnName.t))

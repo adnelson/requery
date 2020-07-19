@@ -107,6 +107,16 @@ let insertAuthors =
     |> into(tname("author"))
   );
 
+let getAuthorIdsCTE =
+  QB.(
+    with_(
+      tname("author_ids"),
+      [cname("id")],
+      authorBooksSelect,
+      select([e(all)] |> from(table(tname("author_ids")))),
+    )
+  );
+
 let run = (client, idType) => {
   C.createTable(client, Author.createTable(idType))
   |> then_(_ => C.createTable(client, Book.createTable(idType)))
