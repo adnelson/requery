@@ -10,7 +10,7 @@
       "prettier --write"
     ],
     "*.{re,rei}": [
-      "bsrefmt --in-place"
+      "bsrefmt --in-place -w 100"
     ]
   },
   "prettier": {

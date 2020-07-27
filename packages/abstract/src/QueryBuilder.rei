@@ -321,7 +321,12 @@ let insertColumnsWith:
 // Given a function to convert an object to a row, insert one or more objects.
 let insertOne: toRow('t) => toInsert('r, 'oc, 't);
 let insertMany: toRow('t) => toInsert('r, 'oc, list('t));
+
+// Add a `RETURNING` clause to an `INSERT` statement (for supported syntax)
 let returning: ('r, insert('r, 'oc)) => insert('r, 'oc);
+
+// Add an `ON CONFLICT` clause to an `INSERT` statement (for supported syntax)
+let onConflict: ('oc, insert('r, 'oc)) => insert('r, 'oc);
 
 // Insert with a SELECT query.
 let insertSelect: toInsert('r, 'oc, select);
@@ -337,8 +342,11 @@ let insertSelect: toInsert('r, 'oc, select);
 let into: (tableName, tableName => insert('r, 'oc)) => insert('r, 'oc);
 
 /***************************
-  * CREATE TABLE Queries
-
+ * CREATE TABLE Queries
+ *
+ * Made up of some number of "statements", including
+   * Column definitions (`cdef`)
+   * Constraint definitions (`constraint_`)
 
  [
    cdef("id", Types.int, ~primaryKey=true),
@@ -363,6 +371,7 @@ let cdef:
 
 let constraintName: string => constraintName;
 
+// Define a single constraint as a statement.
 let constraint_: (~a: string=?, tableConstraint) => statement;
 
 // Table-level constraints

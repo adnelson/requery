@@ -1,10 +1,7 @@
 {
   "name": "requery-postgres",
-  "bs-dependencies": [
-    "@glennsl/bs-json",
-    "requery-abstract",
-    "bs-postgres"
-  ],
+  "bs-dependencies": ["@glennsl/bs-json", "requery-abstract", "bs-postgres"],
+  "bs-dev-dependencies": ["reason-jest"],
   "namespace": true,
   "package-specs": {
     "in-source": true,
@@ -15,7 +12,12 @@
   },
   "refmt": 3,
   "sources": [
-    "src"
+    "src",
+    {
+      "dir": "__tests__",
+      "subdirs": true,
+      "type": "dev"
+    }
   ],
   "suffix": ".bs.js",
   "warnings": {

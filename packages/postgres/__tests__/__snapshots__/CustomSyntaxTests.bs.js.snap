@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`custom syntax no on conflict 1`] = `"INSERT INTO author (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen')  "`;
+
+exports[`custom syntax with on conflict on a constraint 1`] = `"INSERT INTO author (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen') ON CONFLICT ON CONSTRAINT scary_constraint   DO NOTHING "`;
+
+exports[`on conflict rendering 1`] = `"ON CONFLICT ON CONSTRAINT scary_constraint   DO NOTHING"`;

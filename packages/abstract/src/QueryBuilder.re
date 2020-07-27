@@ -305,6 +305,9 @@ let insertSelect = select => Insert.make(Insert.Select(select));
 let returning = (returning, insert) =>
   Insert.{...insert, returning: Some(returning)};
 
+let onConflict = (onConflict, insert) =>
+  Insert.{...insert, onConflict: Some(onConflict)};
+
 let into = (t, f) => f(t);
 
 let cdef =

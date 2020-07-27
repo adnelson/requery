@@ -3224,9 +3224,9 @@ realpath-native@^1.1.0:
     util.promisify "^1.0.0"
 
 reason-jest@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/reason-jest/-/reason-jest-1.2.0.tgz#5b594dcf6efa9fcde501f7d95ced098a75903708"
-  integrity sha512-glsWwkoqQB55r5/gYQ4BHdYoA3j878BIP0qYEapz9WaOZtbM+V5lr3Rjya1BeZKvBEjizRsDNriKXXgoburJPg==
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/reason-jest/-/reason-jest-1.4.0.tgz#6f1388a1f8c365fb848425555e295541e69f7f11"
+  integrity sha512-thvTXTAgP2hjiwSTexskNlLOfCd6OTxuvAFxiYFVWnrVZwPxlPrgITBbhjOmfSWkOJTYVwA7ivwCDIpy8Bk5tQ==
 
 regex-not@^1.0.0, regex-not@^1.0.2:
   version "1.0.2"

@@ -28,8 +28,23 @@ module SnapshotTests = {
     );
   });
   describe("insert", () => {
-    test("authors", () =>
-      expect(BooksExample.insertAuthors->R.Insert.render)->toMatchSnapshot()
-    )
+    test("authors", () => {
+      expect(
+        R.Insert.render(
+          ~onConflict=string_of_int,
+          BooksExample.insertAuthors,
+        ),
+      )
+      ->toMatchSnapshot()
+    });
+    test("authors with fake on conflict", () => {
+      let insert = BooksExample.insertAuthors;
+      let withOnConflict = insert |> QB.onConflict(1234);
+      let renderOnConflict = n => "ON CONFLICT " ++ string_of_int(n);
+      let rendered =
+        R.Insert.render(~onConflict=renderOnConflict, withOnConflict);
+      expect(rendered)->toMatchSnapshot();
+      expect(rendered)->toEqual(stringContaining("ON CONFLICT 1234"));
+    });
   });
 };
