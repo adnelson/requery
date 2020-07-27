@@ -2,6 +2,7 @@ open Jest;
 open Expect;
 module QB = Requery.QueryBuilder;
 module RE = Requery.RowEncode;
+module Example = Requery.BooksExample;
 
 let onConflictConstraint =
   Custom.Sql.OnConflict.{
@@ -14,33 +15,21 @@ let onConflictConstraint =
     action: DoNothing,
   };
 
-let insertAuthors =
-  QB.(
-    [("Stephen", "King"), ("Jane", "Austen")]
-    |> insertMany(RE.columns2("first", string, "last", string))
-    |> into(tname("author"))
-  );
-//    |> onConflict(onConflictConstraint)
-
 module CustomSyntaxTests = {
-  test("on conflict rendering", () =>
-    expect(onConflictConstraint->Custom.Render.OnConflict.render)
-    ->toMatchSnapshot()
+  test("rendering an on conflict clause", () =>
+    expect(onConflictConstraint->Custom.Render.OnConflict.render)->toMatchSnapshot()
   );
-  describe("custom syntax", () => {
+  describe("rendering an insert", () => {
     test("no on conflict", () =>
-      expect(insertAuthors |> Postgres.Render.insert)->toMatchSnapshot()
+      expect(Requery.Sql.Insert(Example.insertAuthors) |> Custom.render)->toMatchSnapshot()
     );
     describe("with on conflict", () =>
       test("on a constraint", () => {
         let insert =
-          Requery.Sql.Insert(
-            insertAuthors |> QB.onConflict(onConflictConstraint),
-          );
+          Requery.Sql.Insert(Example.insertAuthors |> QB.onConflict(onConflictConstraint));
         let rendered = insert |> Custom.render;
         expect(rendered)->toMatchSnapshot();
-        expect(rendered)
-        ->toEqual(stringContaining("ON CONFLICT ON CONSTRAINT"));
+        expect(rendered)->toEqual(stringContaining("ON CONFLICT ON CONSTRAINT"));
         expect(rendered)->toEqual(stringContaining("scary_constraint"));
       })
     );
