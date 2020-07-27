@@ -1,6 +1,6 @@
 {
   "name": "requery-postgres",
-  "version": "0.21.0",
+  "version": "0.21.1",
   "description": "ReasonML SQL query builder and database interaction library",
   "repository": "https://github.com/adnelson/requery",
   "author": "Allen Nelson <ithinkican@gmail.com>",
@@ -22,7 +22,7 @@
     "lint-staged": "^10.2.11",
     "onchange": "^6.1.0",
     "prettier": "^2.0.5",
-    "requery-abstract": "^0.21.0"
+    "requery-abstract": "^0.21.1"
   },
   "lint-staged": {
     "*.{md,scss,css,js,json}": [
@@ -47,6 +47,5 @@
   "gitHead": "070a1c35478946515074fe0286b47121b4bbfac7",
   "publishConfig": {
     "access": "public"
-  },
-  "dependencies": {}
+  }
 }
