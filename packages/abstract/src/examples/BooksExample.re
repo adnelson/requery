@@ -118,8 +118,8 @@ let getAuthorIdsCTE =
   );
 
 let run = (client, idType) => {
-  C.createTable(client, Author.createTable(idType))
-  |> then_(_ => C.createTable(client, Book.createTable(idType)))
+  client->C.createTable(Author.createTable(idType))
+  |> then_(_ => client->C.createTable(Book.createTable(idType)))
   // TODO when figure out ifNotExists problem
   //  |> then_(_ => C.createView(client, authorBooksSelect |> createView(tname("author_books"))))
   |> then_(_
