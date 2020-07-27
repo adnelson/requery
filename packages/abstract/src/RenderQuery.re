@@ -24,8 +24,7 @@ module DefaultRules: SqlRenderingRules = {
   let requiresEscape = n => !S.isMatch(n, validReg);
   // Escape double quotes by turning them into double-double quotes.
   let escapeName = n =>
-    !requiresEscape(n)
-      ? n : "\"" ++ S.replace(~old="\"", ~new_="\"\"", n) ++ "\"";
+    !requiresEscape(n) ? n : "\"" ++ S.replace(~old="\"", ~new_="\"\"", n) ++ "\"";
 };
 
 module WithRenderingRules = (S: SqlRenderingRules) => {
@@ -52,8 +51,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       switch (toTuple(c)) {
       | (None, Named(c)) => ColumnName.render(c)
       | (None, All) => "*"
-      | (Some(t), Named(c)) =>
-        TableName.render(t) ++ "." ++ ColumnName.render(c)
+      | (Some(t), Named(c)) => TableName.render(t) ++ "." ++ ColumnName.render(c)
       | (Some(t), All) => TableName.render(t) ++ ".*"
       };
   };
@@ -80,8 +78,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       | Int(i) => string_of_int(i)
       | Float(f) => Js.Float.toString(f)
       // Escape single quotes by replacing them with single quote pairs.
-      | String(s) =>
-        "'" ++ Utils.String.replace(~old="'", ~new_="''", s) ++ "'"
+      | String(s) => "'" ++ Utils.String.replace(~old="'", ~new_="''", s) ++ "'"
       | Bool(b) => b ? S._TRUE : S._FALSE;
 
     // TODO right now we're parenthesizing more than we need to. We could be
@@ -141,32 +138,20 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       | SubSelect(q, alias) => "(" ++ render(q) ++ ") AS " ++ alias
       | Join(join, t1, t2) =>
         switch (renderJoinType(join)) {
-        | (keyword, None) =>
-          renderTarget(t1) ++ " " ++ keyword ++ " " ++ renderTarget(t2)
+        | (keyword, None) => renderTarget(t1) ++ " " ++ keyword ++ " " ++ renderTarget(t2)
         | (keyword, Some(on)) =>
-          renderTarget(t1)
-          ++ " "
-          ++ keyword
-          ++ " "
-          ++ renderTarget(t2)
-          ++ " ON "
-          ++ on
+          renderTarget(t1) ++ " " ++ keyword ++ " " ++ renderTarget(t2) ++ " ON " ++ on
         }
 
     and renderSelectInUnion: selectInUnion => string =
       ({selections, from, groupBy, where}) => {
-        let selections' =
-          A.mapJoinCommas(selections, Aliased.render(Expression.render));
+        let selections' = A.mapJoinCommas(selections, Aliased.render(Expression.render));
         let from' = O.mapString(from, t => " FROM " ++ renderTarget(t));
         let groupBy' =
           switch (groupBy) {
           | Some((exprs, having)) when A.length(exprs) > 0 =>
-            let gb =
-              " GROUP BY " ++ A.mapJoinCommas(exprs, Expression.render);
-            gb
-            ++ O.mapWithDefault(having, "", h =>
-                 " HAVING " ++ Expression.render(h)
-               );
+            let gb = " GROUP BY " ++ A.mapJoinCommas(exprs, Expression.render);
+            gb ++ having->O.mapString(h => " HAVING " ++ Expression.render(h));
           | _ => ""
           };
         let where' =
@@ -174,8 +159,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
             where,
             fun
             | Where(e) => " WHERE " ++ Expression.render(e)
-            | WhereExists(select) =>
-              " WHERE EXISTS (" ++ render(select) ++ ")",
+            | WhereExists(select) => " WHERE EXISTS (" ++ render(select) ++ ")",
           );
         "SELECT " ++ selections' ++ from' ++ where' ++ groupBy';
       }
@@ -183,10 +167,8 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     and renderSelectVariant =
       fun
       | Select(siu) => renderSelectInUnion(siu)
-      | Union(s1, s2) =>
-        renderSelectVariant(s1) ++ " UNION " ++ renderSelectVariant(s2)
-      | UnionAll(s1, s2) =>
-        renderSelectVariant(s1) ++ " UNION ALL " ++ renderSelectVariant(s2)
+      | Union(s1, s2) => renderSelectVariant(s1) ++ " UNION " ++ renderSelectVariant(s2)
+      | UnionAll(s1, s2) => renderSelectVariant(s1) ++ " UNION ALL " ++ renderSelectVariant(s2)
 
     and render: t => string =
       ({with_, select, orderBy, limit}) => {
@@ -202,15 +184,12 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
         let orderBy' =
           switch (orderBy) {
           | Some(cols) =>
-            A.mapJoinIfNonEmpty(
-              cols, ~prefix=" ORDER BY ", ", ", ((c, optDir)) =>
-              Expression.render(c)
-              ++ O.mapString(optDir, dir => " " ++ renderDirection(dir))
+            A.mapJoinIfNonEmpty(cols, ~prefix=" ORDER BY ", ", ", ((c, optDir)) =>
+              Expression.render(c) ++ O.mapString(optDir, dir => " " ++ renderDirection(dir))
             )
           | _ => ""
           };
-        let limit' =
-          O.mapString(limit, n => " LIMIT " ++ Expression.render(n));
+        let limit' = O.mapString(limit, n => " LIMIT " ++ Expression.render(n));
 
         with_' ++ renderSelectVariant(select) ++ orderBy' ++ limit';
       };
@@ -232,20 +211,15 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
         TableName.render(into),
         switch (data) {
         | Values(values) =>
-          let cols =
-            A.mapJoinCommasParens(values, v => Column.render(fst(v)));
-          let numsOfExprs =
-            ISet.fromArray(A.map(values, ((_, exprs)) => A.length(exprs)));
+          let cols = A.mapJoinCommasParens(values, v => Column.render(fst(v)));
+          let numsOfExprs = ISet.fromArray(A.map(values, ((_, exprs)) => A.length(exprs)));
           switch (ISet.toList(numsOfExprs)) {
           // They must all have the same number of expressions.
           | [count] =>
             // Convert expressions to comma-separated tuples
-            let tuples =
-              A.makeBy(count, n => A.map(values, ((_, exprs)) => exprs[n]));
+            let tuples = A.makeBy(count, n => A.map(values, ((_, exprs)) => exprs[n]));
             let valuesStr =
-              A.mapJoinCommas(tuples, exprs =>
-                A.mapJoinCommasParens(exprs, Expression.render)
-              );
+              A.mapJoinCommas(tuples, exprs => A.mapJoinCommasParens(exprs, Expression.render));
             cols ++ " VALUES " ++ valuesStr;
           | counts => raise(UnequalNumberOfExpressions(counts))
           };
@@ -278,11 +252,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     };
 
     let renderColumnDef = ({name, type_, constraints}) =>
-      [|
-        ColumnName.render(name),
-        TypeName.render(type_),
-        constraints |> renderColumnConstraint,
-      |]
+      [|ColumnName.render(name), TypeName.render(type_), constraints |> renderColumnConstraint|]
       |> Utils.String.joinSpaces;
 
     let renderConstraint: tableConstraint => string =
@@ -297,8 +267,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
         ++ "("
         ++ ColumnName.render(refCol)
         ++ ")"
-      | Unique(columns) =>
-        "UNIQUE " ++ A.mapJoinCommasParens(columns, ColumnName.render)
+      | Unique(columns) => "UNIQUE " ++ A.mapJoinCommasParens(columns, ColumnName.render)
       | Check(expr) => "CHECK (" ++ Expression.render(expr) ++ ")";
 
     let renderStatement: statement => string =
@@ -306,10 +275,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       | ColumnDef(cdef) => renderColumnDef(cdef)
       | Constraint(None, constraint_) => renderConstraint(constraint_)
       | Constraint(Some(n), constraint_) =>
-        "CONSTRAINT "
-        ++ ConstraintName.render(n)
-        ++ " "
-        ++ renderConstraint(constraint_);
+        "CONSTRAINT " ++ ConstraintName.render(n) ++ " " ++ renderConstraint(constraint_);
     let render: t => string =
       ({name, statements, ifNotExists}) =>
         "CREATE TABLE "
@@ -333,12 +299,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
 
   let select: Sql.Select.t => string = Select.render;
   let insert:
-    (
-      ~returning: 'r => string=?,
-      ~onConflict: 'oc => string=?,
-      Sql.Insert.t('r, 'oc)
-    ) =>
-    string = Insert.render;
+    (~returning: 'r => string=?, ~onConflict: 'oc => string=?, Sql.Insert.t('r, 'oc)) => string = Insert.render;
   let createTable: Sql.CreateTable.t => string = CreateTable.render;
   let createView: Sql.CreateView.t => string = CreateView.render;
   let render: ('r => string, 'oc => string, Sql.query('r, 'oc)) => string =
