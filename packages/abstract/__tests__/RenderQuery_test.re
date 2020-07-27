@@ -29,8 +29,7 @@ module SnapshotTests = {
   });
   describe("insert", () => {
     test("authors", () =>
-      expect(BooksExample.insertAuthors |> R.Insert.render(_ => ""))
-      ->toMatchSnapshot()
+      expect(BooksExample.insertAuthors->R.Insert.render)->toMatchSnapshot()
     )
   });
 };

@@ -12,7 +12,7 @@ type selectVariant = Sql.Select.selectVariant;
 type select = Sql.Select.select;
 type expr = Sql.Expression.t;
 type direction = Sql.Select.direction;
-type insert('r) = Sql.Insert.t('r);
+type insert('r, 'oc) = Sql.Insert.t('r, 'oc);
 type statement = Sql.CreateTable.statement;
 type createTable = Sql.CreateTable.t;
 type createView = Sql.CreateView.t;
@@ -24,7 +24,7 @@ type whereClause = Sql.Select.whereClause;
 
 type row = list((column, expr));
 type toSelect('t) = 't => select;
-type toInsert('r, 't) = ('t, tableName) => insert('r);
+type toInsert('r, 'oc, 't) = ('t, tableName) => insert('r, 'oc);
 type toColumn('t) = 't => column;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
@@ -242,11 +242,11 @@ let from: (target, list(aliased(expr))) => selectInUnion;
 let fromNone: list(aliased(expr)) => selectInUnion;
 
 // Adds an `INTO` clause to the select, inserting the result into another table
-// within the same database. To specify a different database, use `intoIn`.
-let into: (tableName, selectInUnion) => selectInUnion;
+// within the same database. To specify a different database, use `selectIntoIn`.
+let selectInto: (tableName, selectInUnion) => selectInUnion;
 
-// Like `into` but specifies a different database to put the table in.
-let intoIn: (tableName, databaseName, selectInUnion) => selectInUnion;
+// Like `selectInto` but specifies a different database to put the table in.
+let selectIntoIn: (tableName, databaseName, selectInUnion) => selectInUnion;
 
 // Add a WHERE clause to a selectInUnion.
 let where: (expr, selectInUnion) => selectInUnion;
@@ -306,25 +306,25 @@ let orderBy2: (expr, direction, expr, direction, select) => select;
  ****************************/
 
 // Inserting literal columns/expressions.
-let insertColumns: toInsert('r, list((column, list(expr))));
-let insertRows: toInsert('r, list(list((column, expr))));
-let insertRow: toInsert('r, list((column, expr)));
+let insertColumns: toInsert('r, 'oc, list((column, list(expr))));
+let insertRows: toInsert('r, 'oc, list(list((column, expr))));
+let insertRow: toInsert('r, 'oc, list((column, expr)));
 
 // Apply a conversion function to create columns and expressions.
 let insertRowsWith:
-  (toColumn('a), toExpr('b)) => toInsert('r, list(list(('a, 'b))));
+  (toColumn('a), toExpr('b)) => toInsert('r, 'oc, list(list(('a, 'b))));
 let insertRowWith:
-  ('a => column, 'b => expr) => toInsert('r, list(('a, 'b)));
+  ('a => column, 'b => expr) => toInsert('r, 'oc, list(('a, 'b)));
 let insertColumnsWith:
-  (toColumn('a), toExpr('b)) => toInsert('r, list(('a, list('b))));
+  (toColumn('a), toExpr('b)) => toInsert('r, 'oc, list(('a, list('b))));
 
 // Given a function to convert an object to a row, insert one or more objects.
-let insertOne: toRow('t) => toInsert('r, 't);
-let insertMany: toRow('t) => toInsert('r, list('t));
-let returning: ('r, insert('r)) => insert('r);
+let insertOne: toRow('t) => toInsert('r, 'oc, 't);
+let insertMany: toRow('t) => toInsert('r, 'oc, list('t));
+let returning: ('r, insert('r, 'oc)) => insert('r, 'oc);
 
 // Insert with a SELECT query.
-let insertSelect: toInsert('r, select);
+let insertSelect: toInsert('r, 'oc, select);
 
 /*******************************************************************************
  Apply a table-to-query conversion.
@@ -334,7 +334,7 @@ let insertSelect: toInsert('r, select);
    |> insertMany(RE.columns2("first", string, "last", string))
    |> into(tname("authors"));
  ********************************************************************************/
-let into: (tableName, tableName => insert('r)) => insert('r);
+let into: (tableName, tableName => insert('r, 'oc)) => insert('r, 'oc);
 
 /***************************
   * CREATE TABLE Queries
