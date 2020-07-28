@@ -1,12 +1,8 @@
 {
-  "bs-dependencies": [
-    "@glennsl/bs-json",
-    "bs-postgres",
-    "bs-sqlite"
-  ],
-  "bs-dev-dependencies": ["@glennsl/bs-jest"],
-  "name": "requery",
-  "namespace": true,
+  "name": "requery-abstract",
+  "bs-dependencies": ["@glennsl/bs-json", "re-opaque"],
+  "bs-dev-dependencies": ["reason-jest"],
+  "namespace": "Requery",
   "package-specs": {
     "in-source": true,
     "module": "commonjs"
@@ -16,8 +12,7 @@
   },
   "refmt": 3,
   "sources": [
-    "src",
-    "example",
+    { "dir": "src", "subdirs": true },
     {
       "dir": "__tests__",
       "type": "dev"
@@ -26,6 +21,6 @@
   "suffix": ".bs.js",
   "warnings": {
     "number": "-23-44+60",
-    "error": "+8+6+60",
+    "error": "+8+6+60+49"
   }
 }

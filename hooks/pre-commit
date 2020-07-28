@@ -18,20 +18,5 @@ EOF
 }
 
 
-(
-  cd packages/abstract
-  fix_bs_platform
-  yarn lint-staged
-)
-
-(
-  cd packages/postgres
-  fix_bs_platform
-  yarn lint-staged
-)
-
-(
-  cd packages/postgres
-  fix_bs_platform
-  yarn lint-staged
-)
+fix_bs_platform
+yarn lint-staged

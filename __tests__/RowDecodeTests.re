@@ -7,21 +7,13 @@ module RD = RowDecode;
 
 // Test decoding dictionaries
 module Dict = {
-  let jsonRows: array(Js.Json.t) = [%bs.raw
-    {|require('./test_data/user_rows.json')|}
-  ];
+  let jsonRows: array(Js.Json.t) = [%bs.raw {|require('./test_data/user_rows.json')|}];
   let rows = RD.toRows(jsonRows);
 
   describe("dictOf", () => {
     describe("one-dimensional dictionary", () => {
       let byFirstName: D.t(array(string)) =
-        rows
-        |> RD.(
-             dictOf(
-               ~keyField="first_name",
-               decodeEach(field("last_name", string)),
-             )
-           );
+        rows |> RD.(dictOf(~keyField="first_name", decodeEach(field("last_name", string))));
       test("Bob", () =>
         expect(D.get(byFirstName, "Bob"))->toEqual(Some([|"Blooperman"|]))
       );
@@ -58,8 +50,7 @@ module Dict = {
         expect(D.get(byFirstName, "Bob"))->toEqual(Some([|"Blooperman"|]))
       );
       test("names", () =>
-        expect(firstNames)
-        ->toEqual([|"Bob", "Biff", "Barnabus", "Bertrand", "Billy"|])
+        expect(firstNames)->toEqual([|"Bob", "Biff", "Barnabus", "Bertrand", "Billy"|])
       );
     })
   );
@@ -95,12 +86,10 @@ module Dict = {
                (),
              );
         test("Bob's ID", () =>
-          expect(D.get(D.getExn(dict, "Blooperman"), "Bob"))
-          ->toEqual(Some(1))
+          expect(D.get(D.getExn(dict, "Blooperman"), "Bob"))->toEqual(Some(1))
         );
         test("Biff's ID", () =>
-          expect(D.get(D.getExn(dict, "Bofferton"), "Biff"))
-          ->toEqual(Some(2))
+          expect(D.get(D.getExn(dict, "Bofferton"), "Biff"))->toEqual(Some(2))
         );
         describe("the Boffertons", () => {
           let boffertons = D.getExn(dict, "Bofferton");
@@ -131,8 +120,7 @@ module Dict = {
           expect(D.get(dict, "2"))->toEqual(Some("Biff"))
         );
         test("ordering contains all IDs in order", () =>
-          expect(ordering)
-          ->toEqual(A.map([|1, 2, 3, 4, 5|], string_of_int))
+          expect(ordering)->toEqual(A.map([|1, 2, 3, 4, 5|], string_of_int))
         );
       })
     );

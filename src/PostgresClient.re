@@ -51,7 +51,8 @@ module Pool = {
   type pool = Pg.Pool.t;
   type result = Pg.Result.t(Js.Json.t);
   let runRaw = (client, text) => Pg.Client.Promise.query'(Pg.Query.make(~text, ()), client);
-  let makePool = ({Config.host, database, port, user, password}) => Pg.Pool.make(~host, ~database, ~port, ~user?, ~password?, ());
+  let makePool = ({Config.host, database, port, user, password}) =>
+    Pg.Pool.make(~host, ~database, ~port, ~user?, ~password?, ());
 
   let makeClient = (~onQuery=?, ~onResult=?, pool) =>
     Pg.Pool.Promise.connect(pool)

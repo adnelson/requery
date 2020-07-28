@@ -11,19 +11,18 @@ QueryBuilder.(
 |> Client.select(client, RowDecode.(decodeEach(field("x", int))))
 |> then_(Result.unwrapPromise)
 |> then_(xs => Js.log(xs) |> resolve)
-|> then_(_
-     =>
-       QueryBuilder.(
-         [
-           cdef("first", Types.text),
-           cdef("last", Types.text),
-           constraint_(unique([cname("first"), cname("last")])),
-         ]
-         |> createTable(authors, ~ifNotExists=true)
-       )
-       |> Client.createTable(client)
+|> then_(_ =>
+     QueryBuilder.(
+       [
+         cdef("first", Types.text),
+         cdef("last", Types.text),
+         constraint_(unique([cname("first"), cname("last")])),
+       ]
+       |> createTable(authors, ~ifNotExists=true)
      )
-     // CREATE TABLE IF NOT EXISTS authors (first TEXT NOT NULL, last TEXT NOT NULL, UNIQUE (first, last));
+     |> Client.createTable(client)
+   )
+// CREATE TABLE IF NOT EXISTS authors (first TEXT NOT NULL, last TEXT NOT NULL, UNIQUE (first, last));
 // INSERT INTO authors (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen')
 |> then_(_ =>
      RowEncode.(

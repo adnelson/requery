@@ -57,9 +57,7 @@ module Render = {
       | IndexExpression(e) => "(" ++ e->Render.Expression.render ++ ")";
     let renderTarget = ({index, where, onConstraint}) =>
       S.joinSpaces([|
-        onConstraint->O.mapString(cn =>
-          "ON CONSTRAINT " ++ cn->Render.ConstraintName.render
-        ),
+        onConstraint->O.mapString(cn => "ON CONSTRAINT " ++ cn->Render.ConstraintName.render),
         index->O.mapString(renderIndex),
         where->O.mapString(e => "WHERE " ++ e->Render.Expression.render),
       |]);
@@ -68,11 +66,7 @@ module Render = {
       | DoNothing => "DO NOTHING";
     let render: t => string =
       ({target, action}) =>
-        S.joinSpaces([|
-          "ON CONFLICT",
-          target->O.mapString(renderTarget),
-          action->renderAction,
-        |]);
+        S.joinSpaces([|"ON CONFLICT", target->O.mapString(renderTarget), action->renderAction|]);
   };
 };
 

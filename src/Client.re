@@ -14,8 +14,7 @@ module QueryResult = {
   let errorToJson: Utils.Json.encoder(error) =
     Utils.Json.Encode.(
       fun
-      | RowDecodeError(e) =>
-        e |> object1("RowDecodeError", RowDecode.errorToJson)
+      | RowDecodeError(e) => e |> object1("RowDecodeError", RowDecode.errorToJson)
     );
 
   exception Error(error);
@@ -71,21 +70,10 @@ let logQueryWith: (string => unit, t('h, 'r, 'q), 'q) => unit =
   (f, {queryToSql}, q) => f(queryToSql(q) ++ ";");
 
 // Logs a query to stdout via Js.log.
-let logQuery: (t('h, 'r, 'q), 'q) => unit =
-  (c, q) => logQueryWith(Js.log, c, q);
+let logQuery: (t('h, 'r, 'q), 'q) => unit = (c, q) => logQueryWith(Js.log, c, q);
 
 // Create a client.
-let make =
-    (
-      ~handle,
-      ~queryToSql,
-      ~resultToRows,
-      ~queryRaw,
-      ~execRaw,
-      ~onQuery=?,
-      ~onResult=?,
-      (),
-    ) => {
+let make = (~handle, ~queryToSql, ~resultToRows, ~queryRaw, ~execRaw, ~onQuery=?, ~onResult=?, ()) => {
   handle,
   queryToSql,
   queryRaw,
@@ -99,10 +87,7 @@ let renderQuery = ({queryToSql}, query) => queryToSql(query);
 let handle = ({handle}) => handle;
 
 let query: (t('h, 'r, 'q), 'q) => Js.Promise.t(rows) =
-  (
-    {onQuery, onResult, handle, queryToSql, queryRaw, resultToRows} as client,
-    query,
-  ) => {
+  ({onQuery, onResult, handle, queryToSql, queryRaw, resultToRows} as client, query) => {
     let _ = O.map(onQuery, f => f(client, query));
     queryRaw(handle, queryToSql(query))
     |> then_(result => {
@@ -112,10 +97,7 @@ let query: (t('h, 'r, 'q), 'q) => Js.Promise.t(rows) =
   };
 
 let exec: (t('h, 'r, 'q), 'q) => Js.Promise.t(rows) =
-  (
-    {onQuery, onResult, handle, queryToSql, execRaw, resultToRows} as client,
-    query,
-  ) => {
+  ({onQuery, onResult, handle, queryToSql, execRaw, resultToRows} as client, query) => {
     let _ = O.map(onQuery, f => f(client, query));
     execRaw(handle, queryToSql(query))
     |> then_(result => {
@@ -125,8 +107,7 @@ let exec: (t('h, 'r, 'q), 'q) => Js.Promise.t(rows) =
   };
 
 let decodeResult:
-  (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) =>
-  QueryResult.t('a) =
+  (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) => QueryResult.t('a) =
   (decode, rows) =>
     try(Belt.Result.Ok(decode(rows))) {
     | RowDecode.Error(e) => Belt.Result.Error(RowDecodeError(e))
@@ -141,9 +122,7 @@ let decodeResultPromise:
 ///// Selects
 ////////////////////////////////////////////////////////////////////////////////
 
-let select =
-    (cli, decode: RowDecode.rowsDecoder('a), select)
-    : Js.Promise.t(QueryResult.t('a)) =>
+let select = (cli, decode: RowDecode.rowsDecoder('a), select): Js.Promise.t(QueryResult.t('a)) =>
   query(cli, Sql.Select(select)) |> then_(decodeResultPromise(decode));
 let selectUnwrap = (cli, decode, select_) =>
   select(cli, decode, select_) |> then_(QueryResult.unwrapPromise);
