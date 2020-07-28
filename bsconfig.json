@@ -1,6 +1,6 @@
 {
   "name": "requery-abstract",
-  "bs-dependencies": ["@glennsl/bs-json", "re-opaque"],
+  "bs-dependencies": ["@glennsl/bs-json", "re-opaque", "bs-postgres"],
   "bs-dev-dependencies": ["reason-jest"],
   "namespace": "Requery",
   "package-specs": {

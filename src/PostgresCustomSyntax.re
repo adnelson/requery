@@ -1,11 +1,11 @@
-module A = Requery.Utils.Array;
-module O = Requery.Utils.Option;
-module S = Requery.Utils.String;
-module QB = Requery.QueryBuilder;
+module A = Utils.Array;
+module O = Utils.Option;
+module S = Utils.String;
+module QB = QueryBuilder;
 
 module Sql = {
   // Postgres-specific syntax
-  include Requery.Sql;
+  include Sql;
 
   // Expresses the `RETURNING` clause for inserts
   module Returning = {

@@ -38,7 +38,7 @@ module Config = {
   };
 };
 
-type query = Custom.query;
+type query = PostgresCustomSyntax.query;
 
 // Postgres results are wrapped in this type
 type result = Pg.Result.t(Js.Json.t);
@@ -63,7 +63,7 @@ module Pool = {
            ~onQuery?,
            ~onResult?,
            ~queryRaw=runRaw,
-           ~queryToSql=Custom.render,
+           ~queryToSql=PostgresCustomSyntax.render,
            ~resultToRows=(result: result) => RowDecode.toRows(result##rows),
            (),
          )
