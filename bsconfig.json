@@ -1,5 +1,5 @@
 {
-  "name": "requery-abstract",
+  "name": "@adnelson/requery",
   "bs-dependencies": ["@glennsl/bs-json", "re-opaque", "bs-postgres"],
   "bs-dev-dependencies": ["reason-jest"],
   "namespace": "Requery",
