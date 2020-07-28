@@ -59,9 +59,7 @@ module Book = {
   };
   let make = (author, title) => {id: (), author, title};
   let toRow = ({author, title}) =>
-    RE.(
-      stringRow([("author id", author |> int), ("title", title |> string)])
-    );
+    RE.(stringRow([("author id", author |> int), ("title", title |> string)]));
   let fromJson = j =>
     JD.{
       id: j |> field("id", int),
@@ -79,7 +77,7 @@ module Book = {
         cdef("author id", idType),
         cdef("title", Types.text),
         constraint_(
-          foreignKey(cname("author id"), (tname("author"), cname("id"))),
+          foreignKey(~onDelete=Cascade, cname("author id"), (tname("author"), cname("id"))),
         ),
       ]
       |> createTable(tname("book"), ~ifNotExists=true)
@@ -146,11 +144,7 @@ let run = (client, idType) => {
               QB.(select([e(all)] |> from(table(Author.tableName))))
               |> C.select(
                    client,
-                   RowDecode.(
-                     decodeEach(
-                       columns3("id", int, "first", string, "last", string),
-                     )
-                   ),
+                   RowDecode.(decodeEach(columns3("id", int, "first", string, "last", string))),
                  )
             )
          // Log them to console

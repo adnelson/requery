@@ -5,6 +5,16 @@ module ISet = Belt.Set.Int;
 module J = Utils.Json;
 module S = Utils.String;
 
+let map: 'a 'b. (array('a), 'a => 'b) => array('b) = Belt.Array.map;
+let join: array(string) => string = Js.Array.joinWith("");
+let rmEmpty: array(string) => array(string) = strs => strs->A.keep(s => s->S.length > 0);
+let spaces: array(string) => string = strs => strs->rmEmpty |> Js.Array.joinWith(" ");
+let commas: array(string) => string = Js.Array.joinWith(",");
+let semis: array(string) => string = Js.Array.joinWith(";");
+let parens: string => string = s => "(" ++ s ++ ")";
+let brackets: string => string = s => "[" ++ s ++ "]";
+let curlies: string => string = s => "{" ++ s ++ "}";
+
 module type SqlRenderingRules = {
   // How to render TRUE and FALSE constants
   let _TRUE: string;
@@ -107,8 +117,8 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       | IsNull(e) => renderP(e) ++ " IS NULL"
       | IsNotNull(e) => renderP(e) ++ " IS NOT NULL"
       | Not(e) => "NOT " ++ renderP(e)
-      | Call(fnName, args) => fnName ++ A.mapJoinCommasParens(args, render)
-      | Tuple(exprs) => A.mapJoinCommasParens(exprs, render)
+      | Call(fnName, args) => fnName ++ A.mapJoinCommas(args, render)->parens
+      | Tuple(exprs) => A.mapJoinCommas(exprs, render)->parens
     and renderP =
       fun
       | Atom(_) as e
@@ -135,7 +145,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     let rec renderTarget: target => string =
       fun
       | Table(tname) => Aliased.render(Sql.TableName.toString, tname)
-      | SubSelect(q, alias) => "(" ++ render(q) ++ ") AS " ++ alias
+      | SubSelect(q, alias) => render(q)->parens ++ " AS " ++ alias
       | Join(join, t1, t2) =>
         switch (renderJoinType(join)) {
         | (keyword, None) => renderTarget(t1) ++ " " ++ keyword ++ " " ++ renderTarget(t2)
@@ -159,7 +169,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
             where,
             fun
             | Where(e) => " WHERE " ++ Expression.render(e)
-            | WhereExists(select) => " WHERE EXISTS (" ++ render(select) ++ ")",
+            | WhereExists(select) => " WHERE EXISTS " ++ render(select)->parens,
           );
         "SELECT " ++ selections' ++ from' ++ where' ++ groupBy';
       }
@@ -177,9 +187,8 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
             " WITH "
             ++ TableName.render(table_)
             ++ A.mapJoinCommasParens(columns_, ColumnName.render)
-            ++ " AS ("
-            ++ render(innerSelect)
-            ++ ")"
+            ++ " AS "
+            ++ render(innerSelect)->parens
           );
         let orderBy' =
           switch (orderBy) {
@@ -206,7 +215,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
           {data, into, returning, onConflict},
         )
         : string =>
-      Utils.String.joinSpaces([|
+      [|
         "INSERT INTO",
         TableName.render(into),
         switch (data) {
@@ -227,7 +236,8 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
         },
         onConflict->O.mapString(renderOnConflict),
         returning->O.mapString(renderReturning),
-      |]);
+      |]
+      ->spaces;
   };
 
   module CreateTable = {
@@ -255,20 +265,27 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       [|ColumnName.render(name), TypeName.render(type_), constraints |> renderColumnConstraint|]
       |> Utils.String.joinSpaces;
 
+    let renderOnDelete =
+      fun
+      | Cascade => "CASCADE"
+      | SetNull => "SET NULL";
+
     let renderConstraint: tableConstraint => string =
       fun
       | PrimaryKey(columns) =>
         "PRIMARY KEY " ++ A.mapJoinCommasParens(columns, ColumnName.render)
-      | ForeignKey(col, (refTable, refCol)) =>
-        "FOREIGN KEY ("
-        ++ ColumnName.render(col)
-        ++ ") REFERENCES "
-        ++ TableName.render(refTable)
-        ++ "("
-        ++ ColumnName.render(refCol)
-        ++ ")"
-      | Unique(columns) => "UNIQUE " ++ A.mapJoinCommasParens(columns, ColumnName.render)
-      | Check(expr) => "CHECK (" ++ Expression.render(expr) ++ ")";
+      | ForeignKey(col, (refTable, refCol), onDelete) =>
+        [|
+          "FOREIGN KEY",
+          ColumnName.render(col)->parens,
+          "REFERENCES",
+          TableName.render(refTable),
+          ColumnName.render(refCol)->parens,
+          onDelete->O.mapString(od => "ON DELETE " ++ od->renderOnDelete),
+        |]
+        ->spaces
+      | Unique(columns) => "UNIQUE " ++ columns->A.map(ColumnName.render)->commas->parens
+      | Check(expr) => "CHECK " ++ expr->Expression.render->parens ++ ")";
 
     let renderStatement: statement => string =
       fun
@@ -278,11 +295,14 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
         "CONSTRAINT " ++ ConstraintName.render(n) ++ " " ++ renderConstraint(constraint_);
     let render: t => string =
       ({name, statements, ifNotExists}) =>
-        "CREATE TABLE "
-        ++ (ifNotExists ? "IF NOT EXISTS " : "")
-        ++ TableName.render(name)
-        ++ " "
-        ++ A.mapJoinCommasParens(statements, renderStatement);
+        [|
+          "CREATE TABLE",
+          ifNotExists ? "IF NOT EXISTS" : "",
+          TableName.render(name),
+          " ",
+          A.mapJoinCommasParens(statements, renderStatement),
+        |]
+        ->spaces;
   };
 
   module CreateView = {

@@ -17,6 +17,7 @@ type statement = Sql.CreateTable.statement;
 type createTable = Sql.CreateTable.t;
 type createView = Sql.CreateView.t;
 type whereClause = Sql.Select.whereClause;
+type onDelete = Sql.CreateTable.onDelete;
 
 /****************************
  * Encoder types
@@ -267,10 +268,8 @@ let groupBy: (~having: expr=?, list(expr), selectInUnion) => selectInUnion;
 let groupBy1: (~having: expr=?, expr, selectInUnion) => selectInUnion;
 let groupByColumn: (~having: expr=?, string, selectInUnion) => selectInUnion;
 let groupByCol: (~having: expr=?, string, selectInUnion) => selectInUnion; // alias
-let groupByColumns:
-  (~having: expr=?, list(string), selectInUnion) => selectInUnion;
-let groupByCols:
-  (~having: expr=?, list(string), selectInUnion) => selectInUnion; // alias
+let groupByColumns: (~having: expr=?, list(string), selectInUnion) => selectInUnion;
+let groupByCols: (~having: expr=?, list(string), selectInUnion) => selectInUnion; // alias
 
 let union1: (selectInUnion, select) => select;
 let union: (selectVariant, select) => select;
@@ -311,12 +310,9 @@ let insertRows: toInsert('r, 'oc, list(list((column, expr))));
 let insertRow: toInsert('r, 'oc, list((column, expr)));
 
 // Apply a conversion function to create columns and expressions.
-let insertRowsWith:
-  (toColumn('a), toExpr('b)) => toInsert('r, 'oc, list(list(('a, 'b))));
-let insertRowWith:
-  ('a => column, 'b => expr) => toInsert('r, 'oc, list(('a, 'b)));
-let insertColumnsWith:
-  (toColumn('a), toExpr('b)) => toInsert('r, 'oc, list(('a, list('b))));
+let insertRowsWith: (toColumn('a), toExpr('b)) => toInsert('r, 'oc, list(list(('a, 'b))));
+let insertRowWith: ('a => column, 'b => expr) => toInsert('r, 'oc, list(('a, 'b)));
+let insertColumnsWith: (toColumn('a), toExpr('b)) => toInsert('r, 'oc, list(('a, list('b))));
 
 // Given a function to convert an object to a row, insert one or more objects.
 let insertOne: toRow('t) => toInsert('r, 'oc, 't);
@@ -376,13 +372,14 @@ let constraint_: (~a: string=?, tableConstraint) => statement;
 
 // Table-level constraints
 let primaryKey: list(columnName) => tableConstraint;
-let foreignKey: (columnName, (tableName, columnName)) => tableConstraint;
+
+// Using string is a horrible hack right now
+let foreignKey: (~onDelete: onDelete=?, columnName, (tableName, columnName)) => tableConstraint;
 let unique: list(columnName) => tableConstraint;
 let check: expr => tableConstraint;
 
 // Creating a table
-let createTable:
-  (~ifNotExists: bool=?, tableName, list(statement)) => createTable;
+let createTable: (~ifNotExists: bool=?, tableName, list(statement)) => createTable;
 
 // Creating a view
 let createView: (~ifNotExists: bool=?, tableName, select) => createView;

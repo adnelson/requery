@@ -64,16 +64,14 @@ module Column: ColumnType = {
   // e.g. 'foo' or 'mytable.foo'
   type t = (option(TableName.t), col);
   let fromString: string => t = c => (None, colFromString(c));
-  let fromStringWithTable: (TableName.t, string) => t =
-    (t, c) => (Some(t), colFromString(c));
+  let fromStringWithTable: (TableName.t, string) => t = (t, c) => (Some(t), colFromString(c));
   let all: t = (None, All);
   let allFrom: TableName.t => t = t => (Some(t), All);
   let fromTuples: array((TableName.t, string)) => array(t) =
     a => A.map(a, Utils.uncurry(fromStringWithTable));
   let fromTupleList: list((TableName.t, string)) => list(t) =
     l => L.map(l, Utils.uncurry(fromStringWithTable));
-  let fromStringArray: array(string) => array(t) =
-    a => A.map(a, fromString);
+  let fromStringArray: array(string) => array(t) = a => A.map(a, fromString);
   let fromStringList: list(string) => list(t) = l => L.map(l, fromString);
   external toTuple: t => (option(TableName.t), col) = "%identity";
   let fromColumnNameWithTable = (tn, cn) => (Some(tn), Named(cn));
@@ -230,10 +228,7 @@ module Insert = {
             A.mapWithIndex(rows, (rowIndex, row) =>
               switch (A.get(row, colIndex)) {
               | Some((c, e)) when c == col => e
-              | _ =>
-                raise(
-                  Error(RowIsMissingColumn(rowIndex, row, colIndex, col)),
-                )
+              | _ => raise(Error(RowIsMissingColumn(rowIndex, row, colIndex, col)))
               }
             ),
           )
@@ -252,12 +247,7 @@ module Insert = {
     onConflict: option('onConflict),
   };
 
-  let make = (~returning=?, ~onConflict=?, data, into) => {
-    into,
-    data,
-    returning,
-    onConflict,
-  };
+  let make = (~returning=?, ~onConflict=?, data, into) => {into, data, returning, onConflict};
 };
 
 // CREATE TABLE query
@@ -276,15 +266,16 @@ module CreateTable = {
     constraints: columnConstraints,
   };
 
-  let makeColumnDef = (~name, type_, constraints) => {
-    name,
-    type_,
-    constraints,
-  };
+  let makeColumnDef = (~name, type_, constraints) => {name, type_, constraints};
+
+  // TODO this is only a prototype
+  type onDelete =
+    | Cascade
+    | SetNull;
 
   type tableConstraint =
     | PrimaryKey(array(ColumnName.t))
-    | ForeignKey(ColumnName.t, (TableName.t, ColumnName.t))
+    | ForeignKey(ColumnName.t, (TableName.t, ColumnName.t), option(onDelete))
     | Unique(array(ColumnName.t))
     | Check(Expression.t);
 
