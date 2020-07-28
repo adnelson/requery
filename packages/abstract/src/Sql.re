@@ -245,18 +245,19 @@ module Insert = {
     | Values(columnValues)
     | Select(Select.t);
 
-  // TODO the way returning is handled is pretty different for different DBs. We'll
-  // eventually want to make this a type parameter.
-  type returning =
-    | Columns(array(Column.t));
-
-  type t('returning) = {
+  type t('returning, 'onConflict) = {
     into: TableName.t,
     data,
     returning: option('returning),
+    onConflict: option('onConflict),
   };
 
-  let make = (~returning=?, data, into) => {into, data, returning};
+  let make = (~returning=?, ~onConflict=?, data, into) => {
+    into,
+    data,
+    returning,
+    onConflict,
+  };
 };
 
 // CREATE TABLE query
@@ -308,8 +309,8 @@ module CreateView = {
   };
 };
 
-type query('returning) =
+type query('returning, 'onConflict) =
   | Select(Select.t)
-  | Insert(Insert.t('returning))
+  | Insert(Insert.t('returning, 'onConflict))
   | CreateTable(CreateTable.t)
   | CreateView(CreateView.t);

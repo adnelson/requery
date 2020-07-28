@@ -17,14 +17,14 @@ type select = Sql.Select.select;
 
 type expr = Sql.Expression.t;
 type direction = Sql.Select.direction;
-type insert('r) = Sql.Insert.t('r);
+type insert('r, 'oc) = Sql.Insert.t('r, 'oc);
 type statement = Sql.CreateTable.statement;
 type createTable = Sql.CreateTable.t;
 type createView = Sql.CreateView.t;
 type whereClause = Sql.Select.whereClause;
 type row = list((column, expr));
 type toSelect('t) = 't => select;
-type toInsert('r, 't) = ('t, tableName) => insert('r);
+type toInsert('r, 'oc, 't) = ('t, tableName) => insert('r, 'oc);
 type toColumn('t) = 't => column;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
@@ -148,9 +148,10 @@ let fromNone = exprs => {
   where: None,
 };
 
-let into: (tableName, selectInUnion) => selectInUnion =
+let selectInto: (tableName, selectInUnion) => selectInUnion =
   (t, sel) => {...sel, into: Some((t, None))};
-let intoIn: (tableName, databaseName, selectInUnion) => selectInUnion =
+
+let selectIntoIn: (tableName, databaseName, selectInUnion) => selectInUnion =
   (t, db, sel) => {...sel, into: Some((t, Some(db)))};
 
 let where: (expr, selectInUnion) => selectInUnion =
@@ -303,6 +304,9 @@ let insertSelect = select => Insert.make(Insert.Select(select));
 
 let returning = (returning, insert) =>
   Insert.{...insert, returning: Some(returning)};
+
+let onConflict = (onConflict, insert) =>
+  Insert.{...insert, onConflict: Some(onConflict)};
 
 let into = (t, f) => f(t);
 

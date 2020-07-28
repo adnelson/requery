@@ -17,32 +17,40 @@
     "bs-postgres": "^0.2.0"
   },
   "devDependencies": {
+    "@glennsl/bs-json": "^5",
     "bs-platform": "7.3.1",
     "bs-postgres": "^0.2.0",
+    "jest": "^26.1.0",
     "lint-staged": "^10.2.11",
     "onchange": "^6.1.0",
     "prettier": "^2.0.5",
-    "requery-abstract": "^0.21.1"
+    "reason-jest": "^1.3.0",
+    "requery-abstract": "../abstract"
   },
   "lint-staged": {
     "*.{md,scss,css,js,json}": [
       "prettier --write"
     ],
     "*.{re,rei}": [
-      "bsrefmt --in-place"
+      "bsrefmt --in-place -w 100"
     ]
   },
   "scripts": {
     "build": "sh -c 'NINJA_ANSI_FORCED=1 bsb -make-world'",
     "cleanbuild": "yarn clean && yarn build",
     "watch": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build'",
-    "test": "yarn build && jest __tests__",
-    "test:watch": "onchange -v -k -i -d 500 'src/**/*.{re,rei}' 'example/*.re' '__tests__/**/*.{re,rei}' '__tests__/**/*.json' -- sh -c 'clear && yarn build && jest __tests__'",
+    "test": "jest __tests__",
+    "test:watch": "jest __tests__ --watch",
     "format": "bsrefmt --in-place --print-width 100 src/*.{re,rei} example/*.re",
     "clean": "bsb -clean-world",
     "watch:abstract": "sh -c \"yarn watch & onchange -k -i -d 500 '../abstract/src/**/*.{re,rei}' -- yarn cleanbuild\"",
     "watch:run": "onchange -k -i -d 500 '**/*.{re,rei}' bsconfig.json -- sh -c 'yarn build && yarn testquery'",
-    "testquery": "node example/PostgresBooks.bs.js"
+    "testquery": "node example/PostgresBooks.bs.js",
+    "re:clean": "bsb -clean-world",
+    "re:build": "bsb -make-world",
+    "re:watch": "bsb -make-world -w",
+    "re:formatall": "find src __tests__ -name '*.re' | xargs npx bsrefmt --in-place",
+    "re:formatchanged": "git diff --name-only --diff-filter=d HEAD -- '*.re' | xargs -I{} realpath --relative-to=. $(git rev-parse --show-toplevel)/'{}' | while read f; do npx bsrefmt --in-place \"$f\"; done"
   },
   "gitHead": "070a1c35478946515074fe0286b47121b4bbfac7",
   "publishConfig": {

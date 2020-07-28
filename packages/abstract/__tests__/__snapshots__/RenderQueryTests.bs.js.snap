@@ -4,7 +4,9 @@ exports[`createTable author 1`] = `"CREATE TABLE IF NOT EXISTS author (id INTEGE
 
 exports[`createTable book 1`] = `"CREATE TABLE IF NOT EXISTS book (id INTEGER PRIMARY KEY NOT NULL, \\"author id\\" INTEGER NOT NULL, title TEXT NOT NULL, FOREIGN KEY (\\"author id\\") REFERENCES author(id))"`;
 
-exports[`insert authors 1`] = `"INSERT INTO author (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen')"`;
+exports[`insert authors 1`] = `"INSERT INTO author (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen')  "`;
+
+exports[`insert authors with fake on conflict 1`] = `"INSERT INTO author (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen') ON CONFLICT 1234 "`;
 
 exports[`select author books 1`] = `"SELECT a.id AS \\"author id\\" FROM author AS a INNER JOIN book AS b ON a.id = b.\\"author id\\""`;
 

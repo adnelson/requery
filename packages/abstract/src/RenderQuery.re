@@ -151,7 +151,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
           switch (groupBy) {
           | Some((exprs, having)) when A.length(exprs) > 0 =>
             let gb = " GROUP BY " ++ A.mapJoinCommas(exprs, Expression.render);
-            gb ++ O.mapWithDefault(having, "", h => " HAVING " ++ Expression.render(h));
+            gb ++ having->O.mapString(h => " HAVING " ++ Expression.render(h));
           | _ => ""
           };
         let where' =
@@ -199,31 +199,35 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     open Sql.Insert;
     exception UnequalNumberOfExpressions(list(int));
 
-    let render: ('returning => string, t('returning)) => string =
-      (renderReturning, {data, into, returning}) => {
-        "INSERT INTO "
-        ++ TableName.render(into)
-        ++ " "
-        ++ (
-          switch (data) {
-          | Values(values) =>
-            let cols = A.mapJoinCommasParens(values, v => Column.render(fst(v)));
-            let numsOfExprs = ISet.fromArray(A.map(values, ((_, exprs)) => A.length(exprs)));
-            switch (ISet.toList(numsOfExprs)) {
-            // They must all have the same number of expressions.
-            | [count] =>
-              // Convert expressions to comma-separated tuples
-              let tuples = A.makeBy(count, n => A.map(values, ((_, exprs)) => exprs[n]));
-              let valuesStr =
-                A.mapJoinCommas(tuples, exprs => A.mapJoinCommasParens(exprs, Expression.render));
-              cols ++ " VALUES " ++ valuesStr;
-            | counts => raise(UnequalNumberOfExpressions(counts))
-            };
-          | Select(sel) => Select.render(sel)
-          }
+    let render =
+        (
+          ~returning as renderReturning: 'returning => string=_ => "",
+          ~onConflict as renderOnConflict: 'onConflict => string=_ => "",
+          {data, into, returning, onConflict},
         )
-        ++ O.mapString(returning, renderReturning);
-      };
+        : string =>
+      Utils.String.joinSpaces([|
+        "INSERT INTO",
+        TableName.render(into),
+        switch (data) {
+        | Values(values) =>
+          let cols = A.mapJoinCommasParens(values, v => Column.render(fst(v)));
+          let numsOfExprs = ISet.fromArray(A.map(values, ((_, exprs)) => A.length(exprs)));
+          switch (ISet.toList(numsOfExprs)) {
+          // They must all have the same number of expressions.
+          | [count] =>
+            // Convert expressions to comma-separated tuples
+            let tuples = A.makeBy(count, n => A.map(values, ((_, exprs)) => exprs[n]));
+            let valuesStr =
+              A.mapJoinCommas(tuples, exprs => A.mapJoinCommasParens(exprs, Expression.render));
+            cols ++ " VALUES " ++ valuesStr;
+          | counts => raise(UnequalNumberOfExpressions(counts))
+          };
+        | Select(sel) => Select.render(sel)
+        },
+        onConflict->O.mapString(renderOnConflict),
+        returning->O.mapString(renderReturning),
+      |]);
   };
 
   module CreateTable = {
@@ -294,14 +298,15 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
   };
 
   let select: Sql.Select.t => string = Select.render;
-  let insert: ('r => string, Sql.Insert.t('r)) => string = r => Insert.render(r);
+  let insert:
+    (~returning: 'r => string=?, ~onConflict: 'oc => string=?, Sql.Insert.t('r, 'oc)) => string = Insert.render;
   let createTable: Sql.CreateTable.t => string = CreateTable.render;
   let createView: Sql.CreateView.t => string = CreateView.render;
-  let render: ('r => string, Sql.query('r)) => string =
-    r =>
+  let render: ('r => string, 'oc => string, Sql.query('r, 'oc)) => string =
+    (returning, onConflict) =>
       fun
       | Select(s) => select(s)
-      | Insert(i) => insert(r, i)
+      | Insert(i) => insert(~returning, ~onConflict, i)
       | CreateTable(ct) => createTable(ct)
       | CreateView(cv) => createView(cv);
 };
