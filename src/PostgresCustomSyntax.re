@@ -27,6 +27,8 @@ module Sql = {
       onConstraint: option(QB.constraintName),
     };
 
+    let makeTarget = (~index=?, ~where=?, ~onConstraint=?, ()) => {index, where, onConstraint};
+
     // TODO `DO UPDATE` syntax
     type conflictAction =
       | DoNothing;
@@ -35,6 +37,8 @@ module Sql = {
       target: option(conflictTarget),
       action: conflictAction,
     };
+
+    let make = (~target=?, action) => {target, action};
   };
 };
 

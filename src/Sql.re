@@ -288,6 +288,8 @@ module CreateTable = {
     statements: array(statement),
     ifNotExists: bool,
   };
+
+  let getTableName: t => TableName.t = ({name}) => name;
 };
 
 module CreateView = {
