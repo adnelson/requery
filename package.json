@@ -1,5 +1,5 @@
 {
-  "name": "requery-abstract",
+  "name": "@adnelson/requery",
   "version": "0.21.1",
   "description": "ReasonML SQL query builder and database interaction library (DB-agnostic)",
   "repository": "https://github.com/adnelson/requery",
