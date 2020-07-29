@@ -329,4 +329,5 @@ let createView = (~ifNotExists=true, name, query) => Sql.CreateView.{name, query
 module Types = {
   let int = typeName("INTEGER");
   let text = typeName("TEXT");
+  let char = len => typeName("CHAR(" ++ string_of_int(len) ++ ")");
 };

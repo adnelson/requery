@@ -406,4 +406,5 @@ let createView: (~ifNotExists: bool=?, tableName, select) => createView;
 module Types: {
   let int: typeName;
   let text: typeName;
+  let char: int => typeName;
 };
