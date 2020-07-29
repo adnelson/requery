@@ -1,6 +1,7 @@
 type columnName = Sql.ColumnName.t;
 type databaseName = Sql.DatabaseName.t;
 type tableName = Sql.TableName.t;
+type functionName = Sql.FunctionName.t;
 type aliased('t) = Sql.Aliased.t('t);
 type constraintName = Sql.ConstraintName.t;
 type tableConstraint = Sql.CreateTable.tableConstraint;
@@ -163,6 +164,7 @@ module Op: {
 };
 
 // Functions
+let fname: string => functionName;
 let count: expr => expr;
 let distinct: expr => expr;
 let max: expr => expr;
@@ -170,7 +172,7 @@ let min: expr => expr;
 let sum: expr => expr;
 let avg: expr => expr;
 let coalesce: (expr, expr) => expr;
-let call: (string, list(expr)) => expr;
+let call: (functionName, list(expr)) => expr;
 
 /*********** Higher order functions **********/
 

@@ -44,6 +44,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     let render = s => S.escapeName(String.toString(s));
   };
 
+  module FunctionName = RenderWrapped(Sql.FunctionName);
   module TableName = RenderWrapped(Sql.TableName);
   module ColumnName = RenderWrapped(Sql.ColumnName);
   module ConstraintName = RenderWrapped(Sql.ConstraintName);
@@ -117,7 +118,8 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       | IsNull(e) => renderP(e) ++ " IS NULL"
       | IsNotNull(e) => renderP(e) ++ " IS NOT NULL"
       | Not(e) => "NOT " ++ renderP(e)
-      | Call(fnName, args) => fnName ++ A.mapJoinCommas(args, render)->parens
+      | Call(fnName, args) =>
+        fnName->FunctionName.render ++ A.mapJoinCommas(args, render)->parens
       | Tuple(exprs) => A.mapJoinCommas(exprs, render)->parens
     and renderP =
       fun

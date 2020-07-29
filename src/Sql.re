@@ -3,30 +3,50 @@ module L = Utils.List;
 module O = Utils.Option;
 module SMap = Belt.Map.String;
 
+// Provides basic validation for SQL identifiers.
+// Right now this is overly strict. In reality many more things can be valid
+// SQL identifiers, they just might need to be quoted (which RenderQuery
+// takes care of)
+module IdentifierValidation =
+  Opaque.String.Validation.MatchRegex({
+    // TODO expand this
+    let regex = [%re {|/[\w\- _#@]+/|}];
+  });
+
 // TODO validation
 module DatabaseName =
   Opaque.String.Make(
-    Opaque.String.Validation.NoValidation,
+    IdentifierValidation,
     {},
   );
+
 module TableName =
   Opaque.String.Make(
-    Opaque.String.Validation.NoValidation,
+    IdentifierValidation,
     {},
   );
+
 module ColumnName =
   Opaque.String.Make(
-    Opaque.String.Validation.NoValidation,
+    IdentifierValidation,
     {},
   );
+
 module TypeName =
   Opaque.String.Make(
-    Opaque.String.Validation.NoValidation,
+    IdentifierValidation,
     {},
   );
+
 module ConstraintName =
   Opaque.String.Make(
-    Opaque.String.Validation.NoValidation,
+    IdentifierValidation,
+    {},
+  );
+
+module FunctionName =
+  Opaque.String.Make(
+    IdentifierValidation,
     {},
   );
 
@@ -147,7 +167,7 @@ module Expression = {
     | IsNull(t)
     | IsNotNull(t)
     | Not(t)
-    | Call(string, array(t))
+    | Call(FunctionName.t, array(t))
     | Tuple(array(t));
 };
 

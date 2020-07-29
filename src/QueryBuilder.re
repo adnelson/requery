@@ -3,6 +3,7 @@ module E = Expression;
 module L = Utils.List;
 
 type columnName = Sql.ColumnName.t;
+type functionName = Sql.FunctionName.t;
 type column = Sql.Column.t;
 type tableName = Sql.TableName.t;
 type aliased('t) = Sql.Aliased.t('t);
@@ -47,6 +48,7 @@ let tupleOf = (toExpr: toExpr('a), xs) => tuple(L.map(xs, toExpr));
 let tname = Sql.TableName.fromString;
 let cname = Sql.ColumnName.fromString;
 let cnames = l => L.map(l, Sql.ColumnName.fromString);
+let fname = Sql.FunctionName.fromString;
 let column = Sql.Column.fromString;
 let tcolumn = (t, c) => Sql.Column.fromStringWithTable(tname(t), c);
 let tcolumn_ = (t, c) => Sql.Column.fromColumnNameWithTable(t, c);
@@ -110,13 +112,13 @@ module Op = {
   let (||) = or_;
 };
 
-let count = e => E.Call("COUNT", [|e|]);
-let distinct = e => E.Call("DISTINCT", [|e|]);
-let max = e => E.Call("MAX", [|e|]);
-let min = e => E.Call("MIN", [|e|]);
-let avg = e => E.Call("AVG", [|e|]);
-let sum = e => E.Call("SUM", [|e|]);
-let coalesce = (e1, e2) => E.Call("COALESCE", [|e1, e2|]);
+let count = e => E.Call(fname("COUNT"), [|e|]);
+let distinct = e => E.Call(fname("DISTINCT"), [|e|]);
+let max = e => E.Call(fname("MAX"), [|e|]);
+let min = e => E.Call(fname("MIN"), [|e|]);
+let avg = e => E.Call(fname("AVG"), [|e|]);
+let sum = e => E.Call(fname("SUM"), [|e|]);
+let coalesce = (e1, e2) => E.Call(fname("COALESCE"), [|e1, e2|]);
 let call = (name, args) => E.Call(name, L.toArray(args));
 let inTuple = (e, es) => in_(e, tuple(es));
 let inTupleOf = (e, toExpr, items) => inTuple(e, L.map(items, toExpr));
