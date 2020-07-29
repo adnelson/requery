@@ -301,6 +301,15 @@ let cdef =
     })
   );
 
+let nullableCol = (~unique=?, ~check=?, ~default=?) =>
+  cdef(~primaryKey=false, ~notNull=false, ~unique?, ~check?, ~default?);
+
+let notNullCol = (~unique=?, ~check=?, ~default=?) =>
+  cdef(~primaryKey=false, ~notNull=true, ~unique?, ~check?, ~default?);
+
+let primaryKeyCol = (~check=?, ~default=?) =>
+  cdef(~primaryKey=false, ~notNull=true, ~unique=false, ~check?, ~default?);
+
 let constraintName = Sql.ConstraintName.fromString;
 let (constraint_, primaryKey, foreignKey, unique, check) = {
   open Sql.CreateTable;

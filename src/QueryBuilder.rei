@@ -373,6 +373,13 @@ let cdef:
   ) =>
   statement;
 
+let nullableCol:
+  (~unique: bool=?, ~check: expr=?, ~default: expr=?, string, typeName) => statement;
+
+let notNullCol: (~unique: bool=?, ~check: expr=?, ~default: expr=?, string, typeName) => statement;
+
+let primaryKeyCol: (~check: expr=?, ~default: expr=?, string, typeName) => statement;
+
 let constraintName: string => constraintName;
 
 // Define a single constraint as a statement.
