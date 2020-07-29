@@ -285,7 +285,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
         |]
         ->spaces
       | Unique(columns) => "UNIQUE " ++ columns->A.map(ColumnName.render)->commas->parens
-      | Check(expr) => "CHECK " ++ expr->Expression.render->parens ++ ")";
+      | Check(expr) => "CHECK " ++ expr->Expression.render->parens;
 
     let renderStatement: statement => string =
       fun
