@@ -307,3 +307,8 @@ type query('returning, 'onConflict) =
   | Insert(Insert.t('returning, 'onConflict))
   | CreateTable(CreateTable.t)
   | CreateView(CreateView.t);
+
+type queryRenderer('q) = 'q => string;
+
+// A generic query, should be mostly portable across databases.
+type defaultQuery = query(unit, unit);

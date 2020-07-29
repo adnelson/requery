@@ -332,3 +332,5 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
 };
 
 module Default = WithRenderingRules(DefaultRules);
+
+let renderDefault: Sql.queryRenderer(Sql.defaultQuery) = Default.render(_ => "", _ => "");

@@ -78,6 +78,7 @@ let like = (e1, e2) => E.Like(e1, e2);
 let and_ = (e1, e2) => E.And(e1, e2);
 let or_ = (e1, e2) => E.Or(e1, e2);
 let not = e => E.Not(e);
+let xor = (e1, e2) => e1 |> and_(not(e2)) |> or_(e2 |> and_(not(e1)));
 let ands =
   fun
   | [] => bool(true)
@@ -86,6 +87,10 @@ let ors =
   fun
   | [] => bool(false)
   | [expr, ...exprs] => L.reduce(exprs, expr, or_);
+let xors =
+  fun
+  | [] => bool(false)
+  | [expr, ...exprs] => L.reduce(exprs, expr, xor);
 let isNotNull = e => E.IsNotNull(e);
 let isNull = e => E.IsNull(e);
 

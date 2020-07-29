@@ -127,8 +127,21 @@ let gt: (expr, expr) => expr;
 let leq: (expr, expr) => expr;
 let geq: (expr, expr) => expr;
 let like: (expr, expr) => expr;
+
+// Boolean operators
 let and_: (expr, expr) => expr;
 let or_: (expr, expr) => expr;
+let xor: (expr, expr) => expr;
+
+// AND all of the expressions in the list (true if empty)
+let ands: list(expr) => expr;
+
+// OR all of the expressions in the list (false if empty)
+let ors: list(expr) => expr;
+
+// XOR all of the expressions in the list (false if empty)
+let xors: list(expr) => expr;
+
 let not: expr => expr;
 
 // Symbolic versions of binary operators. Put into their own module
@@ -148,11 +161,6 @@ module Op: {
   let (&&): (expr, expr) => expr;
   let (||): (expr, expr) => expr;
 };
-
-// AND all of the expressions in the list (true if empty)
-let ands: list(expr) => expr;
-// OR all of the expressions in the list (false if empty)
-let ors: list(expr) => expr;
 
 // Functions
 let count: expr => expr;
