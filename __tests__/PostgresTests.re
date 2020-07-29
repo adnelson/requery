@@ -2,7 +2,6 @@ open Jest;
 open Expect;
 module QB = Requery.QueryBuilder;
 module RE = Requery.RowEncode;
-module Example = Requery.BooksExample;
 
 open PostgresCustomSyntax;
 
@@ -23,11 +22,12 @@ module CustomSyntaxTests = {
   );
   describe("rendering an insert", () => {
     test("no on conflict", () =>
-      expect(Sql.Insert(Example.insertAuthors) |> render)->toMatchSnapshot()
+      expect(Sql.Insert(BooksExample.insertAuthors) |> render)->toMatchSnapshot()
     );
     describe("with on conflict", () =>
       test("on a constraint", () => {
-        let insert = Sql.Insert(Example.insertAuthors |> QB.onConflict(onConflictConstraint));
+        let insert =
+          Sql.Insert(BooksExample.insertAuthors |> QB.onConflict(onConflictConstraint));
         let rendered = insert |> render;
         expect(rendered)->toMatchSnapshot();
         expect(rendered)->toEqual(stringContaining("ON CONFLICT ON CONSTRAINT"));
