@@ -322,13 +322,14 @@ module CreateView = {
   };
 };
 
-type query('returning, 'onConflict) =
+type query('returning, 'onConflict, 'createCustom) =
   | Select(Select.t)
   | Insert(Insert.t('returning, 'onConflict))
   | CreateTable(CreateTable.t)
-  | CreateView(CreateView.t);
+  | CreateView(CreateView.t)
+  | CreateCustom('createCustom);
 
 type queryRenderer('q) = 'q => string;
 
 // A generic query, should be mostly portable across databases.
-type defaultQuery = query(unit, unit);
+type defaultQuery = query(unit, unit, unit);

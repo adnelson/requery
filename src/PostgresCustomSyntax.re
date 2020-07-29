@@ -40,9 +40,31 @@ module Sql = {
 
     let make = (~target=?, action) => {target, action};
   };
+
+  module CreateType = {
+    module EnumValue =
+      Opaque.String.Make(
+        (
+          Opaque.String.Validation.MatchRegex({
+            let regex = [%re {|/\w+/|}];
+          })
+        ),
+        {},
+      );
+
+    // TODO something better than string here?
+    type typeVariant =
+      | Enum(array(EnumValue.t));
+
+    type t = {
+      name: TypeName.t,
+      variant: typeVariant,
+    };
+  };
 };
 
 module Render = {
+  open RenderQuery;
   module Rules = Requery.RenderQuery.DefaultRules;
   module Render = Requery.RenderQuery.WithRenderingRules(Rules);
   include Render;
@@ -72,6 +94,23 @@ module Render = {
       ({target, action}) =>
         S.joinSpaces([|"ON CONFLICT", target->O.mapString(renderTarget), action->renderAction|]);
   };
+
+  module CreateType = {
+    open Sql.CreateType;
+    module EnumValue = {
+      include EnumValue;
+      // This should be safe because the enum value regex prevents quotes,
+      // but if that changes this will need to be revisited.
+      let render = ev => "'" ++ ev->EnumValue.toString ++ "'";
+    };
+
+    let renderVariant =
+      fun
+      | Enum(values) => "AS ENUM " ++ values->map(EnumValue.render)->commas->parens;
+
+    let render = ({name, variant}) =>
+      [|"CREATE TYPE", name->TypeName.render, variant->renderVariant|]->spaces;
+  };
 };
 
 module QueryBuilder = {
@@ -81,10 +120,17 @@ module QueryBuilder = {
 
   let returning = columns => QB.returning(Columns(columns));
   let returning1 = col => QB.returning(Columns([|col|]));
+  let enumValue = Sql.CreateType.EnumValue.fromString;
+  let enumValues = vs => vs->Belt.Array.map(enumValue);
+  let createEnum = (name, values) => Sql.CreateType.{name, variant: Enum(values)};
 };
 
-type query = Sql.query(Sql.Returning.t, Sql.OnConflict.t);
+type query = Sql.query(Sql.Returning.t, Sql.OnConflict.t, Sql.CreateType.t);
 
 // lol so many renders
 let render: query => string =
-  Render.Render.render(Render.Returning.render, Render.OnConflict.render);
+  Render.Render.render(
+    Render.Returning.render,
+    Render.OnConflict.render,
+    Render.CreateType.render,
+  );

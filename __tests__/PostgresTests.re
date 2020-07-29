@@ -1,9 +1,9 @@
 open Jest;
 open Expect;
-module QB = Requery.QueryBuilder;
 module RE = Requery.RowEncode;
 
 open PostgresCustomSyntax;
+module QB = PostgresCustomSyntax.QueryBuilder;
 
 let onConflictConstraint =
   Sql.OnConflict.{
@@ -34,5 +34,14 @@ module CustomSyntaxTests = {
         expect(rendered)->toEqual(stringContaining("scary_constraint"));
       })
     );
+  });
+
+  describe("create type", () => {
+    test("enum type", () => {
+      let ct = QB.(createEnum(typeName("color"), [|"red", "green", "blue"|]->enumValues));
+      let rendered = CreateCustom(ct)->render;
+      expect(rendered)->toMatchSnapshot();
+      expect(rendered)->toEqual(stringContaining("AS ENUM"));
+    })
   });
 };

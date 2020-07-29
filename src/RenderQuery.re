@@ -324,15 +324,17 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     (~returning: 'r => string=?, ~onConflict: 'oc => string=?, Sql.Insert.t('r, 'oc)) => string = Insert.render;
   let createTable: Sql.CreateTable.t => string = CreateTable.render;
   let createView: Sql.CreateView.t => string = CreateView.render;
-  let render: ('r => string, 'oc => string, Sql.query('r, 'oc)) => string =
-    (returning, onConflict) =>
+  let render: ('r => string, 'oc => string, 'c => string, Sql.query('r, 'oc, 'c)) => string =
+    (returning, onConflict, createCustom) =>
       fun
       | Select(s) => select(s)
       | Insert(i) => insert(~returning, ~onConflict, i)
       | CreateTable(ct) => createTable(ct)
-      | CreateView(cv) => createView(cv);
+      | CreateView(cv) => createView(cv)
+      | CreateCustom(c) => c->createCustom;
 };
 
 module Default = WithRenderingRules(DefaultRules);
 
-let renderDefault: Sql.queryRenderer(Sql.defaultQuery) = Default.render(_ => "", _ => "");
+let renderDefault: Sql.queryRenderer(Sql.defaultQuery) =
+  Default.render(_ => "", _ => "", _ => "");

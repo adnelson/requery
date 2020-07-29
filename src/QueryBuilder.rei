@@ -390,7 +390,6 @@ let constraint_: (~a: string=?, tableConstraint) => statement;
 // Table-level constraints
 let primaryKey: list(columnName) => tableConstraint;
 
-// Using string is a horrible hack right now
 let foreignKey: (~onDelete: onDelete=?, columnName, (tableName, columnName)) => tableConstraint;
 let unique: list(columnName) => tableConstraint;
 let check: expr => tableConstraint;
