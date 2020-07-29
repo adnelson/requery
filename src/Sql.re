@@ -34,7 +34,12 @@ module ColumnName =
 
 module TypeName =
   Opaque.String.Make(
-    IdentifierValidation,
+    (
+      Opaque.String.Validation.MatchRegex({
+        // TODO expand this
+        let regex = [%re {|/^[\w\- _#@]+(\(\d+\))?$/|}];
+      })
+    ),
     {},
   );
 

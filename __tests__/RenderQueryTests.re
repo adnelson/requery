@@ -4,6 +4,12 @@ module QB = QueryBuilder;
 module R = RenderQuery.Default;
 
 module SnapshotTests = {
+  describe("type names", () => {
+    test("char", () =>
+      expect(QB.Types.char(10)->R.TypeName.render)->toEqual("CHAR(10)")
+    )
+  });
+
   describe("createTable", () => {
     test("author", () =>
       expect(BooksExample.Author.createTable(QB.Types.int)->R.CreateTable.render)
