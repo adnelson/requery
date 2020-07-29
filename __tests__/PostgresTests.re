@@ -38,10 +38,22 @@ module CustomSyntaxTests = {
 
   describe("create type", () => {
     test("enum type", () => {
-      let ct = QB.(createEnum(typeName("color"), [|"red", "green", "blue"|]->enumValues));
+      let ct = QB.(createEnumType(typeName("color"), [|"red", "green", "blue"|]->enumValues));
       let rendered = CreateCustom(ct)->render;
       expect(rendered)->toMatchSnapshot();
       expect(rendered)->toEqual(stringContaining("AS ENUM"));
-    })
+    });
+    test("enum type with invalid characters in value", () => {
+      expect(() =>
+        QB.(createEnumType(typeName("color"), [|"it's bad"->enumValue|]))
+      )
+      ->toThrowSomething
+    });
+
+    test("enum type with no values defined", () => {
+      expect(() =>
+        QB.(createEnumType(typeName("color"), [||]))
+      )->toThrowSomething
+    });
   });
 };

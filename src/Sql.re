@@ -10,7 +10,7 @@ module SMap = Belt.Map.String;
 module IdentifierValidation =
   Opaque.String.Validation.MatchRegex({
     // TODO expand this
-    let regex = [%re {|/[\w\- _#@]+/|}];
+    let regex = [%re {|/^[\w\- _#@]+$/|}];
   });
 
 // TODO validation

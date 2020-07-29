@@ -46,19 +46,29 @@ module Sql = {
       Opaque.String.Make(
         (
           Opaque.String.Validation.MatchRegex({
-            let regex = [%re {|/\w+/|}];
+            let regex = [%re {|/^\w+$/|}];
           })
         ),
         {},
       );
 
-    // TODO something better than string here?
+    // Raised in the query builder function. Might be worth
+    // moving this logic here
+    exception NoValuesInEnum(TypeName.t);
+
     type typeVariant =
       | Enum(array(EnumValue.t));
 
     type t = {
       name: TypeName.t,
       variant: typeVariant,
+    };
+
+    let makeEnum = (name, values) => {
+      switch (values) {
+      | [||] => raise(NoValuesInEnum(name))
+      | _ => {name, variant: Enum(values)}
+      };
     };
   };
 };
@@ -122,7 +132,7 @@ module QueryBuilder = {
   let returning1 = col => QB.returning(Columns([|col|]));
   let enumValue = Sql.CreateType.EnumValue.fromString;
   let enumValues = vs => vs->Belt.Array.map(enumValue);
-  let createEnum = (name, values) => Sql.CreateType.{name, variant: Enum(values)};
+  let createEnumType = Sql.CreateType.makeEnum;
 };
 
 type query = Sql.query(Sql.Returning.t, Sql.OnConflict.t, Sql.CreateType.t);
