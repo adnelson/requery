@@ -332,7 +332,7 @@ module CreateView = {
 type query('returning, 'onConflict, 'createCustom, 'tableRef) =
   | Select(Select.t)
   | Insert(Insert.t('returning, 'onConflict))
-  | CreateTable('tableRef)
+  | CreateTable(CreateTable.t_('tableRef))
   | CreateView(CreateView.t)
   | CreateCustom('createCustom);
 
