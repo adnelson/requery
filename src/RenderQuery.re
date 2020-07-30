@@ -353,7 +353,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       fun
       | Select(s) => s |> select
       | Insert(i) => i |> insert(~returning, ~onConflict)
-      | CreateTable(ct) => failwith("") // ct |> createTableWith(~tableRef)
+      | CreateTable(ct) => ct |> createTableWith(~tableRef)
       | CreateView(cv) => cv |> createView
       | CreateCustom(c) => c |> createCustom;
 };
