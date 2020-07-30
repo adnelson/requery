@@ -61,7 +61,7 @@ Note that while an ORM could be written using `requery` to structure queries, `r
   - `RowEncode`: functions to serialize domain objects into "rows", that is, the data that goes into an `INSERT INTO` query.
   - `RowDecode`: functions to deserialize information returned by a query (e.g. a `SELECT` or an `INSERT` which returns data) into domain objects.
   - `Client`: an abstraction of the actual database object. This allows you to interact with your database using the `requery` abstractions.
-  - `PostgresCustomSyntax`: type-safe AST for PostgresQL. Very much a WIP.
+  - `PostgresSyntax`: type-safe AST for PostgresQL. Very much a WIP.
   - `PostgresClient`: functionality to connect to a postgres database.
 
 ## Examples

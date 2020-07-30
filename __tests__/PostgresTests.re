@@ -2,8 +2,8 @@ open Jest;
 open Expect;
 module RE = Requery.RowEncode;
 
-open PostgresCustomSyntax;
-module QB = PostgresCustomSyntax.QueryBuilder;
+open PostgresSyntax;
+module QB = QueryBuilder;
 
 let onConflictConstraint =
   Sql.OnConflict.{
