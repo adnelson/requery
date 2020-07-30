@@ -135,8 +135,11 @@ module QueryBuilder = {
   let createEnumType = Sql.CreateType.makeEnum;
 };
 
-type insert = Sql.Insert.t(Sql.Returning.t, Sql.OnConflict.t);
-type query('t) = Sql.query(Sql.Returning.t, Sql.OnConflict.t, Sql.CreateType.t, 't);
+type returning = Sql.Returning.t;
+type onConflict = Sql.OnConflict.t;
+type createCustom = Sql.CreateType.t;
+type insert = Sql.Insert.t(returning, onConflict);
+type query('t) = Sql.query(returning, onConflict, createCustom, 't);
 
 // lol so many renders
 let render: query(QB.tableName) => string =
