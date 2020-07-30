@@ -38,7 +38,8 @@ module Config = {
   };
 };
 
-type query = PostgresCustomSyntax.query;
+// Postgres doesn't know about nested tables :)
+type query = PostgresCustomSyntax.query(Sql.TableName.t);
 
 // Postgres results are wrapped in this type
 type result = Pg.Result.t(Js.Json.t);

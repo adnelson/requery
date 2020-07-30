@@ -9,7 +9,7 @@ type tableName = Sql.TableName.t;
 type aliased('t) = Sql.Aliased.t('t);
 type constraintName = Sql.ConstraintName.t;
 type databaseName = Sql.DatabaseName.t;
-type tableConstraint = Sql.CreateTable.tableConstraint;
+type tableConstraint('tr) = Sql.CreateTable.tableConstraint('tr);
 type typeName = Sql.TypeName.t;
 type target = Sql.Select.target;
 type selectInUnion = Sql.Select.selectInUnion;
@@ -19,9 +19,9 @@ type select = Sql.Select.select;
 type expr = Sql.Expression.t;
 type direction = Sql.Select.direction;
 type insert('r, 'oc) = Sql.Insert.t('r, 'oc);
-type statement = Sql.CreateTable.statement;
+type tableStatement('tr) = Sql.CreateTable.statement('tr);
 type onDelete = Sql.CreateTable.onDelete;
-type createTable = Sql.CreateTable.t;
+type createTable('tr) = Sql.CreateTable.t_('tr);
 type createView = Sql.CreateView.t;
 type whereClause = Sql.Select.whereClause;
 type row = list((column, expr));
@@ -288,7 +288,7 @@ let into = (t, f) => f(t);
 
 let cdef =
     (~primaryKey=false, ~notNull=true, ~unique=false, ~check=?, ~default=?, name, type_)
-    : statement =>
+    : tableStatement('tr) =>
   CreateTable.(
     ColumnDef({
       name: cname(name),
@@ -313,17 +313,24 @@ let primaryKeyCol = (~check=?, ~default=?) =>
   cdef(~primaryKey=false, ~notNull=true, ~unique=false, ~check?, ~default?);
 
 let constraintName = Sql.ConstraintName.fromString;
+
 let (constraint_, primaryKey, foreignKey, unique, check) = {
   open Sql.CreateTable;
   let constraint_ = (~a=?, c) => Constraint(O.map(a, constraintName), c);
   let pk = cols => PrimaryKey(L.toArray(cols));
-  let fk = (~onDelete=?, col, (refTbl, refCol)) => ForeignKey(col, (refTbl, refCol), onDelete);
+  let fk = (~onDelete=?, col, (refTbl: 'tr, refCol)): tableConstraint('tr) =>
+    ForeignKey(col, (refTbl, refCol), onDelete);
   let u = cols => Unique(L.toArray(cols));
   let c = expr => Check(expr);
   (constraint_, pk, fk, u, c);
 };
 
-let createTable = (~ifNotExists=true, name, statements) =>
+let createTable =
+    (~ifNotExists=true, name, statements: list(tableStatement(tableName)))
+    : createTable(tableName) =>
+  Sql.CreateTable.{name, statements: L.toArray(statements), ifNotExists};
+
+let createTableWith = (~ifNotExists=true, name, statements) =>
   Sql.CreateTable.{name, statements: L.toArray(statements), ifNotExists};
 
 let createView = (~ifNotExists=true, name, query) => Sql.CreateView.{name, query, ifNotExists};

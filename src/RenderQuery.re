@@ -272,39 +272,50 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       | Cascade => "CASCADE"
       | SetNull => "SET NULL";
 
-    let renderConstraint: tableConstraint => string =
-      fun
-      | PrimaryKey(columns) =>
-        "PRIMARY KEY " ++ A.mapJoinCommasParens(columns, ColumnName.render)
-      | ForeignKey(col, (refTable, refCol), onDelete) =>
-        [|
-          "FOREIGN KEY",
-          ColumnName.render(col)->parens,
-          "REFERENCES",
-          TableName.render(refTable),
-          ColumnName.render(refCol)->parens,
-          onDelete->O.mapString(od => "ON DELETE " ++ od->renderOnDelete),
-        |]
-        ->spaces
-      | Unique(columns) => "UNIQUE " ++ columns->A.map(ColumnName.render)->commas->parens
-      | Check(expr) => "CHECK " ++ expr->Expression.render->parens;
+    let renderConstraint: ('tr => string, tableConstraint('tr)) => string =
+      renderTableRef =>
+        fun
+        | PrimaryKey(columns) =>
+          "PRIMARY KEY " ++ A.mapJoinCommasParens(columns, ColumnName.render)
+        | ForeignKey(col, (refTable, refCol), onDelete) =>
+          [|
+            "FOREIGN KEY",
+            ColumnName.render(col)->parens,
+            "REFERENCES",
+            refTable->renderTableRef,
+            ColumnName.render(refCol)->parens,
+            onDelete->O.mapString(od => "ON DELETE " ++ od->renderOnDelete),
+          |]
+          ->spaces
+        | Unique(columns) => "UNIQUE " ++ columns->A.map(ColumnName.render)->commas->parens
+        | Check(expr) => "CHECK " ++ expr->Expression.render->parens;
 
-    let renderStatement: statement => string =
-      fun
-      | ColumnDef(cdef) => renderColumnDef(cdef)
-      | Constraint(None, constraint_) => renderConstraint(constraint_)
-      | Constraint(Some(n), constraint_) =>
-        "CONSTRAINT " ++ ConstraintName.render(n) ++ " " ++ renderConstraint(constraint_);
-    let render: t => string =
-      ({name, statements, ifNotExists}) =>
+    let renderStatement: ('tr => string, statement('tr)) => string =
+      renderTableRef =>
+        fun
+        | ColumnDef(cdef) => renderColumnDef(cdef)
+        | Constraint(None, constraint_) => constraint_ |> renderConstraint(renderTableRef)
+        | Constraint(Some(n), constraint_) =>
+          [|
+            "CONSTRAINT",
+            ConstraintName.render(n),
+            constraint_ |> renderConstraint(renderTableRef),
+          |]
+          ->spaces;
+
+    let renderWith: ('tr => string, t_('tr)) => string =
+      (renderTableRef, {name, statements, ifNotExists}) =>
         [|
           "CREATE TABLE",
           ifNotExists ? "IF NOT EXISTS" : "",
           TableName.render(name),
           " ",
-          A.mapJoinCommasParens(statements, renderStatement),
+          A.mapJoinCommasParens(statements, renderStatement(renderTableRef)),
         |]
         ->spaces;
+
+    // Common case: referencing tables by name
+    let render: t => string = renderWith(TableName.toString);
   };
 
   module CreateView = {
@@ -322,19 +333,37 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
   let select: Sql.Select.t => string = Select.render;
   let insert:
     (~returning: 'r => string=?, ~onConflict: 'oc => string=?, Sql.Insert.t('r, 'oc)) => string = Insert.render;
-  let createTable: Sql.CreateTable.t => string = CreateTable.render;
+  // Supply a custom renderer to
+  let createTableWith: 'tr. (~tableRef: 'tr => string, Sql.CreateTable.t_('tr)) => string =
+    (~tableRef) => CreateTable.renderWith(tableRef);
+  let createTable: Sql.CreateTable.t => string = createTableWith(~tableRef=TableName.render);
   let createView: Sql.CreateView.t => string = CreateView.render;
-  let render: ('r => string, 'oc => string, 'c => string, Sql.query('r, 'oc, 'c)) => string =
-    (returning, onConflict, createCustom) =>
+  let render:
+    'r 'c 'c 'tr.
+    (
+      ~returning: 'r => string,
+      ~onConflict: 'oc => string,
+      ~createCustom: 'c => string,
+      ~tableRef: 'tr => string,
+      Sql.query('r, 'oc, 'c, 'tr)
+    ) =>
+    string
+   =
+    (~returning, ~onConflict, ~createCustom, ~tableRef) =>
       fun
-      | Select(s) => select(s)
-      | Insert(i) => insert(~returning, ~onConflict, i)
-      | CreateTable(ct) => createTable(ct)
-      | CreateView(cv) => createView(cv)
-      | CreateCustom(c) => c->createCustom;
+      | Select(s) => s |> select
+      | Insert(i) => i |> insert(~returning, ~onConflict)
+      | CreateTable(ct) => failwith("") // ct |> createTableWith(~tableRef)
+      | CreateView(cv) => cv |> createView
+      | CreateCustom(c) => c |> createCustom;
 };
 
 module Default = WithRenderingRules(DefaultRules);
 
 let renderDefault: Sql.queryRenderer(Sql.defaultQuery) =
-  Default.render(_ => "", _ => "", _ => "");
+  Default.render(
+    ~returning=_ => "",
+    ~onConflict=_ => "",
+    ~createCustom=_ => "",
+    ~tableRef=_ => "",
+  );

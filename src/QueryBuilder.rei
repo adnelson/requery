@@ -4,7 +4,7 @@ type tableName = Sql.TableName.t;
 type functionName = Sql.FunctionName.t;
 type aliased('t) = Sql.Aliased.t('t);
 type constraintName = Sql.ConstraintName.t;
-type tableConstraint = Sql.CreateTable.tableConstraint;
+type tableConstraint('tr) = Sql.CreateTable.tableConstraint('tr);
 type column = Sql.Column.t;
 type typeName = Sql.TypeName.t;
 type target = Sql.Select.target;
@@ -14,8 +14,8 @@ type select = Sql.Select.select;
 type expr = Sql.Expression.t;
 type direction = Sql.Select.direction;
 type insert('r, 'oc) = Sql.Insert.t('r, 'oc);
-type statement = Sql.CreateTable.statement;
-type createTable = Sql.CreateTable.t;
+type tableStatement('tr) = Sql.CreateTable.statement('tr);
+type createTable('tr) = Sql.CreateTable.t_('tr);
 type createView = Sql.CreateView.t;
 type whereClause = Sql.Select.whereClause;
 type onDelete = Sql.CreateTable.onDelete;
@@ -373,29 +373,36 @@ let cdef:
     string,
     typeName
   ) =>
-  statement;
+  tableStatement('tr);
 
 let nullableCol:
-  (~unique: bool=?, ~check: expr=?, ~default: expr=?, string, typeName) => statement;
+  (~unique: bool=?, ~check: expr=?, ~default: expr=?, string, typeName) => tableStatement('tr);
 
-let notNullCol: (~unique: bool=?, ~check: expr=?, ~default: expr=?, string, typeName) => statement;
+let notNullCol:
+  (~unique: bool=?, ~check: expr=?, ~default: expr=?, string, typeName) => tableStatement('tr);
 
-let primaryKeyCol: (~check: expr=?, ~default: expr=?, string, typeName) => statement;
+let primaryKeyCol: (~check: expr=?, ~default: expr=?, string, typeName) => tableStatement('tr);
 
 let constraintName: string => constraintName;
 
 // Define a single constraint as a statement.
-let constraint_: (~a: string=?, tableConstraint) => statement;
+let constraint_: (~a: string=?, tableConstraint('tr)) => tableStatement('tr);
 
 // Table-level constraints
-let primaryKey: list(columnName) => tableConstraint;
+let primaryKey: list(columnName) => tableConstraint('tr);
 
-let foreignKey: (~onDelete: onDelete=?, columnName, (tableName, columnName)) => tableConstraint;
-let unique: list(columnName) => tableConstraint;
-let check: expr => tableConstraint;
+let foreignKey: (~onDelete: onDelete=?, columnName, ('tr, columnName)) => tableConstraint('tr);
+
+let unique: list(columnName) => tableConstraint('tr);
+let check: expr => tableConstraint('tr);
 
 // Creating a table
-let createTable: (~ifNotExists: bool=?, tableName, list(statement)) => createTable;
+let createTable:
+  (~ifNotExists: bool=?, tableName, list(tableStatement(tableName))) => createTable(tableName);
+
+// Creating a table with a custom reference type
+let createTableWith:
+  (~ifNotExists: bool=?, tableName, list(tableStatement('tr))) => createTable('tr);
 
 // Creating a view
 let createView: (~ifNotExists: bool=?, tableName, select) => createView;

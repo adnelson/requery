@@ -298,23 +298,25 @@ module CreateTable = {
     | Cascade
     | SetNull;
 
-  type tableConstraint =
+  type tableConstraint('tableRef) =
     | PrimaryKey(array(ColumnName.t))
-    | ForeignKey(ColumnName.t, (TableName.t, ColumnName.t), option(onDelete))
+    | ForeignKey(ColumnName.t, ('tableRef, ColumnName.t), option(onDelete))
     | Unique(array(ColumnName.t))
     | Check(Expression.t);
 
-  type statement =
+  type statement('tableRef) =
     | ColumnDef(columnDef)
-    | Constraint(option(ConstraintName.t), tableConstraint);
+    | Constraint(option(ConstraintName.t), tableConstraint('tableRef));
 
-  type t = {
+  // Generic to any table reference
+  type t_('tableRef) = {
     name: TableName.t,
-    statements: array(statement),
+    statements: array(statement('tableRef)),
     ifNotExists: bool,
   };
 
-  let getTableName: t => TableName.t = ({name}) => name;
+  // Referencing a table by name
+  type t = t_(TableName.t);
 };
 
 module CreateView = {
@@ -327,14 +329,14 @@ module CreateView = {
   };
 };
 
-type query('returning, 'onConflict, 'createCustom) =
+type query('returning, 'onConflict, 'createCustom, 'tableRef) =
   | Select(Select.t)
   | Insert(Insert.t('returning, 'onConflict))
-  | CreateTable(CreateTable.t)
+  | CreateTable('tableRef)
   | CreateView(CreateView.t)
   | CreateCustom('createCustom);
 
 type queryRenderer('q) = 'q => string;
 
 // A generic query, should be mostly portable across databases.
-type defaultQuery = query(unit, unit, unit);
+type defaultQuery = query(unit, unit, unit, TableName.t);

@@ -135,12 +135,24 @@ module QueryBuilder = {
   let createEnumType = Sql.CreateType.makeEnum;
 };
 
-type query = Sql.query(Sql.Returning.t, Sql.OnConflict.t, Sql.CreateType.t);
+type insert = Sql.Insert.t(Sql.Returning.t, Sql.OnConflict.t);
+type query('t) = Sql.query(Sql.Returning.t, Sql.OnConflict.t, Sql.CreateType.t, 't);
 
 // lol so many renders
-let render: query => string =
+let render: query(QB.tableName) => string =
   Render.Render.render(
-    Render.Returning.render,
-    Render.OnConflict.render,
-    Render.CreateType.render,
+    ~returning=Render.Returning.render,
+    ~onConflict=Render.OnConflict.render,
+    ~createCustom=Render.CreateType.render,
+    ~tableRef=Render.TableName.render,
   );
+
+// Render using a custom table reference type.
+let renderWith: (~tableRef: 'tr => string, query('tableRef)) => string =
+  (~tableRef) =>
+    Render.Render.render(
+      ~returning=Render.Returning.render,
+      ~onConflict=Render.OnConflict.render,
+      ~createCustom=Render.CreateType.render,
+      ~tableRef,
+    );
