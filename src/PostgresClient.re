@@ -73,16 +73,24 @@ module Pool = {
 
   let releaseClient = Pg.Pool.Pool_Client.release;
   let releasePool = Pg.Pool.Promise.end_;
-  let runClient = (~onQuery=?, ~onResult=?, pool, action) =>
-    makeClient(~onQuery?, ~onResult?, pool)
-    |> then_(client => action(client) |> finally(() => releaseClient(Client.handle(client))));
 
+  // Abstracts setup/teardown of a postgres connection pool.
   let runPool: (Config.t, pool => Js.Promise.t('a)) => Js.Promise.t('a) =
     (config, action) => {
       let pool = makePool(config);
       action(pool) |> finally(() => releasePool(pool));
     };
 
-  let runPoolClient = (~onQuery=?, ~onResult=?, config, action) =>
-    runPool(config, pool => runClient(~onQuery?, ~onResult?, pool, action));
+  // Create a client from a pool and then run an action with it. The
+  // client is automatically released afterwards.
+  // If you don't want to manage the setup/teardown of the pool, you can
+  // use `runPoolClient`.
+  let runClientInPool = (~onQuery=?, ~onResult=?, pool, action: client => Js.Promise.t('a)) =>
+    makeClient(~onQuery?, ~onResult?, pool)
+    |> then_(client => action(client) |> finally(() => releaseClient(Client.handle(client))));
+
+  // Abstracts setup/teardown of both a connection pool, and a client within
+  // that pool.
+  let runPoolClient = (~onQuery=?, ~onResult=?, config, action: client => Js.Promise.t('a)) =>
+    runPool(config, pool => runClientInPool(~onQuery?, ~onResult?, pool, action));
 };
