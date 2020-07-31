@@ -2,16 +2,13 @@ open Jest;
 open Expect;
 module RE = Requery.RowEncode;
 
-module QB = QueryBuilder;
 module PQB = PostgresQueryBuilder;
 
 module CustomSyntaxTests = {
-  open PostgresSyntax;
+  open PostgresQueryBuilder;
 
   let scaryConstraint =
-    PQB.(
-      pgMakeOnConflict(~target=pgOnConstraint("scary_constraint"->QB.constraintName), DoNothing)
-    );
+    pgMakeOnConflict(~target=pgOnConstraint("scary_constraint"->constraintName), DoNothing);
 
   test("rendering an on conflict  clause", () =>
     expect(scaryConstraint->PostgresRender.OnConflict.render)->toMatchSnapshot()
@@ -23,14 +20,14 @@ module CustomSyntaxTests = {
     );
     describe("with on conflict", () => {
       test("on a constraint", () => {
-        let insert = Sql.Insert(BooksExample.insertAuthors |> QB.onConflict(scaryConstraint));
+        let insert = Sql.Insert(BooksExample.insertAuthors |> onConflict(scaryConstraint));
         let rendered = insert |> PostgresRender.pgRender;
         expect(rendered)->toMatchSnapshot();
         expect(rendered)->toEqual(stringContaining("ON CONFLICT ON CONSTRAINT"));
         expect(rendered)->toEqual(stringContaining("scary_constraint"));
       });
       test("do nothing", () => {
-        let insert = Sql.Insert(BooksExample.insertAuthors |> PQB.pgOnConflictNothing);
+        let insert = Sql.Insert(BooksExample.insertAuthors |> pgOnConflictNothing);
         let rendered = insert |> PostgresRender.pgRender;
         expect(rendered)->toMatchSnapshot();
         expect(rendered)->toEqual(stringContaining("ON CONFLICT"));
@@ -40,7 +37,6 @@ module CustomSyntaxTests = {
   });
 
   describe("create type", () => {
-    open QueryBuilder;
     open PostgresQueryBuilder;
     test("enum type", () => {
       let ct = pgCreateEnumType(typeName("color"), ["red", "green", "blue"]->pgEnumValues);

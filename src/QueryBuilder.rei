@@ -24,11 +24,10 @@ type onDelete = Sql.CreateTable.onDelete;
  * Encoder types
  ***************************/
 
-// TODO this should be columnname?
-type row = list((column, expr));
+type row = list((columnName, expr));
 type toSelect('t) = 't => select;
 type toInsert('r, 'oc, 't) = ('t, tableName) => insert('r, 'oc);
-type toColumn('t) = 't => column;
+type toColumnName('t) = 't => columnName;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
 
@@ -93,6 +92,7 @@ let typeName: string => typeName;
 // Make a `column` from a string, without a table name.
 // Remember the difference between the `column` and `columnName` types
 // is that the former can include a table name prefix (see `tcolumn`).
+// To make a `columnName` use `cname`.
 let column: string => column;
 
 // Make a `column` with a table name, e.g. `fruits.color`. Table name
@@ -316,14 +316,16 @@ let orderBy2: (expr, direction, expr, direction, select) => select;
  ****************************/
 
 // Inserting literal columns/expressions.
-let insertColumns: toInsert('r, 'oc, list((column, list(expr))));
-let insertRows: toInsert('r, 'oc, list(list((column, expr))));
-let insertRow: toInsert('r, 'oc, list((column, expr)));
+let insertColumns: toInsert('r, 'oc, list((columnName, list(expr))));
+let insertRows: toInsert('r, 'oc, list(list((columnName, expr))));
+let insertRow: toInsert('r, 'oc, list((columnName, expr)));
 
 // Apply a conversion function to create columns and expressions.
-let insertRowsWith: (toColumn('a), toExpr('b)) => toInsert('r, 'oc, list(list(('a, 'b))));
-let insertRowWith: ('a => column, 'b => expr) => toInsert('r, 'oc, list(('a, 'b)));
-let insertColumnsWith: (toColumn('a), toExpr('b)) => toInsert('r, 'oc, list(('a, list('b))));
+let insertRowsWith:
+  (toColumnName('a), toExpr('b)) => toInsert('r, 'oc, list(list(('a, 'b))));
+let insertRowWith: (toColumnName('a), 'b => expr) => toInsert('r, 'oc, list(('a, 'b)));
+let insertColumnsWith:
+  (toColumnName('a), toExpr('b)) => toInsert('r, 'oc, list(('a, list('b))));
 
 // Given a function to convert an object to a row, insert one or more objects.
 let insertOne: toRow('t) => toInsert('r, 'oc, 't);

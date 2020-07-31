@@ -24,10 +24,10 @@ type onDelete = Sql.CreateTable.onDelete;
 type createTable('tr) = Sql.CreateTable.t_('tr);
 type createView = Sql.CreateView.t;
 type whereClause = Sql.Select.whereClause;
-type row = list((column, expr));
+type row = list((columnName, expr));
 type toSelect('t) = 't => select;
 type toInsert('r, 'oc, 't) = ('t, tableName) => insert('r, 'oc);
-type toColumn('t) = 't => column;
+type toColumnName('t) = 't => columnName;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
 
@@ -257,18 +257,20 @@ let convertColumn = (toC, toE, (k, vs)) => (toC(k), A.map(L.toArray(vs), toE));
 let insertColumns = cols =>
   Insert.make(Values(L.toArray(L.map(cols, ((c, exprs)) => (c, L.toArray(exprs))))));
 
-let insertColumnsWith = (toColumn, toExpr, cols) =>
-  Insert.make(Values(L.toArray(L.map(cols, convertColumn(toColumn, toExpr)))));
+let insertColumnsWith = (toColumnName, toExpr, cols) =>
+  Insert.make(Values(L.toArray(L.map(cols, convertColumn(toColumnName, toExpr)))));
 
 let insertRows = rows =>
   Insert.(make(Values(rowsToColumns(L.toArray(L.map(rows, L.toArray))))));
 
-let insertRowsWith = (toColumn, toExpr, rows) =>
+let insertRowsWith = (toColumnName, toExpr, rows) =>
   Insert.(
     make(
       Values(
         rowsToColumns(
-          A.map(L.toArray(rows), row => A.map(L.toArray(row), convertRow(toColumn, toExpr))),
+          A.map(L.toArray(rows), row =>
+            A.map(L.toArray(row), convertRow(toColumnName, toExpr))
+          ),
         ),
       ),
     )

@@ -1,5 +1,5 @@
 // Extending the generic query builder with postgres-specific syntax
-open Requery.QueryBuilder;
+include Requery.QueryBuilder;
 include PostgresSyntax;
 
 let pgReturning: (array(column), insert(pgReturning, 'a)) => insert(pgReturning, 'a) =

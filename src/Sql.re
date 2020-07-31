@@ -223,11 +223,11 @@ module Select = {
 };
 
 module Insert = {
-  type row = array((Column.t, Expression.t));
+  type row = array((ColumnName.t, Expression.t));
   type error =
     | EmptyValues
     | MissingColumn(Column.t)
-    | RowIsMissingColumn(int, row, int, Column.t);
+    | RowIsMissingColumn(int, row, int, ColumnName.t);
 
   exception Error(error);
 
@@ -235,7 +235,7 @@ module Insert = {
   // Row-based values: a nested array of tuples.
   type rowValues = array(row);
   // Column-based values: an array of expressions for each column.
-  type columnValues = array((Column.t, array(Expression.t)));
+  type columnValues = array((ColumnName.t, array(Expression.t)));
 
   // Since either representation equivalent information, we can
   // translate from one to another.

@@ -5,7 +5,7 @@ module O = Utils.Option;
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), (L.amap(vs), toE));
-let stringRowWith = (toExpr, row) => L.map(row, convertRow(column, toExpr));
+let stringRowWith = (toExpr, row) => L.map(row, convertRow(cname, toExpr));
 let stringRow = stringRowWith(Utils.id);
 let rowFromFields = (fields, obj) =>
   stringRow(L.map(fields, ((field, fn)) => (field, fn(obj))));

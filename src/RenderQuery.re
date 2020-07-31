@@ -222,7 +222,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
         TableName.render(into),
         switch (data) {
         | Values(values) =>
-          let cols = A.mapJoinCommasParens(values, v => Column.render(fst(v)));
+          let cols = A.mapJoinCommasParens(values, v => ColumnName.render(fst(v)));
           let numsOfExprs = ISet.fromArray(A.map(values, ((_, exprs)) => A.length(exprs)));
           switch (ISet.toList(numsOfExprs)) {
           // They must all have the same number of expressions.
