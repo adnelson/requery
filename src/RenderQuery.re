@@ -117,6 +117,9 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       | Or(ex1, ex2) => renderP(ex1) ++ " OR " ++ renderP(ex2)
       | IsNull(e) => renderP(e) ++ " IS NULL"
       | IsNotNull(e) => renderP(e) ++ " IS NOT NULL"
+      // A few tricks to simplify generated output
+      | Not(IsNotNull(e)) => render(IsNull(e))
+      | Not(IsNull(e)) => render(IsNotNull(e))
       | Not(e) => "NOT " ++ renderP(e)
       | Call(fnName, args) =>
         fnName->FunctionName.render ++ A.mapJoinCommas(args, render)->parens

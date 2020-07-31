@@ -327,6 +327,8 @@ let (constraint_, primaryKey, foreignKey, unique, check) = {
   (constraint_, pk, fk, u, c);
 };
 
+let primaryKey1 = name => primaryKey([name]);
+
 let createTable =
     (~ifNotExists=true, name, statements: list(tableStatement(tableName)))
     : createTable(tableName) =>
