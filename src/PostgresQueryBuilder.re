@@ -17,6 +17,8 @@ let pgCreateEnumType: (typeName, list(pgEnumValue)) => pgCreateType =
 
 let pgOnConstraint = cname => OnConflict.{index: None, onConstraint: Some(cname), where: None};
 
+let pgMakeOnConflict = OnConflict.make;
+
 // Attaches `ON CONFLICT DO NOTHING` to an insert
 let pgOnConflictNothing: 'r. insert('r, pgOnConflict) => insert('r, pgOnConflict) =
   ins => ins |> onConflict(OnConflict.make(DoNothing));

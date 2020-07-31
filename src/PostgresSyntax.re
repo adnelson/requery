@@ -71,56 +71,6 @@ module CreateType = {
   };
 };
 
-/* module Render = { */
-/*   open RenderQuery; */
-/*   module Rules = Requery.RenderQuery.DefaultRules; */
-/*   module Render = Requery.RenderQuery.WithRenderingRules(Rules); */
-/*   include Render; */
-/*   module Returning = { */
-/*     let render: Sql.Returning.t => string = */
-/*       fun */
-/*       | Columns(columns) => */
-/*         " RETURNING " ++ A.mapJoinCommasParens(columns, Render.Column.render); */
-/*   }; */
-
-/*   module OnConflict = { */
-/*     open Sql.OnConflict; */
-/*     let renderIndex = */
-/*       fun */
-/*       | IndexColumn(cn) => cn->Render.ColumnName.render */
-/*       | IndexExpression(e) => "(" ++ e->Render.Expression.render ++ ")"; */
-/*     let renderTarget = ({index, where, onConstraint}) => */
-/*       S.joinSpaces([| */
-/*         onConstraint->O.mapString(cn => "ON CONSTRAINT " ++ cn->Render.ConstraintName.render), */
-/*         index->O.mapString(renderIndex), */
-/*         where->O.mapString(e => "WHERE " ++ e->Render.Expression.render), */
-/*       |]); */
-/*     let renderAction = */
-/*       fun */
-/*       | DoNothing => "DO NOTHING"; */
-/*     let render: t => string = */
-/*       ({target, action}) => */
-/*         S.joinSpaces([|"ON CONFLICT", target->O.mapString(renderTarget), action->renderAction|]); */
-/*   }; */
-
-/*   module CreateType = { */
-/*     open Sql.CreateType; */
-/*     module EnumValue = { */
-/*       include EnumValue; */
-/*       // This should be safe because the enum value regex prevents quotes, */
-/*       // but if that changes this will need to be revisited. */
-/*       let render = ev => "'" ++ ev->EnumValue.toString ++ "'"; */
-/*     }; */
-
-/*     let renderVariant = */
-/*       fun */
-/*       | Enum(values) => "AS ENUM " ++ values->map(EnumValue.render)->commas->parens; */
-
-/*     let render = ({name, variant}) => */
-/*       [|"CREATE TYPE", name->TypeName.render, variant->renderVariant|]->spaces; */
-/*   }; */
-/* }; */
-
 // Type aliases for postgres-specific queries
 type pgEnumValue = CreateType.EnumValue.t;
 type pgCreateType = CreateType.t;
@@ -130,34 +80,3 @@ type pgCreateCustom = CreateType.t;
 type pgInsert = Sql.Insert.t(pgReturning, pgOnConflict);
 type pgQueryOf('t) = Sql.query(pgReturning, pgOnConflict, pgCreateCustom, 't);
 type pgQuery = Sql.query(pgReturning, pgOnConflict, pgCreateCustom, Sql.TableName.t);
-
-/* module QueryBuilder = { */
-/*   module QB = Requery.QueryBuilder; */
-/*   include QB; */
-/*   open Sql; */
-/*   type enumValue = CreateType.EnumValue.t; */
-/*   type createType = CreateType.t; */
-/* type returning = Sql.Returning.t; */
-/* type onConflict = Sql.OnConflict.t; */
-/* type createCustom = Sql.CreateType.t; */
-
-/* // Insert made specific to postgres */
-/* type pgInsert = Sql.Insert.t(returning, onConflict); */
-
-/* type query('t) = Sql.query(returning, onConflict, createCustom, 't); */
-
-/*   let returning: (array(column), insert(Returning.t, 'a)) => insert(Returning.t, 'a) = */
-/*     columns => QB.returning(Returning.Columns(columns)); */
-/*   let returning1: (column, insert(Returning.t, 'a)) => insert(Returning.t, 'a) = */
-/*     col => QB.returning(Returning.Columns([|col|])); */
-
-/*   let enumValue: string => enumValue = Sql.CreateType.EnumValue.fromString; */
-/*   let enumValues: list(string) => list(enumValue) = vs => vs->Belt.List.map(enumValue); */
-/*   let enumValuesArray: array(string) => array(enumValue) = vs => vs->Belt.Array.map(enumValue); */
-/*   let createEnumType: (typeName, list(enumValue)) => createType = */
-/*     (name, values) => CreateType.makeEnum(name, values->Belt.List.toArray); */
-
-/*   // Attaches `ON CONFLICT DO NOTHING` to an insert */
-/*   let onConflictNothing: 'r. insert('r, OnConflict.t) => insert('r, OnConflict.t) = */
-/*     ins => ins |> onConflict(OnConflict.make(DoNothing)); */
-/* }; */

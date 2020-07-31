@@ -9,15 +9,9 @@ module CustomSyntaxTests = {
   open PostgresSyntax;
 
   let scaryConstraint =
-    OnConflict.{
-      target:
-        Some({
-          index: None,
-          onConstraint: Some("scary_constraint"->QB.constraintName),
-          where: None,
-        }),
-      action: DoNothing,
-    };
+    PQB.(
+      pgMakeOnConflict(~target=pgOnConstraint("scary_constraint"->QB.constraintName), DoNothing)
+    );
 
   test("rendering an on conflict  clause", () =>
     expect(scaryConstraint->PostgresRender.OnConflict.render)->toMatchSnapshot()
