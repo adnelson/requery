@@ -15,7 +15,8 @@
     { "dir": "src", "subdirs": true },
     {
       "dir": "__tests__",
-      "type": "dev"
+      "type": "dev",
+      "subdirs": true
     }
   ],
   "suffix": ".bs.js",
