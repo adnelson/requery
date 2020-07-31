@@ -24,6 +24,7 @@ type onDelete = Sql.CreateTable.onDelete;
  * Encoder types
  ***************************/
 
+// TODO this should be columnname?
 type row = list((column, expr));
 type toSelect('t) = 't => select;
 type toInsert('r, 'oc, 't) = ('t, tableName) => insert('r, 'oc);

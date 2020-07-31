@@ -338,7 +338,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     (~tableRef) => CreateTable.renderWith(tableRef);
   let createTable: Sql.CreateTable.t => string = createTableWith(~tableRef=TableName.render);
   let createView: Sql.CreateView.t => string = CreateView.render;
-  let render:
+  let renderGeneric:
     'r 'c 'c 'tr.
     (
       ~returning: 'r => string,
@@ -361,7 +361,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
 module Default = WithRenderingRules(DefaultRules);
 
 let renderDefault: Sql.queryRenderer(Sql.defaultQuery) =
-  Default.render(
+  Default.renderGeneric(
     ~returning=_ => "",
     ~onConflict=_ => "",
     ~createCustom=_ => "",
