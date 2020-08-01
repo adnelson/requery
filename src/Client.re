@@ -1,5 +1,5 @@
-module O = Utils.Option;
-module R = Utils.Result;
+module O = OptionUtils;
+module R = ResultUtils;
 let (resolve, then_, reject) = Js.Promise.(resolve, then_, reject);
 
 module QueryResult = {
@@ -70,6 +70,7 @@ let logQueryWith: (string => unit, t('h, 'r, 'q), 'q) => unit =
   (f, {queryToSql}, q) => f(queryToSql(q) ++ ";");
 
 // Logs a query to stdout via Js.log.
+// TODO add a ~color parameter to this?
 let logQuery: (t('h, 'r, 'q), 'q) => unit = (c, q) => logQueryWith(Js.log, c, q);
 
 // Create a client.
@@ -107,45 +108,46 @@ let exec: (t('h, 'r, 'q), 'q) => Js.Promise.t(rows) =
   };
 
 let decodeResult:
-  (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) => QueryResult.t('a) =
+  (RowDecode.fromRows('a), array(RowDecode.Row.t(Js.Json.t))) => QueryResult.t('a) =
   (decode, rows) =>
     try(Belt.Result.Ok(decode(rows))) {
     | RowDecode.Error(e) => Belt.Result.Error(RowDecodeError(e))
     };
 
 let decodeResultPromise:
-  (RowDecode.rowsDecoder('a), array(RowDecode.Row.t(Js.Json.t))) =>
+  (RowDecode.fromRows('a), array(RowDecode.Row.t(Js.Json.t))) =>
   Js.Promise.t(QueryResult.t('a)) =
   (decode, rows) => rows |> decodeResult(decode) |> resolve;
 
 ////////////////////////////////////////////////////////////////////////////////
 ///// Selects
-////////////////////////////////////////////////////////////////////////////////
 
-let select = (cli, decode: RowDecode.rowsDecoder('a), select): Js.Promise.t(QueryResult.t('a)) =>
+let select =
+    (cli: t(_), decode: RowDecode.fromRows('a), select): Js.Promise.t(QueryResult.t('a)) =>
   query(cli, Sql.Select(select)) |> then_(decodeResultPromise(decode));
+
 let selectUnwrap = (cli, decode, select_) =>
   select(cli, decode, select_) |> then_(QueryResult.unwrapPromise);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///// Inserts
-////////////////////////////////////////////////////////////////////////////////
 
 let insert = (cli, insert) => exec(cli, Sql.Insert(insert));
+
 let insertReturn = (cli, decode, insert) =>
   query(cli, Sql.Insert(insert)) |> then_(decodeResultPromise(decode));
+
 let insertReturnUnwrap = (cli, decode, insert) =>
   insertReturn(cli, decode, insert) |> then_(QueryResult.unwrapPromise);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///// Creation
-////////////////////////////////////////////////////////////////////////////////
 
 let createTable = (cli, ct) => exec(cli, Sql.CreateTable(ct));
+
 let createView = (cli, cv) => exec(cli, Sql.CreateView(cv));
 
 ////////////////////////////////////////////////////////////////////////////////
 ///// Raw SQL
-////////////////////////////////////////////////////////////////////////////////
 
 let execRaw = ({handle, execRaw}, sql) => execRaw(handle, sql);

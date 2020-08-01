@@ -1,4 +1,6 @@
 // Things to `open` in every `*Utils` module
+module IMap = Belt.Map.Int;
+module ISet = Belt.Set.Int;
 module SMap = Belt.Map.String;
 module SSet = Belt.Set.String;
 module Promise = Js.Promise;

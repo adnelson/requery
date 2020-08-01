@@ -1,9 +1,9 @@
+open UtilsPrelude;
 module A = ArrayUtils;
-module L = Utils.List;
-module O = Utils.Option;
-module ISet = Belt.Set.Int;
+module L = ListUtils;
+module O = OptionUtils;
 module J = JsonUtils;
-module S = Utils.String;
+module S = StringUtils;
 
 let map: 'a 'b. (array('a), 'a => 'b) => array('b) = Belt.Array.map;
 let join: array(string) => string = Js.Array.joinWith("");
@@ -89,7 +89,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
       | Int(i) => string_of_int(i)
       | Float(f) => Js.Float.toString(f)
       // Escape single quotes by replacing them with single quote pairs.
-      | String(s) => "'" ++ Utils.String.replace(~old="'", ~new_="''", s) ++ "'"
+      | String(s) => "'" ++ StringUtils.replace(~old="'", ~new_="''", s) ++ "'"
       | Bool(b) => b ? S._TRUE : S._FALSE;
 
     // TODO right now we're parenthesizing more than we need to. We could be
@@ -249,10 +249,10 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
     open Sql.CreateTable;
     let renderColumnConstraint = c => {
       let {primaryKey, notNull, unique, check, default} = c;
-      Utils.String.(
+      StringUtils.(
         joinSpaces(
           A.keepSome(
-            O.(
+            OptionUtils.(
               [|
                 someIf(primaryKey, "PRIMARY KEY"),
                 someIf(notNull, "NOT NULL"),
@@ -268,7 +268,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
 
     let renderColumnDef = ({name, type_, constraints}) =>
       [|ColumnName.render(name), TypeName.render(type_), constraints |> renderColumnConstraint|]
-      |> Utils.String.joinSpaces;
+      |> StringUtils.joinSpaces;
 
     let renderOnDelete =
       fun

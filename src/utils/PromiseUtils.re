@@ -1,5 +1,7 @@
 include Js.Promise;
 
+[@bs.send] external flatMap: (t('a), 'a => t('b)) => t('b) = "then";
+
 let transform: ('a => 'b, t('a)) => t('b) = (f, prom) => prom |> then_(x => resolve(f(x)));
 
 let then2: (('a, 'b) => t('c), t(('a, 'b))) => t('c) =
@@ -14,6 +16,9 @@ let rLogReturn: ('a => 'b, 'a) => Js.Promise.t('a) =
     Js.Promise.resolve(x);
   };
 exception Error(error);
+
+let catchMap = (prom, f) => prom |> catch(err => err->f->resolve);
+
 let finally: (unit => t(unit), t('a)) => t('a) =
   (action, prom) =>
     prom

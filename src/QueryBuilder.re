@@ -1,6 +1,6 @@
 open Sql;
 module E = Expression;
-module L = Utils.List;
+module L = ListUtils;
 
 type columnName = Sql.ColumnName.t;
 type functionName = Sql.FunctionName.t;

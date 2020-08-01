@@ -1,6 +1,6 @@
 module A = ArrayUtils;
-module L = Utils.List;
-module O = Utils.Option;
+module L = ListUtils;
+module O = OptionUtils;
 module SMap = Belt.Map.String;
 
 // Provides basic validation for SQL identifiers.

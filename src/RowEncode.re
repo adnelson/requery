@@ -1,7 +1,7 @@
 // Tools for encoding into rows
 include QueryBuilder;
-module L = Utils.List;
-module O = Utils.Option;
+module L = ListUtils;
+module O = OptionUtils;
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
 let convertColumn = (toC, toE, (k, vs)) => (toC(k), (L.amap(vs), toE));

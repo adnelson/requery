@@ -2,7 +2,7 @@ open Jest;
 open Expect;
 
 module String = {
-  open Utils.String;
+  open StringUtils;
   describe("dedupe", () => {
     let input = [|"a", "b", "b", "a", "c"|];
     test("array", () =>

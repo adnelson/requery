@@ -22,7 +22,7 @@ module OnConflict = {
     | IndexColumn(cn) => cn->ColumnName.render
     | IndexExpression(e) => "(" ++ e->Render.Expression.render ++ ")";
   let renderTarget = ({index, where, onConstraint}) =>
-    S.joinSpaces([|
+    StringUtils.joinSpaces([|
       onConstraint->O.mapString(cn => "ON CONSTRAINT " ++ cn->Render.ConstraintName.render),
       index->O.mapString(renderIndex),
       where->O.mapString(e => "WHERE " ++ e->Render.Expression.render),
