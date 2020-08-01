@@ -1,3 +1,5 @@
+// Mutable map underpinned by the Map type from the javascript stdlib.
+// Only works for int and string keys.
 open UtilsPrelude;
 module A = ArrayUtils;
 module D = DictUtils;
@@ -27,6 +29,8 @@ let singletonEntries: ('k, 'a) => entries('k, 'a) = (k, v) => Obj.magic([|(k, v)
 [@bs.send] external get: (t('k, 'a), 'k) => option('a) = "get";
 
 [@bs.send] external set: (t('k, 'a), 'k, 'v) => unit = "set";
+
+[@bs.send] external delete: (t('k, 'a), 'k) => bool = "delete";
 
 // Map a function over the values in a map.
 let map: (t('k, 'a), 'a => 'b) => t('k, 'b) =

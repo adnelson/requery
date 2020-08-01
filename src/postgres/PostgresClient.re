@@ -77,7 +77,7 @@ module Pool = {
   let runPool: (Config.t, pool => Js.Promise.t('a)) => Js.Promise.t('a) =
     (config, action) => {
       let pool = makePool(config);
-      action(pool) |> finally(() => releasePool(pool));
+      action(pool)->finally(() => releasePool(pool)->ignore);
     };
 
   // Create a client from a pool and then run an action with it. The
@@ -99,7 +99,10 @@ module Pool = {
          )
          |> resolve
        )
-    |> then_(client => action(client) |> finally(() => releaseClient(Client.handle(client))));
+    // TODO return a promise which waits for the finish of the `releaseClient`
+    |> then_(client =>
+         action(client)->finally(() => releaseClient(Client.handle(client))->ignore)
+       );
 
   // Abstracts setup/teardown of both a connection pool, and a client within
   // that pool.

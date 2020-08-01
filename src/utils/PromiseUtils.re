@@ -1,8 +1,12 @@
 include Js.Promise;
 
 [@bs.send] external flatMap: (t('a), 'a => t('b)) => t('b) = "then";
+[@bs.send] external map: (t('a), 'a => 'b) => t('b) = "then";
 
 let transform: ('a => 'b, t('a)) => t('b) = (f, prom) => prom |> then_(x => resolve(f(x)));
+
+// Annoyingly Js.Promise requires that you reject with an exn
+[@bs.val] [@bs.scope "Promise"] external rejectError: 'a => t('b) = "reject";
 
 let then2: (('a, 'b) => t('c), t(('a, 'b))) => t('c) =
   (f, prom) => prom |> then_(((a, b)) => f(a, b));
@@ -17,17 +21,6 @@ let rLogReturn: ('a => 'b, 'a) => Js.Promise.t('a) =
   };
 exception Error(error);
 
-let catchMap = (prom, f) => prom |> catch(err => err->f->resolve);
+[@bs.send] external catchMap: (t('a), error => 'a) => t('a) = "catch";
 
-let finally: (unit => t(unit), t('a)) => t('a) =
-  (action, prom) =>
-    prom
-    |> then_(result => {
-         ignore(action());
-         resolve(result);
-       })
-    |> catch(err => {
-         ignore(action());
-         Js.log(err);
-         reject(Error(err));
-       });
+[@bs.send] external finally: (t('a), unit => unit) => t('a) = "finally";
