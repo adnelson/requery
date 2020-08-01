@@ -31,6 +31,13 @@ module CachedSelectDecode = {
     selectDecode: SelectDecode.t('a, 'result),
   };
 
+  let make = (~toCacheKey, ~removeErrorsFromCache=true, selectDecode) => {
+    cache: M.String.empty(),
+    toCacheKey,
+    removeErrorsFromCache,
+    selectDecode,
+  };
+
   // Run a query, caching the selection to avoid repeated queries.
   let run: (Client.t('h, 'r, 'q), t('a, 'r), 'a) => P.t(Client.QueryResult.t('r)) =
     (cli, {cache, toCacheKey, removeErrorsFromCache, selectDecode}, sel) => {
@@ -43,7 +50,7 @@ module CachedSelectDecode = {
             ? prom_
             : prom_
               |> P.catch(err => {
-                   cache->M.delete(key);
+                   cache->M.delete(key)->ignore;
                    P.rejectError(err);
                  });
         cache->M.set(key, prom);

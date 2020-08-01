@@ -65,8 +65,8 @@ let getExn = (d, k) =>
 let has = (m, key) => Belt.Option.isSome(get(m, key));
 
 module String = {
+  [@bs.new] external empty: unit => t(string, 'a) = "Map";
   [@bs.new] external fromArray: array((string, 'a)) => t(string, 'a) = "Map";
-
   [@bs.send] external toArray: t(string, 'a) => array((string, 'a)) = "entries";
 
   let fromBeltMap: SMap.t('a) => t(string, 'a) = map => fromArray(SMap.toArray(map));
@@ -80,6 +80,7 @@ module String = {
 };
 
 module Int = {
+  [@bs.new] external empty: unit => t(int, 'a) = "Map";
   [@bs.new] external fromArray: array((int, 'a)) => t(int, 'a) = "Map";
   [@bs.send] external toArray: t(int, 'a) => array((int, 'a)) = "entries";
 
