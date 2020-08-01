@@ -1,11 +1,10 @@
-open Requery;
 module Pg = BsPostgres;
 module Rules = RenderQuery.DefaultRules;
 module Render = RenderQuery.WithRenderingRules(Rules);
 module JE = Json.Encode;
 module JD = Json.Decode;
 let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
-  Utils.Promise.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
+  PromiseUtils.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 
 // Connection config. TODO many more options to support
 module Config = {
@@ -86,7 +85,20 @@ module Pool = {
   // If you don't want to manage the setup/teardown of the pool, you can
   // use `runPoolClient`.
   let runClientInPool = (~onQuery=?, ~onResult=?, pool, action: client => Js.Promise.t('a)) =>
-    makeClient(~onQuery?, ~onResult?, pool)
+    Pg.Pool.Promise.connect(pool)
+    |> then_(client =>
+         Client.make(
+           ~execRaw=runRaw,
+           ~handle=client,
+           ~onQuery?,
+           ~onResult?,
+           ~queryRaw=runRaw,
+           ~queryToSql=PostgresRender.pgRender,
+           ~resultToRows=(result: result) => RowDecode.toRows(result##rows),
+           (),
+         )
+         |> resolve
+       )
     |> then_(client => action(client) |> finally(() => releaseClient(Client.handle(client))));
 
   // Abstracts setup/teardown of both a connection pool, and a client within

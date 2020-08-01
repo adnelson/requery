@@ -11,8 +11,8 @@ module QueryResult = {
     fun
     | RowDecodeError(e) => RowDecode.Error(e);
 
-  let errorToJson: Utils.Json.encoder(error) =
-    Utils.Json.Encode.(
+  let errorToJson: JsonUtils.toJson(error) =
+    JsonUtils.Encode.(
       fun
       | RowDecodeError(e) => e |> object1("RowDecodeError", RowDecode.errorToJson)
     );
@@ -24,9 +24,9 @@ module QueryResult = {
   let ok: 'a => t('a) = res => R.Ok(res);
   let error: error => t('a) = err => R.Error(err);
 
-  module Enc = Utils.Json.Encode;
+  module Enc = JsonUtils.Encode;
 
-  let encode: Utils.Json.encoder('a) => Utils.Json.encoder(t('a)) =
+  let encode: JsonUtils.toJson('a) => JsonUtils.toJson(t('a)) =
     Enc.(
       encodeSuccess =>
         fun

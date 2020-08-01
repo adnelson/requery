@@ -1,5 +1,5 @@
 // Postgres-specific syntax
-module A = Utils.Array;
+module A = ArrayUtils;
 module O = Utils.Option;
 module S = Utils.String;
 module QB = QueryBuilder;

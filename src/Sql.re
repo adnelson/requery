@@ -1,4 +1,4 @@
-module A = Utils.Array;
+module A = ArrayUtils;
 module L = Utils.List;
 module O = Utils.Option;
 module SMap = Belt.Map.String;

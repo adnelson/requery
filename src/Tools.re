@@ -1,4 +1,4 @@
-module A = Utils.Array;
+module A = ArrayUtils;
 open Sql;
 
 module TableTools = {

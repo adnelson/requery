@@ -1,6 +1,6 @@
-include Utils.Json.Decode;
-module A = Utils.Array;
-module D = Utils.Dict;
+include JsonUtils.Decode;
+module A = ArrayUtils;
+module D = DictUtils;
 module O = Utils.Option;
 module S = Utils.String;
 type dict('a) = D.t('a);
@@ -8,6 +8,7 @@ type dict('a) = D.t('a);
 type error =
   | RowDecodeError(int, Js.Json.t, string)
   | EmptyRows;
+
 exception Error(error);
 
 module Row = {
@@ -19,7 +20,7 @@ module Row = {
   let map = (row, f) => {...row, contents: f(row.contents)};
   let mapGet = (row, f) => f(row.contents);
 
-  let decodeJson: (decoder('a), t(Js.Json.t)) => 'a =
+  let decodeJson: (fromJson('a), t(Js.Json.t)) => 'a =
     (decode, row) =>
       try(mapGet(row, decode)) {
       | DecodeError(err) => raise(Error(RowDecodeError(row.index, row.contents, err)))
@@ -33,7 +34,7 @@ type rowsDecoder('t) = array(Row.t(Js.Json.t)) => 't;
 let unit: rowsDecoder(unit) = _ => ();
 
 let errorToJson =
-  Utils.Json.Encode.(
+  JsonUtils.Encode.(
     fun
     | RowDecodeError(num, rowJson, message) =>
       object_([
@@ -75,35 +76,35 @@ let getFirst: array(Row.t('a)) => Row.t('a) =
   | rows => rows[0];
 
 // Decode the first row with the given JSON decoder.
-let decodeOne: decoder('t) => rowsDecoder('t) =
+let decodeOne: fromJson('t) => rowsDecoder('t) =
   (decode, rows) => rows |> getFirst |> Row.decodeJson(decode);
 
 // Map a JSON decoder over the rows, collecting the result for each row.
-let decodeEach: (decoder('a), array(Row.t(Js.Json.t))) => array('a) =
+let decodeEach: (fromJson('a), array(Row.t(Js.Json.t))) => array('a) =
   (d, arr) => A.map(arr, Row.decodeJson(d));
 
 // A decoder which just returns the json rows.
 let jsonRows: rowsDecoder(array(Js.Json.t)) = decodeEach(j => j);
 
 // Decode each row and reduce the result to some value.
-let decodeReduce: (decoder('a), 'b, ('a, 'b) => 'b) => rowsDecoder('b) =
+let decodeReduce: (fromJson('a), 'b, ('a, 'b) => 'b) => rowsDecoder('b) =
   (dec, start, f, rows) => A.reduce(decodeEach(dec, rows), start, f);
 
-let optColumn: (string, decoder('t)) => rowsDecoder(option('t)) =
+let optColumn: (string, fromJson('t)) => rowsDecoder(option('t)) =
   (col, dec, rows) => O.map(A.head(rows), Row.decodeJson(field(col, dec)));
 
 // Get one column, with the given name and with the given decoder.
 // Alias for `Json.Decode.field`
-let column1: (string, decoder('t)) => decoder('t) = field;
+let column1: (string, fromJson('t)) => fromJson('t) = field;
 
-let columns2: (string, decoder('a), string, decoder('b)) => decoder(('a, 'b)) =
+let columns2: (string, fromJson('a), string, fromJson('b)) => fromJson(('a, 'b)) =
   (columnA, decodeA, columnB, decodeB, j) => (
     j |> field(columnA, decodeA),
     j |> field(columnB, decodeB),
   );
 
 let columns3:
-  (string, decoder('a), string, decoder('b), string, decoder('c)) => decoder(('a, 'b, 'c)) =
+  (string, fromJson('a), string, fromJson('b), string, fromJson('c)) => fromJson(('a, 'b, 'c)) =
   (columnA, decodeA, columnB, decodeB, columnC, decodeC, j) => (
     j |> field(columnA, decodeA),
     j |> field(columnB, decodeB),
@@ -114,12 +115,12 @@ let columns3:
 // the ID and another decoder to get the rest of the object, decodes
 // the row into the object.
 let withId =
-    (~idField: string, ~idDecode: decoder('id), decode: decoder('t)): decoder(('id, 't)) =>
+    (~idField: string, ~idDecode: fromJson('id), decode: fromJson('t)): fromJson(('id, 't)) =>
   tup2(field(idField, idDecode), decode);
 
 // Decode a row into a 3-tuple.
 let tuple3Row:
-  (string, decoder('a), string, decoder('b), string, decoder('c)) => decoder(('a, 'b, 'c)) =
+  (string, fromJson('a), string, fromJson('b), string, fromJson('c)) => fromJson(('a, 'b, 'c)) =
   (columnA, decodeA, columnB, decodeB, columnC, decodeC, j) => (
     j |> field(columnA, decodeA),
     j |> field(columnB, decodeB),
@@ -131,9 +132,9 @@ let tuple3Row:
 let dict =
     (
       ~keyField: string,
-      ~keyDecode: decoder(string)=string,
+      ~keyDecode: fromJson(string)=string,
       ~valueField: string,
-      ~valueDecode: decoder('a),
+      ~valueDecode: fromJson('a),
       (),
     )
     : rowsDecoder(D.t('a)) =>
@@ -146,11 +147,11 @@ let dict =
 let dict2d =
     (
       ~outerKeyField: string,
-      ~outerKeyDecode: decoder(string)=string,
+      ~outerKeyDecode: fromJson(string)=string,
       ~innerKeyField: string,
-      ~innerKeyDecode: decoder(string)=string,
+      ~innerKeyDecode: fromJson(string)=string,
       ~valueField: string,
-      ~valueDecode: decoder('a),
+      ~valueDecode: fromJson('a),
       (),
     )
     : rowsDecoder(D.t(D.t('a))) =>
@@ -179,13 +180,13 @@ let dict2d =
 let dict3d =
     (
       ~keyField1: string,
-      ~keyDecode1: decoder(string)=string,
+      ~keyDecode1: fromJson(string)=string,
       ~keyField2: string,
-      ~keyDecode2: decoder(string)=string,
+      ~keyDecode2: fromJson(string)=string,
       ~keyField3: string,
-      ~keyDecode3: decoder(string)=string,
+      ~keyDecode3: fromJson(string)=string,
       ~valueField: string,
-      ~valueDecode: decoder('a),
+      ~valueDecode: fromJson('a),
       (),
     )
     : rowsDecoder(dict(dict(dict('a)))) =>
@@ -220,15 +221,15 @@ let dict3d =
 let dict4d =
     (
       ~keyField1: string,
-      ~keyDecode1: decoder(string)=string,
+      ~keyDecode1: fromJson(string)=string,
       ~keyField2: string,
-      ~keyDecode2: decoder(string)=string,
+      ~keyDecode2: fromJson(string)=string,
       ~keyField3: string,
-      ~keyDecode3: decoder(string)=string,
+      ~keyDecode3: fromJson(string)=string,
       ~keyField4: string,
-      ~keyDecode4: decoder(string)=string,
+      ~keyDecode4: fromJson(string)=string,
       ~valueField: string,
-      ~valueDecode: decoder('a),
+      ~valueDecode: fromJson('a),
       (),
     )
     : rowsDecoder(dict(dict(dict(dict('a))))) =>
@@ -269,9 +270,9 @@ let dict4d =
 let dictWithOrder =
     (
       ~keyField: string,
-      ~keyDecode: decoder(string)=string,
+      ~keyDecode: fromJson(string)=string,
       ~valueField: string,
-      ~valueDecode: decoder('a),
+      ~valueDecode: fromJson('a),
       (),
     )
     : rowsDecoder((D.t('a), array(string))) =>
@@ -286,7 +287,7 @@ let dictWithOrder =
 // This can be nested, although it's not particularly efficient
 // since each nested call will need to iterate over all rows.
 let dictOf =
-    (~keyField: string, ~keyDecode: decoder(string)=string, inner: rowsDecoder('a))
+    (~keyField: string, ~keyDecode: fromJson(string)=string, inner: rowsDecoder('a))
     : rowsDecoder(D.t('a)) =>
   rows => {
     let agg = D.empty();
@@ -308,7 +309,7 @@ let dictOf =
 let tuples =
     (
       keyField: string,
-      keyDecode: decoder('k),
+      keyDecode: fromJson('k),
       keyToString: 'k => string,
       inner: rowsDecoder('v),
     )

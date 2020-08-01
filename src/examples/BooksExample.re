@@ -1,13 +1,11 @@
-module Client = Requery.Client;
-open Requery;
 module QB = QueryBuilder;
 module RE = RowEncode;
 module Rules = RenderQuery.DefaultRules;
 module Render = RenderQuery.WithRenderingRules(Rules);
-module P = Utils.Promise;
-module J = Utils.Json;
-module JD = Utils.Json.Decode;
-module JE = Utils.Json.Encode;
+module P = PromiseUtils;
+module J = JsonUtils;
+module JD = JsonUtils.Decode;
+module JE = JsonUtils.Encode;
 module C = Requery.Client;
 let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
   P.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);

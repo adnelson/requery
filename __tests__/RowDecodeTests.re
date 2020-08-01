@@ -1,8 +1,8 @@
 open Jest;
 open Expect;
-module A = Utils.Array;
+module A = ArrayUtils;
 module O = Utils.Option;
-module D = Utils.Dict;
+module D = DictUtils;
 module RD = RowDecode;
 
 // Test decoding dictionaries

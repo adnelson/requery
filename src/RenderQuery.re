@@ -1,8 +1,8 @@
-module A = Utils.Array;
+module A = ArrayUtils;
 module L = Utils.List;
 module O = Utils.Option;
 module ISet = Belt.Set.Int;
-module J = Utils.Json;
+module J = JsonUtils;
 module S = Utils.String;
 
 let map: 'a 'b. (array('a), 'a => 'b) => array('b) = Belt.Array.map;
