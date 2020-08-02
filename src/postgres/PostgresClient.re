@@ -69,7 +69,7 @@ module Pool = {
   let makeClient = (~onQuery=?, ~onResult=?, pool: BsPostgres.Pool.t) =>
     BsPostgres.Pool.Promise.connect(pool)->P.map(h => fromPgClient(~onQuery?, ~onResult?, h));
 
-  let releaseClient = BsPostgres.Pool.Pool_Client.release;
+  let releaseClient = ({Client.handle}) => handle->BsPostgres.Pool.Pool_Client.release;
   let releasePool = BsPostgres.Pool.Promise.end_;
 
   // Abstracts setup/teardown of a postgres connection pool.
@@ -84,56 +84,35 @@ module Pool = {
   // If you don't want to manage the setup/teardown of the pool, you can
   // use `runPoolClient`.
   let runClientInPool:
+    'a.
     (
       ~onQuery: (client, query) => unit=?,
       ~onResult: (client, option(query), result) => unit=?,
       BsPostgres.Pool.t,
       client => Js.Promise.t('a)
     ) =>
-    Js.Promise.t('a) =
+    Js.Promise.t('a)
+   =
     (~onQuery=?, ~onResult=?, pool, action) =>
-      BsPostgres.Pool.Promise.connect(pool)
-      ->P.map(client =>
-          Client.make(
-            ~execRaw=runRaw,
-            ~handle=client,
-            ~onQuery?,
-            ~onResult?,
-            ~queryRaw=runRaw,
-            ~queryToSql=PostgresRender.pgRender,
-            ~resultToRows=
-              (result: BsPostgres.Result.t(Js.Json.t)) => RowDecode.toRows(result##rows),
-            (),
-          )
-        )
-      ->P.flatMap(client
-          // TODO: ensure that releaseClient completes
-          // before the promise resolves.
-          =>
-            P.make((~resolve, ~reject) => {
-              // Feels hacky but whatever. We want to make sure that the
-              // promise waits to resolve until after the promise completes
-              let result: ref(option(R.t(int, P.error))) = ref(None);
-              action(client)
-              ->P.map((r: int) => result := Some(Ok(r)))
-              ->P.catchMap(e => result := Some(Error(e)))
-              ->finally(() =>
-                  releaseClient(Client.handle(client))
-                  ->P.map(_ =>
-                      switch (result^) {
-                      | Some(Ok(r)) => resolve(. r)
-                      | Some(Error(e)) => reject(. Obj.magic(e))
-                      | None => Js.Exn.raiseError("Promise never returned or errored!")
-                      }
-                    )
-                  ->ignore
-                )
-              ->ignore;
-            })
-          );
+      makeClient(~onQuery?, ~onResult?, pool)
+      ->P.flatMap(client =>
+          action(client)
+          ->P.flatMap(r => client->releaseClient->P.map(_ => r))
+          ->P.catchF(e => client->releaseClient->P.flatMap(_ => P.rejectError(e)))
+        );
 
   // Abstracts setup/teardown of both a connection pool, and a client within
   // that pool.
-  let runPoolClient = (~onQuery=?, ~onResult=?, config, action: client => Js.Promise.t('a)) =>
-    runPool(config, pool => runClientInPool(~onQuery?, ~onResult?, pool, action));
+  let runPoolClient:
+    'a.
+    (
+      ~onQuery: (client, query) => unit=?,
+      ~onResult: (client, option(query), result) => unit=?,
+      Config.t,
+      client => Js.Promise.t('a)
+    ) =>
+    Js.Promise.t('a)
+   =
+    (~onQuery=?, ~onResult=?, config, action) =>
+      runPool(config, pool => runClientInPool(~onQuery?, ~onResult?, pool, action));
 };
