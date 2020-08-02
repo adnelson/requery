@@ -1,5 +1,6 @@
 module O = OptionUtils;
 module R = ResultUtils;
+module P = PromiseUtils;
 let (resolve, then_, reject) = Js.Promise.(resolve, then_, reject);
 
 module QueryResult = {
@@ -61,7 +62,7 @@ type t('handle, 'result, 'query) = {
   // Function to run on the query before it's executed.
   onQuery: option((t('handle, 'result, 'query), 'query) => unit),
   // Function to run after the result is received.
-  onResult: option((t('handle, 'result, 'query), 'query, 'result) => unit),
+  onResult: option((t('handle, 'result, 'query), option('query), 'result) => unit),
 };
 
 // Can be passed to a `onQuery` argument, given some string conversion. Invokes
@@ -92,7 +93,7 @@ let query: (t('h, 'r, 'q), 'q) => Js.Promise.t(rows) =
     let _ = O.map(onQuery, f => f(client, query));
     queryRaw(handle, queryToSql(query))
     |> then_(result => {
-         let _ = O.map(onResult, f => f(client, query, result));
+         let _ = O.map(onResult, f => f(client, Some(query), result));
          result |> resultToRows |> resolve;
        });
   };
@@ -102,43 +103,45 @@ let exec: (t('h, 'r, 'q), 'q) => Js.Promise.t(rows) =
     let _ = O.map(onQuery, f => f(client, query));
     execRaw(handle, queryToSql(query))
     |> then_(result => {
-         let _ = O.map(onResult, f => f(client, query, result));
+         let _ = O.map(onResult, f => f(client, Some(query), result));
          result |> resultToRows |> resolve;
        });
   };
 
-let decodeResult:
-  (RowDecode.fromRows('a), array(RowDecode.Row.t(Js.Json.t))) => QueryResult.t('a) =
-  (decode, rows) =>
-    try(Belt.Result.Ok(decode(rows))) {
+let decodeResult: (RowDecode.fromRows('a), rows) => QueryResult.t('a) =
+  (fromRows, rows) =>
+    try(Belt.Result.Ok(fromRows(rows))) {
     | RowDecode.Error(e) => Belt.Result.Error(RowDecodeError(e))
     };
-
-let decodeResultPromise:
-  (RowDecode.fromRows('a), array(RowDecode.Row.t(Js.Json.t))) =>
-  Js.Promise.t(QueryResult.t('a)) =
-  (decode, rows) => rows |> decodeResult(decode) |> resolve;
 
 ////////////////////////////////////////////////////////////////////////////////
 ///// Selects
 
 let select =
-    (cli: t(_), decode: RowDecode.fromRows('a), select): Js.Promise.t(QueryResult.t('a)) =>
-  query(cli, Sql.Select(select)) |> then_(decodeResultPromise(decode));
+    (cli: t(_), fromRows: RowDecode.fromRows('a), select): Js.Promise.t(QueryResult.t('a)) =>
+  query(cli, Sql.Select(select))->P.map(decodeResult(fromRows));
 
-let selectUnwrap = (cli, decode, select_) =>
-  select(cli, decode, select_) |> then_(QueryResult.unwrapPromise);
+let selectUnwrap = (cli, fromRows, select_) =>
+  select(cli, fromRows, select_) |> then_(QueryResult.unwrapPromise);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///// Inserts
 
-let insert = (cli, insert) => exec(cli, Sql.Insert(insert));
+let insert:
+  'h 'r 'q.
+  (
+    t('h, 'r, Sql.query('returning, 'onConflict, _, _)),
+    Sql.Insert.t('returning, 'onConflict)
+  ) =>
+  Js.Promise.t(_)
+ =
+  (cli, insert) => exec(cli, Sql.Insert(insert));
 
-let insertReturn = (cli, decode, insert) =>
-  query(cli, Sql.Insert(insert)) |> then_(decodeResultPromise(decode));
+let insertReturn = (cli, fromRows, insert) =>
+  query(cli, Sql.Insert(insert))->P.map(decodeResult(fromRows));
 
-let insertReturnUnwrap = (cli, decode, insert) =>
-  insertReturn(cli, decode, insert) |> then_(QueryResult.unwrapPromise);
+let insertReturnUnwrap = (cli, fromRows, insert) =>
+  insertReturn(cli, fromRows, insert) |> then_(QueryResult.unwrapPromise);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///// Creation
@@ -150,4 +153,27 @@ let createView = (cli, cv) => exec(cli, Sql.CreateView(cv));
 ////////////////////////////////////////////////////////////////////////////////
 ///// Raw SQL
 
-let execRaw = ({handle, execRaw}, sql) => execRaw(handle, sql);
+// Execute a query and throw away the result
+let execRaw: 'h 'r 'q. (t('h, 'r, 'q), string) => P.t(unit) =
+  ({handle, execRaw, onResult} as client, sql) =>
+    execRaw(handle, sql)
+    ->P.map(res => {
+        onResult->O.forEach(f => f(client, None, res));
+        ();
+      });
+
+// Execute a query with raw SQL and convert the result to rows
+let queryRawRows: 'h 'r 'q. (t('h, 'r, 'q), string) => P.t(rows) =
+  ({handle, queryRaw, onResult, resultToRows} as client, rawSql) =>
+    queryRaw(handle, rawSql)
+    ->P.map(res => {
+        onResult->O.forEach(f => f(client, None, res));
+        res->resultToRows;
+      });
+
+// Execute a query with raw SQL and parse the resulting rows.
+let queryRawDecode:
+  'h 'r 'q.
+  (t('h, 'r, 'q), RowDecode.fromRows('a), string) => P.t(QueryResult.t('a))
+ =
+  (client, fromRows, rawSql) => client->queryRawRows(rawSql)->P.map(decodeResult(fromRows));

@@ -86,7 +86,7 @@ module Pool = {
   let runClientInPool =
       (
         ~onQuery: option((client, query) => unit)=?,
-        ~onResult: option((client, query, result) => unit)=?,
+        ~onResult: option((client, option(query), result) => unit)=?,
         pool: BsPostgres.Pool.t,
         action: client => Js.Promise.t('a),
       ) =>
