@@ -43,4 +43,7 @@ exception Error(error);
 
 [@bs.send] external catchMap: (t('a), error => 'a) => t('a) = "catch";
 
+// Catch in significant-data-first order (hence `F`)
+[@bs.send] external catchF: (t('a), error => t('a)) => t('a) = "catch";
+
 [@bs.send] external finally: (t('a), unit => unit) => t('a) = "finally";

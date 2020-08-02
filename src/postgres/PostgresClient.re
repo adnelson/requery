@@ -83,40 +83,54 @@ module Pool = {
   // client is automatically released afterwards.
   // If you don't want to manage the setup/teardown of the pool, you can
   // use `runPoolClient`.
-  let runClientInPool =
-      (
-        ~onQuery: option((client, query) => unit)=?,
-        ~onResult: option((client, option(query), result) => unit)=?,
-        pool: BsPostgres.Pool.t,
-        action: client => Js.Promise.t('a),
-      ) =>
-    BsPostgres.Pool.Promise.connect(pool)
-    ->P.map(client =>
-        Client.make(
-          ~execRaw=runRaw,
-          ~handle=client,
-          ~onQuery?,
-          ~onResult?,
-          ~queryRaw=runRaw,
-          ~queryToSql=PostgresRender.pgRender,
-          ~resultToRows=
-            (result: BsPostgres.Result.t(Js.Json.t)) => RowDecode.toRows(result##rows),
-          (),
+  let runClientInPool:
+    (
+      ~onQuery: (client, query) => unit=?,
+      ~onResult: (client, option(query), result) => unit=?,
+      BsPostgres.Pool.t,
+      client => Js.Promise.t('a)
+    ) =>
+    Js.Promise.t('a) =
+    (~onQuery=?, ~onResult=?, pool, action) =>
+      BsPostgres.Pool.Promise.connect(pool)
+      ->P.map(client =>
+          Client.make(
+            ~execRaw=runRaw,
+            ~handle=client,
+            ~onQuery?,
+            ~onResult?,
+            ~queryRaw=runRaw,
+            ~queryToSql=PostgresRender.pgRender,
+            ~resultToRows=
+              (result: BsPostgres.Result.t(Js.Json.t)) => RowDecode.toRows(result##rows),
+            (),
+          )
         )
-      )
-    ->P.flatMap(client
-        // Wrap in an extra promise to ensure that releaseClient completes
-        // before the promise resolves.
-        =>
-          P.make((~resolve, ~reject as _) => {
-            let unit_ = ();
-            action(client)
-            ->finally(() =>
-                releaseClient(Client.handle(client))->P.map(_ => resolve(. unit_))->ignore
-              )
-            ->ignore;
-          })
-        );
+      ->P.flatMap(client
+          // TODO: ensure that releaseClient completes
+          // before the promise resolves.
+          =>
+            P.make((~resolve, ~reject) => {
+              // Feels hacky but whatever. We want to make sure that the
+              // promise waits to resolve until after the promise completes
+              let result: ref(option(R.t(int, P.error))) = ref(None);
+              action(client)
+              ->P.map((r: int) => result := Some(Ok(r)))
+              ->P.catchMap(e => result := Some(Error(e)))
+              ->finally(() =>
+                  releaseClient(Client.handle(client))
+                  ->P.map(_ =>
+                      switch (result^) {
+                      | Some(Ok(r)) => resolve(. r)
+                      | Some(Error(e)) => reject(. Obj.magic(e))
+                      | None => Js.Exn.raiseError("Promise never returned or errored!")
+                      }
+                    )
+                  ->ignore
+                )
+              ->ignore;
+            })
+          );
 
   // Abstracts setup/teardown of both a connection pool, and a client within
   // that pool.
