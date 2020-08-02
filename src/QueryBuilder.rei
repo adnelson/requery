@@ -358,9 +358,9 @@ let into: (tableName, tableName => insert('r, 'oc)) => insert('r, 'oc);
    * Constraint definitions (`constraint_`)
 
  [
-   cdef("id", Types.int, ~primaryKey=true),
-   cdef("first", Types.text),
-   cdef("last", Types.text),
+   cdef(cname("id"), Types.int, ~primaryKey=true),
+   cdef(cname("first"), Types.text),
+   cdef(cname("last"), Types.text),
  ]
  |> createTable(tname("author"), ~ifNotExists=true)
   ****************************/
@@ -373,18 +373,19 @@ let cdef:
     ~unique: bool=?,
     ~check: expr=?,
     ~default: expr=?,
-    string,
+    columnName,
     typeName
   ) =>
   tableStatement('tr);
 
 let nullableCol:
-  (~unique: bool=?, ~check: expr=?, ~default: expr=?, string, typeName) => tableStatement('tr);
+  (~unique: bool=?, ~check: expr=?, ~default: expr=?, columnName, typeName) => tableStatement('tr);
 
 let notNullCol:
-  (~unique: bool=?, ~check: expr=?, ~default: expr=?, string, typeName) => tableStatement('tr);
+  (~unique: bool=?, ~check: expr=?, ~default: expr=?, columnName, typeName) => tableStatement('tr);
 
-let primaryKeyCol: (~check: expr=?, ~default: expr=?, string, typeName) => tableStatement('tr);
+let primaryKeyCol:
+  (~check: expr=?, ~default: expr=?, columnName, typeName) => tableStatement('tr);
 
 let constraintName: string => constraintName;
 

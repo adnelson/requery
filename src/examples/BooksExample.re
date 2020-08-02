@@ -39,9 +39,9 @@ module Author = {
   let createTable = idType =>
     QueryBuilder.(
       [
-        cdef("id", idType, ~primaryKey=true),
-        cdef("first", Types.text),
-        cdef("last", Types.text),
+        cdef(cname("id"), idType, ~primaryKey=true),
+        cdef(cname("first"), Types.text),
+        cdef(cname("last"), Types.text),
         constraint_(unique([cname("first"), cname("last")])),
       ]
       |> createTable(tableName, ~ifNotExists=true)
@@ -70,10 +70,10 @@ module Book = {
   let createTable = idType =>
     QueryBuilder.(
       [
-        cdef("id", idType, ~primaryKey=true),
+        cdef(cname("id"), idType, ~primaryKey=true),
         // Note: can have spaces in column name
-        cdef("author id", idType),
-        cdef("title", Types.text),
+        cdef(cname("author id"), idType),
+        cdef(cname("title"), Types.text),
         constraint_(
           foreignKey(~onDelete=Cascade, cname("author id"), (tname("author"), cname("id"))),
         ),

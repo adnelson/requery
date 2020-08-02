@@ -293,7 +293,7 @@ let cdef =
     : tableStatement('tr) =>
   CreateTable.(
     ColumnDef({
-      name: cname(name),
+      name,
       type_,
       constraints: {
         primaryKey,
