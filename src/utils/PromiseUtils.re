@@ -4,6 +4,9 @@ include Js.Promise;
 
 [@bs.send] external map: (t('a), 'a => 'b) => t('b) = "then";
 
+// Fire off a promise and ignore its result
+let fireOff: 'a. (unit => t(unit)) => unit = makePromise => makePromise()->ignore;
+
 // Treat a promise as an applicative functor.
 let apply: 'a 'b. (t('a => 'b), t('a)) => t('b) =
   (funcPromise, nextPromise) =>
