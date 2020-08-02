@@ -104,10 +104,19 @@ module Pool = {
           (),
         )
       )
-    // TODO return a promise which waits for the finish of the `releaseClient`
-    ->P.flatMap(client =>
-        action(client)->finally(() => releaseClient(Client.handle(client))->ignore)
-      );
+    ->P.flatMap(client
+        // Wrap in an extra promise to ensure that releaseClient completes
+        // before the promise resolves.
+        =>
+          P.make((~resolve, ~reject as _) => {
+            let unit_ = ();
+            action(client)
+            ->finally(() =>
+                releaseClient(Client.handle(client))->P.map(_ => resolve(. unit_))->ignore
+              )
+            ->ignore;
+          })
+        );
 
   // Abstracts setup/teardown of both a connection pool, and a client within
   // that pool.
