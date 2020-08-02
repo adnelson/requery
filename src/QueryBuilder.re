@@ -2,28 +2,28 @@ open Sql;
 module E = Expression;
 module L = ListUtils;
 
-type columnName = Sql.ColumnName.t;
-type functionName = Sql.FunctionName.t;
-type column = Sql.Column.t;
-type tableName = Sql.TableName.t;
-type aliased('t) = Sql.Aliased.t('t);
-type constraintName = Sql.ConstraintName.t;
-type databaseName = Sql.DatabaseName.t;
-type tableConstraint('tr) = Sql.CreateTable.tableConstraint('tr);
-type typeName = Sql.TypeName.t;
-type target = Sql.Select.target;
-type selectInUnion = Sql.Select.selectInUnion;
-type selectVariant = Sql.Select.selectVariant;
-type select = Sql.Select.select;
+type columnName = ColumnName.t;
+type functionName = FunctionName.t;
+type column = Column.t;
+type tableName = TableName.t;
+type aliased('t) = Aliased.t('t);
+type constraintName = ConstraintName.t;
+type databaseName = DatabaseName.t;
+type tableConstraint('tr) = CreateTable.tableConstraint('tr);
+type typeName = TypeName.t;
+type target = Select.target;
+type selectInUnion = Select.selectInUnion;
+type selectVariant = Select.selectVariant;
+type select = Select.select;
 
-type expr = Sql.Expression.t;
-type direction = Sql.Select.direction;
-type insert('r, 'oc) = Sql.Insert.t('r, 'oc);
-type tableStatement('tr) = Sql.CreateTable.statement('tr);
-type onDelete = Sql.CreateTable.onDelete;
-type createTable('tr) = Sql.CreateTable.t_('tr);
-type createView = Sql.CreateView.t;
-type whereClause = Sql.Select.whereClause;
+type expr = Expression.t;
+type direction = Select.direction;
+type insert('r, 'oc) = Insert.t('r, 'oc);
+type tableStatement('tr) = CreateTable.statement('tr);
+type onDelete = CreateTable.onDelete;
+type createTable('tr) = CreateTable.t_('tr);
+type createView = CreateView.t;
+type whereClause = Select.whereClause;
 type row = list((columnName, expr));
 type toSelect('t) = 't => select;
 type toInsert('r, 'oc, 't) = ('t, tableName) => insert('r, 'oc);
@@ -31,7 +31,7 @@ type toColumnName('t) = 't => columnName;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
 
-let typeName = Sql.TypeName.fromString;
+let typeName = TypeName.fromString;
 let typed = (e, t) => E.Typed(e, t);
 
 let null = E.Atom(E.Null);
@@ -45,22 +45,21 @@ let tuple = exprs => E.Tuple(L.toArray(exprs));
 let tuple2 = (f, g, (a, b)) => tuple([f(a), g(b)]);
 let tupleOf = (toExpr: toExpr('a), xs) => tuple(L.map(xs, toExpr));
 
-let tname = Sql.TableName.fromString;
-let cname = Sql.ColumnName.fromString;
-let cnames = l => L.map(l, Sql.ColumnName.fromString);
-let fname = Sql.FunctionName.fromString;
-let column = Sql.Column.fromString;
-let tcolumn = (t, c) => Sql.Column.fromStringWithTable(tname(t), c);
-let tcolumn_ = (t, c) => Sql.Column.fromColumnNameWithTable(t, c);
-let columns = Sql.Column.fromStringList;
-let tcolumns = l => Sql.Column.fromTupleList(L.map(l, ((t, c)) => (tname(t), c)));
+let tname = TableName.fromString;
+let cname = ColumnName.fromString;
+let cnames = l => L.map(l, ColumnName.fromString);
+let fname = FunctionName.fromString;
+let column = Column.fromString;
+let columnFromName: columnName => column = cn => cn->ColumnName.toString->column;
+let tcolumn = (t, c) => Column.fromColumnNameWithTable(t, c);
+let columns = Column.fromStringList;
+let tcolumns = l => Column.fromTupleList(L.map(l, ((t, c)) => (tname(t), c)));
 let col_ = c => E.Atom(E.Column(c));
-let col = c => E.Atom(E.Column(column(c)));
+let col = c => E.Atom(E.Column(columnFromName(c)));
 let cols = cs => L.map(cs, col);
 let tcol = (t, c) => E.Atom(E.Column(tcolumn(t, c)));
-let tcol_ = (t, c) => E.Atom(E.Column(tcolumn_(t, c)));
-let all = E.(Atom(Column(Sql.Column.all)));
-let allFrom = t => E.Atom(Column(Sql.Column.allFrom(tname(t))));
+let all = E.(Atom(Column(Column.all)));
+let allFrom = t => E.Atom(Column(Column.allFrom(tname(t))));
 
 let between = (e, lo, hi) => E.Between(e, lo, hi);
 let in_ = (e1, e2) => E.In(e1, e2);
@@ -314,30 +313,26 @@ let notNullCol = (~unique=?, ~check=?, ~default=?) =>
 let primaryKeyCol = (~check=?, ~default=?) =>
   cdef(~primaryKey=false, ~notNull=true, ~unique=false, ~check?, ~default?);
 
-let constraintName = Sql.ConstraintName.fromString;
+let constraintName = ConstraintName.fromString;
 
-let (constraint_, primaryKey, foreignKey, unique, check) = {
-  open Sql.CreateTable;
-  let constraint_ = (~a=?, c) => Constraint(O.map(a, constraintName), c);
-  let pk = cols => PrimaryKey(L.toArray(cols));
-  let fk = (~onDelete=?, col, (refTbl: 'tr, refCol)): tableConstraint('tr) =>
-    ForeignKey(col, (refTbl, refCol), onDelete);
-  let u = cols => Unique(L.toArray(cols));
-  let c = expr => Check(expr);
-  (constraint_, pk, fk, u, c);
-};
+let constraint_ = (~a=?, c) => CreateTable.(Constraint(a, c));
+let primaryKey = cols => CreateTable.PrimaryKey(L.toArray(cols));
+let foreignKey = (~onDelete=?, col, (refTbl: 'tr, refCol)): tableConstraint('tr) =>
+  CreateTable.ForeignKey(col, (refTbl, refCol), onDelete);
+let unique = cols => CreateTable.Unique(L.toArray(cols));
+let check = expr => CreateTable.Check(expr);
 
 let primaryKey1 = name => primaryKey([name]);
 
 let createTable =
     (~ifNotExists=true, name, statements: list(tableStatement(tableName)))
     : createTable(tableName) =>
-  Sql.CreateTable.{name, statements: L.toArray(statements), ifNotExists};
+  CreateTable.{name, statements: L.toArray(statements), ifNotExists};
 
 let createTableWith = (~ifNotExists=true, name, statements) =>
-  Sql.CreateTable.{name, statements: L.toArray(statements), ifNotExists};
+  CreateTable.{name, statements: L.toArray(statements), ifNotExists};
 
-let createView = (~ifNotExists=true, name, query) => Sql.CreateView.{name, query, ifNotExists};
+let createView = (~ifNotExists=true, name, query) => CreateView.{name, query, ifNotExists};
 
 module Types = {
   let int = typeName("INTEGER");

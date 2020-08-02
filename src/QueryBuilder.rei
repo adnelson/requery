@@ -62,20 +62,19 @@ let typed: (expr, typeName) => expr;
  *  Dealing with specialized name types
  **********************************************/
 
-// A single column, from a string
-let col: string => expr;
+// A single column, from a columnName. Recall that columns and columnNames
+// differ in that the former can be `*` and can be prefixed with a table
+// name, while columnNames are just wrapped strings.
+let col: columnName => expr;
 
 // Multiple columns
-let cols: list(string) => list(expr);
+let cols: list(columnName) => list(expr);
 
 // A single column, from a column name
 let col_: column => expr;
 
-// A single column from a string table name and string column name
-let tcol: (string, string) => expr;
-
 // A single column from a table name and column name
-let tcol_: (tableName, columnName) => expr;
+let tcol: (tableName, columnName) => expr;
 
 // Make a `tableName` from a string
 let tname: string => tableName;
@@ -95,12 +94,8 @@ let typeName: string => typeName;
 // To make a `columnName` use `cname`.
 let column: string => column;
 
-// Make a `column` with a table name, e.g. `fruits.color`. Table name
-// comes first.
-let tcolumn: (string, string) => column;
-
 // Make a `column` object from a table name and column name.
-let tcolumn_: (tableName, columnName) => column;
+let tcolumn: (tableName, columnName) => column;
 
 // Make multiple `column`s from strings.
 let columns: list(string) => list(column);
@@ -277,10 +272,10 @@ let whereExists: (select, selectInUnion) => selectInUnion;
 
 let groupBy: (~having: expr=?, list(expr), selectInUnion) => selectInUnion;
 let groupBy1: (~having: expr=?, expr, selectInUnion) => selectInUnion;
-let groupByColumn: (~having: expr=?, string, selectInUnion) => selectInUnion;
-let groupByCol: (~having: expr=?, string, selectInUnion) => selectInUnion; // alias
-let groupByColumns: (~having: expr=?, list(string), selectInUnion) => selectInUnion;
-let groupByCols: (~having: expr=?, list(string), selectInUnion) => selectInUnion; // alias
+let groupByColumn: (~having: expr=?, columnName, selectInUnion) => selectInUnion;
+let groupByCol: (~having: expr=?, columnName, selectInUnion) => selectInUnion; // alias
+let groupByColumns: (~having: expr=?, list(columnName), selectInUnion) => selectInUnion;
+let groupByCols: (~having: expr=?, list(columnName), selectInUnion) => selectInUnion; // alias
 
 let union1: (selectInUnion, select) => select;
 let union: (selectVariant, select) => select;
@@ -390,7 +385,7 @@ let primaryKeyCol:
 let constraintName: string => constraintName;
 
 // Define a single constraint as a statement.
-let constraint_: (~a: string=?, tableConstraint('tr)) => tableStatement('tr);
+let constraint_: (~a: constraintName=?, tableConstraint('tr)) => tableStatement('tr);
 
 // Table-level constraints
 let primaryKey: list(columnName) => tableConstraint('tr);

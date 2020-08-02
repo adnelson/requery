@@ -61,6 +61,7 @@ module type ColumnType = {
     | Named(ColumnName.t);
   type t;
   let fromString: string => t;
+  let fromColumnName: ColumnName.t => t;
   let fromStringWithTable: (TableName.t, string) => t;
   let fromColumnNameWithTable: (TableName.t, ColumnName.t) => t;
   let all: t;
@@ -89,6 +90,7 @@ module Column: ColumnType = {
   // e.g. 'foo' or 'mytable.foo'
   type t = (option(TableName.t), col);
   let fromString: string => t = c => (None, colFromString(c));
+  let fromColumnName = cn => (None, Named(cn));
   let fromStringWithTable: (TableName.t, string) => t = (t, c) => (Some(t), colFromString(c));
   let all: t = (None, All);
   let allFrom: TableName.t => t = t => (Some(t), All);

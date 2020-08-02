@@ -85,12 +85,14 @@ module Book = {
 let authorBooksSelect =
   QueryBuilder.(
     select(
-      [e(tcol("a", "id"), ~a="author id")]
+      [e(tcol(tname("a"), cname("id")), ~a="author id")]
       |> from(
            table(Author.tableName, ~a="a")
            |> innerJoin(
                 table(Book.tableName, ~a="b"),
-                QB.Op.(tcol("a", "id") == tcol("b", "author id")),
+                QB.Op.(
+                  tcol(tname("a"), cname("id")) == tcol(tname("b"), cname("author id"))
+                ),
               ),
          ),
     )

@@ -7,7 +7,7 @@ module OperatorTests = {
     test("xor", () => {
       expect(bool(true)->xor(bool(false))->RenderQuery.Default.Expression.render)
       ->toMatchSnapshot();
-      expect(col("foobar")->xor(bool(false))->RenderQuery.Default.Expression.render)
+      expect(col(cname("foobar"))->xor(bool(false))->RenderQuery.Default.Expression.render)
       ->toMatchSnapshot();
     })
   });
