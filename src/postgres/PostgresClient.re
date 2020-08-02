@@ -84,7 +84,12 @@ module Pool = {
   // If you don't want to manage the setup/teardown of the pool, you can
   // use `runPoolClient`.
   let runClientInPool =
-      (~onQuery=?, ~onResult=?, pool: BsPostgres.Pool.t, action: client => Js.Promise.t('a)) =>
+      (
+        ~onQuery: option((client, query) => unit)=?,
+        ~onResult: option((client, query, result) => unit)=?,
+        pool: BsPostgres.Pool.t,
+        action: client => Js.Promise.t('a),
+      ) =>
     BsPostgres.Pool.Promise.connect(pool)
     ->P.map(client =>
         Client.make(
