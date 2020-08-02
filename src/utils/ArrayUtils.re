@@ -4,8 +4,16 @@ module O = Belt.Option;
 
 include Belt.Array;
 
+let toList = Belt.List.fromArray;
+let mapToList = (arr, f) => arr->map(f)->toList;
+
+[@bs.val] [@bs.variadic] external maxFloat: array(float) => float = "Math.max";
+
+[@bs.val] [@bs.variadic] external maxInt: array(int) => int = "Math.max";
+
 let max: array(float) => float = arr => reduce(arr, neg_infinity, max);
 let min: array(float) => float = arr => reduce(arr, infinity, min);
+
 let contains: (array('a), 'a) => bool = (arr, elem) => some(arr, e => e == elem);
 let joinWith: (array(string), string) => string = (arr, sep) => Js.Array.joinWith(sep, arr);
 let joinSpaces: array(string) => string = arr => joinWith(arr, " ");

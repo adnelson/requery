@@ -3,7 +3,6 @@ module IMap = Belt.Map.Int;
 module ISet = Belt.Set.Int;
 module SMap = Belt.Map.String;
 module SSet = Belt.Set.String;
-module Promise = Js.Promise;
 
 // Throw an exception as a native javascript error. Acts like failwith but
 // will have a stack trace if triggered.

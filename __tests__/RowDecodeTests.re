@@ -1,6 +1,6 @@
 open Jest;
 open Expect;
-open Utils;
+open Utils.Abbreviations;
 module RD = RowDecode;
 
 // Test decoding dictionaries
