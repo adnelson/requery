@@ -63,19 +63,17 @@ let fromPgClient = (~onQuery=?, ~onResult=?, client: BsPostgres.Client.t) =>
 
 // Pooled connections
 module Pool = {
-  type pool = BsPostgres.Pool.t;
-  type result = BsPostgres.Result.t(Js.Json.t);
-  let makePool = ({Config.host, database, port, user, password}): pool =>
+  let makePool = ({Config.host, database, port, user, password}): BsPostgres.Pool.t =>
     BsPostgres.Pool.make(~host, ~database, ~port, ~user?, ~password?, ());
 
-  let makeClient = (~onQuery=?, ~onResult=?, pool) =>
+  let makeClient = (~onQuery=?, ~onResult=?, pool: BsPostgres.Pool.t) =>
     BsPostgres.Pool.Promise.connect(pool)->P.map(h => fromPgClient(~onQuery?, ~onResult?, h));
 
   let releaseClient = BsPostgres.Pool.Pool_Client.release;
   let releasePool = BsPostgres.Pool.Promise.end_;
 
   // Abstracts setup/teardown of a postgres connection pool.
-  let runPool: (Config.t, pool => Js.Promise.t('a)) => Js.Promise.t('a) =
+  let runPool: (Config.t, BsPostgres.Pool.t => Js.Promise.t('a)) => Js.Promise.t('a) =
     (config, action) => {
       let pool = makePool(config);
       action(pool)->finally(() => releasePool(pool)->ignore);
@@ -85,7 +83,8 @@ module Pool = {
   // client is automatically released afterwards.
   // If you don't want to manage the setup/teardown of the pool, you can
   // use `runPoolClient`.
-  let runClientInPool = (~onQuery=?, ~onResult=?, pool, action: client => Js.Promise.t('a)) =>
+  let runClientInPool =
+      (~onQuery=?, ~onResult=?, pool: BsPostgres.Pool.t, action: client => Js.Promise.t('a)) =>
     BsPostgres.Pool.Promise.connect(pool)
     ->P.map(client =>
         Client.make(
@@ -95,14 +94,15 @@ module Pool = {
           ~onResult?,
           ~queryRaw=runRaw,
           ~queryToSql=PostgresRender.pgRender,
-          ~resultToRows=(result: result) => RowDecode.toRows(result##rows),
+          ~resultToRows=
+            (result: BsPostgres.Result.t(Js.Json.t)) => RowDecode.toRows(result##rows),
           (),
         )
       )
     // TODO return a promise which waits for the finish of the `releaseClient`
-    |> then_(client =>
-         action(client)->finally(() => releaseClient(Client.handle(client))->ignore)
-       );
+    ->P.flatMap(client =>
+        action(client)->finally(() => releaseClient(Client.handle(client))->ignore)
+      );
 
   // Abstracts setup/teardown of both a connection pool, and a client within
   // that pool.
