@@ -173,7 +173,7 @@ let queryRawRows: 'h 'r 'q. (t('h, 'r, 'q), string) => P.t(rows) =
 
 // Execute a query with raw SQL and parse the resulting rows.
 let queryRawDecode:
-  'h 'r 'q.
+  'h 'r 'q 'a.
   (t('h, 'r, 'q), RowDecode.fromRows('a), string) => P.t(QueryResult.t('a))
  =
   (client, fromRows, rawSql) => client->queryRawRows(rawSql)->P.map(decodeResult(fromRows));
