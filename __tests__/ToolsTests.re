@@ -23,6 +23,12 @@ module TableToolsTests = {
       ->toBe(Some(QB.Types.text));
       expect(defMap->M.has("blabla"->QB.cname))->toBe(false);
     });
+    test("getCol", () => {
+      expect(authors->TableTools.getCol("id"))->toEqual("id"->QB.cname);
+      expect(() =>
+        authors->TableTools.getCol("not a real column")
+      )->toThrowSomething;
+    });
     test("primaryKeyColumn", () =>
       expect(authors->TableTools.primaryKeyColumn)->toEqual(Some("id"->QB.cname))
     );
