@@ -306,7 +306,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
           |]
           ->spaces;
 
-    let renderWith: ('tr => string, t_('tr)) => string =
+    let renderWith: ('tr => string, t('tr)) => string =
       (renderTableRef, {name, statements, ifNotExists}) =>
         [|
           "CREATE TABLE",
@@ -318,7 +318,7 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
         ->spaces;
 
     // Common case: referencing tables by name
-    let render: t => string = renderWith(TableName.toString);
+    let render: t(TableName.t) => string = renderWith(TableName.toString);
   };
 
   module CreateView = {
@@ -337,9 +337,10 @@ module WithRenderingRules = (S: SqlRenderingRules) => {
   let insert:
     (~returning: 'r => string=?, ~onConflict: 'oc => string=?, Sql.Insert.t('r, 'oc)) => string = Insert.render;
   // Supply a custom renderer to
-  let createTableWith: 'tr. (~tableRef: 'tr => string, Sql.CreateTable.t_('tr)) => string =
+  let createTableWith: 'tr. (~tableRef: 'tr => string, Sql.CreateTable.t('tr)) => string =
     (~tableRef) => CreateTable.renderWith(tableRef);
-  let createTable: Sql.CreateTable.t => string = createTableWith(~tableRef=TableName.render);
+  let createTable: Sql.CreateTable.t(TableName.t) => string =
+    createTableWith(~tableRef=TableName.render);
   let createView: Sql.CreateView.t => string = CreateView.render;
   let renderGeneric:
     'r 'c 'c 'tr.

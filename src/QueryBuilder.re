@@ -21,7 +21,7 @@ type direction = Select.direction;
 type insert('r, 'oc) = Insert.t('r, 'oc);
 type tableStatement('tr) = CreateTable.statement('tr);
 type onDelete = CreateTable.onDelete;
-type createTable('tr) = CreateTable.t_('tr);
+type createTable('tr) = CreateTable.t('tr);
 type createView = CreateView.t;
 type whereClause = Select.whereClause;
 type row = list((columnName, expr));
@@ -290,19 +290,17 @@ let into = (t, f) => f(t);
 let cdef =
     (~primaryKey=false, ~notNull=true, ~unique=false, ~check=?, ~default=?, name, type_)
     : tableStatement('tr) =>
-  CreateTable.(
-    ColumnDef({
-      name,
-      type_,
-      constraints: {
-        primaryKey,
-        notNull,
-        unique,
-        check,
-        default,
-      },
-    })
-  );
+  ColumnDef({
+    CreateTable.name,
+    type_,
+    constraints: {
+      primaryKey,
+      notNull,
+      unique,
+      check,
+      default,
+    },
+  });
 
 let nullableCol = (~unique=?, ~check=?, ~default=?) =>
   cdef(~primaryKey=false, ~notNull=false, ~unique?, ~check?, ~default?);
@@ -326,11 +324,17 @@ let primaryKey1 = name => primaryKey([name]);
 
 let createTable =
     (~ifNotExists=true, name, statements: list(tableStatement(tableName)))
-    : createTable(tableName) =>
-  CreateTable.{name, statements: L.toArray(statements), ifNotExists};
+    : createTable(tableName) => {
+  CreateTable.name,
+  statements: L.toArray(statements),
+  ifNotExists,
+};
 
-let createTableWith = (~ifNotExists=true, name, statements) =>
-  CreateTable.{name, statements: L.toArray(statements), ifNotExists};
+let createTableWith = (~ifNotExists=true, name, statements) => {
+  CreateTable.name,
+  statements: L.toArray(statements),
+  ifNotExists,
+};
 
 let createView = (~ifNotExists=true, name, query) => CreateView.{name, query, ifNotExists};
 

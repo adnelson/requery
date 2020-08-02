@@ -293,6 +293,10 @@ module CreateTable = {
     constraints: columnConstraints,
   };
 
+  let defName = ({name}) => name;
+  let defType = ({type_}) => type_;
+  let defConstraints = ({constraints}) => constraints;
+
   let makeColumnDef = (~name, type_, constraints) => {name, type_, constraints};
 
   // TODO this is only a prototype
@@ -311,14 +315,11 @@ module CreateTable = {
     | Constraint(option(ConstraintName.t), tableConstraint('tableRef));
 
   // Generic to any table reference
-  type t_('tableRef) = {
+  type t('tableRef) = {
     name: TableName.t,
     statements: array(statement('tableRef)),
     ifNotExists: bool,
   };
-
-  // Referencing a table by name
-  type t = t_(TableName.t);
 };
 
 module CreateView = {
@@ -334,7 +335,7 @@ module CreateView = {
 type query('returning, 'onConflict, 'createCustom, 'tableRef) =
   | Select(Select.t)
   | Insert(Insert.t('returning, 'onConflict))
-  | CreateTable(CreateTable.t_('tableRef))
+  | CreateTable(CreateTable.t('tableRef))
   | CreateView(CreateView.t)
   | CreateCustom('createCustom);
 

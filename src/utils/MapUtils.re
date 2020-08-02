@@ -15,8 +15,15 @@ type entries('k, 'a);
 
 [@bs.send] external entries: t('k, 'a) => entries('k, 'a) = "entries";
 
+let entriesAsArray:
+  (entries('k, 'v), array(('k, 'v)) => array(('k, 'v2))) => entries('k, 'v2) =
+  (entries, f) => entries->Obj.magic->f->Obj.magic;
+
 [@bs.send]
 external mapEntries: (entries('k, 'a), (('k, 'a)) => ('k, 'b)) => entries('k, 'b) = "map";
+
+[@bs.send]
+external filterEntries: (entries('k, 'a), (('k, 'a)) => bool) => entries('k, 'b) = "filter";
 
 [@bs.send]
 external concatEntries: (entries('k, 'a), entries('k, 'a)) => entries('k, 'a) = "concat";
@@ -24,13 +31,30 @@ external concatEntries: (entries('k, 'a), entries('k, 'a)) => entries('k, 'a) = 
 // TODO remove magic
 let singletonEntries: ('k, 'a) => entries('k, 'a) = (k, v) => Obj.magic([|(k, v)|]);
 
+[@bs.send] external entries: t('k, 'a) => entries('k, 'a) = "entries";
 [@bs.new] external fromEntries: entries('k, 'a) => t('k, 'a) = "Map";
 
-[@bs.send] external get: (t('k, 'a), 'k) => option('a) = "get";
-
+[@bs.send] [@bs.return nullable] external get: (t('k, 'a), 'k) => option('a) = "get";
+[@bs.send] external has: (t('k, 'a), 'k) => bool = "has";
 [@bs.send] external set: (t('k, 'a), 'k, 'v) => unit = "set";
-
 [@bs.send] external delete: (t('k, 'a), 'k) => bool = "delete";
+[@bs.send] external keys: t('k, 'a) => Js.Array.array_like('k) = "keys";
+
+let keyArray: t('k, 'a) => array('k) = m => m->keys->Js.Array.from;
+
+// Construct a map with string keys
+let fromArrayStringKeys: 'k 'v. (array(('k, 'v)), 'k => string) => t('k, 'a) =
+  (arr, keyToString) => {
+    let entries = Obj.magic(arr->A.mapFst(keyToString));
+    fromEntries(entries);
+  };
+
+// Construct a map with int keys
+let fromArrayIntKeys: 'k 'v. (array(('k, 'v)), 'k => int) => t('k, 'a) =
+  (arr, keyToInt) => {
+    let entries = Obj.magic(arr->A.mapFst(keyToInt));
+    fromEntries(entries);
+  };
 
 // Map a function over the values in a map.
 let map: (t('k, 'a), 'a => 'b) => t('k, 'b) =
@@ -46,6 +70,18 @@ let mapWithKeys: (t('k, 'a), (string, 'a) => 'b) => t('k, 'b) =
     fromEntries(mapEntries(entries, ((k, v)) => (k, f(k, v))));
   };
 
+let keep: (t('k, 'a), 'a => bool) => t('k, 'a) =
+  (m, f) => m->entries->filterEntries(((k, v)) => f(v))->fromEntries;
+
+let keepMap: (t('k, 'a), 'a => option('b)) => t('k, 'b) =
+  (m, f) =>
+    m
+    ->entries
+    ->entriesAsArray(arr =>
+        arr->Belt.Array.keepMap(((k, v)) => f(v)->Belt.Option.map(v' => (k, v')))
+      )
+    ->fromEntries;
+
 // Set a key in a dictionary, producing a new dictionary.
 // TODO remove obj.magic
 let setPure: (t('k, 'a), string, 'a) => t('k, 'a) =
@@ -60,9 +96,6 @@ let getExn = (d, k) =>
   | None => throw("No such key '" ++ k ++ "' in ")
   | Some(v) => v
   };
-
-// I really shouldn't have to be implementing this myself but ohhhh wellll
-let has = (m, key) => Belt.Option.isSome(get(m, key));
 
 module String = {
   [@bs.new] external empty: unit => t(string, 'a) = "Map";

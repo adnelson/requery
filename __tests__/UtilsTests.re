@@ -13,3 +13,27 @@ module String = {
     );
   });
 };
+
+module Map = {
+  open MapUtils;
+  describe("maps", () => {
+    test("string", () => {
+      let map = String.fromArray([|("foo", "bar")|]);
+      expect(map->get("foo"))->toEqual(Some("bar"));
+    });
+    test("int", () => {
+      let map = Int.fromArray([|(123, "bar")|]);
+      expect(map->get(123))->toEqual(Some("bar"));
+    });
+    test("string-like", () => {
+      module MyString =
+        Opaque.String.Make(
+          Opaque.String.Validation.NoValidation,
+          {},
+        );
+      let map =
+        fromArrayStringKeys([|(MyString.fromString("foo"), "bar")|], MyString.toString);
+      expect(map->get(MyString.fromString("foo")))->toEqual(Some("bar"));
+    });
+  });
+};

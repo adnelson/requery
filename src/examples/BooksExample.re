@@ -2,11 +2,7 @@ module QB = QueryBuilder;
 module RE = RowEncode;
 module Rules = RenderQuery.DefaultRules;
 module Render = RenderQuery.WithRenderingRules(Rules);
-module P = PromiseUtils;
-module J = JsonUtils;
-module JD = JsonUtils.Decode;
-module JE = JsonUtils.Encode;
-module C = Requery.Client;
+open Utils.Abbreviations;
 let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
   P.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 
@@ -116,16 +112,16 @@ let getAuthorIdsCTE =
   );
 
 let run = (client, idType) => {
-  client->C.createTable(Author.createTable(idType))
-  |> then_(_ => client->C.createTable(Book.createTable(idType)))
+  client->Client.createTable(Author.createTable(idType))
+  |> then_(_ => client->Client.createTable(Book.createTable(idType)))
   // TODO when figure out ifNotExists problem
-  //  |> then_(_ => C.createView(client, authorBooksSelect |> createView(tname("author_books"))))
+  //  |> then_(_ => Client.createView(client, authorBooksSelect |> createView(tname("author_books"))))
   |> then_(_
        // Inserting with an explicit query, using columns2 to define the
        // encoding on the fly
        =>
          insertAuthors
-         |> C.insert(client)
+         |> Client.insert(client)
          // Inserting using the Author-specific functions
          |> then_(_ =>
               QB.(
@@ -137,12 +133,12 @@ let run = (client, idType) => {
                 |> insertMany(Author.toRow)
                 |> into(Author.tableName)
               )
-              |> C.insert(client)
+              |> Client.insert(client)
             )
          // Selecting author rows, decoding as tuples
          |> then_(_ =>
               QB.(select([e(all)] |> from(table(Author.tableName))))
-              |> C.select(
+              |> Client.select(
                    client,
                    RowDecode.(decodeEach(columns3("id", int, "first", string, "last", string))),
                  )
@@ -152,7 +148,7 @@ let run = (client, idType) => {
          // Selecting author rows, decoding as Author objects
          |> then_(_ =>
               QB.(select([e(all)] |> from(table(Author.tableName))))
-              |> C.select(client, RowDecode.(decodeEach(Author.fromJson)))
+              |> Client.select(client, RowDecode.(decodeEach(Author.fromJson)))
             )
          |> then_(rows => rLog(rows))
          // Use a WITH query (CTE)
@@ -165,7 +161,7 @@ let run = (client, idType) => {
                   select([e(all)] |> from(table(tname("author_ids")))),
                 )
               )
-              |> C.select(client, RowDecode.(decodeEach(field("id", int))))
+              |> Client.select(client, RowDecode.(decodeEach(field("id", int))))
             )
          |> then_(rows => rLog(rows))
        );

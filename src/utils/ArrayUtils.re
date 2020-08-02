@@ -108,3 +108,11 @@ let firsts: array(('a, 'b)) => array('a) = arr => map(arr, fst);
 
 // Convenient alias, get second elements from a tuple array
 let seconds: array(('a, 'b)) => array('b) = arr => map(arr, snd);
+
+// Map a function over the first element of each tuple in an array.
+let mapFst: 'a1 'a2 'b. (array(('a1, 'b)), 'a1 => 'a2) => array(('a2, 'b)) =
+  (arr, f) => arr->map(((x, y)) => (f(x), y));
+
+// Map a function over the second element of each tuple in an array.
+let mapSnd: 'a 'b1 'b2. (array(('a, 'b1)), 'b1 => 'b2) => array(('a, 'b2)) =
+  (arr, f) => arr->map(((x, y)) => (x, f(y)));
