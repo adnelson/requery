@@ -51,8 +51,7 @@ module CreateType = {
       {},
     );
 
-  // Raised in the query builder function. Might be worth
-  // moving this logic here
+  // Raised by `makeEnum` if there are no values in the enum
   exception NoValuesInEnum(TypeName.t);
 
   type typeVariant =

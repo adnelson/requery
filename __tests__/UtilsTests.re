@@ -31,8 +31,7 @@ module Map = {
           Opaque.String.Validation.NoValidation,
           {},
         );
-      let map =
-        fromArrayStringKeys([|(MyString.fromString("foo"), "bar")|], MyString.toString);
+      let map = fromArray([|(MyString.fromString("foo"), "bar")|]);
       expect(map->get(MyString.fromString("foo")))->toEqual(Some("bar"));
     });
   });

@@ -116,3 +116,26 @@ let mapFst: 'a1 'a2 'b. (array(('a1, 'b)), 'a1 => 'a2) => array(('a2, 'b)) =
 // Map a function over the second element of each tuple in an array.
 let mapSnd: 'a 'b1 'b2. (array(('a, 'b1)), 'b1 => 'b2) => array(('a, 'b2)) =
   (arr, f) => arr->map(((x, y)) => (x, f(y)));
+
+type array_like('a) = Js.Array.array_like('a);
+
+module ArrayLike = {
+  type t('a) = Js.Array.array_like('a);
+
+  external fromArray: array('a) => t('a) = "%identity";
+  let toArray: t('a) => array('a) = Js.Array.from;
+
+  [@bs.send] external map: (t('a), 'a => 'b) => t('b) = "map";
+
+  [@bs.send] external filter: (t('a), 'a => bool) => t('a) = "filter";
+
+  [@bs.send] external concat: (t('a), t('a)) => t('a) = "concat";
+  [@bs.send] external concatArray: (t('a), array('a)) => t('a) = "concat";
+
+  // Treat an array as an array_like
+  // external onArray: t('a) => (array('a) => array('b)) => t('b) = (al, f) => al->toArrayLike
+
+  // Run an array function on an array_like
+  let onArray: 'a 'b. (t('a), array('a) => array('b)) => t('b) =
+    (al, f) => al->toArray->f->fromArray;
+};

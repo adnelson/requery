@@ -22,8 +22,7 @@ module TableTools = {
 
   // Get column definitions as a map keyed on column name
   let columnDefMap: CreateTable.t('a) => M.t(ColumnName.t, CreateTable.columnDef) =
-    tbl =>
-      tbl->columnDefs->A.map(cd => (cd.name, cd))->M.fromArrayStringKeys(ColumnName.toString);
+    tbl => tbl->columnDefs->A.map(cd => (cd.name, cd))->M.fromArray;
 
   // Look up a column on this table by string. If it exists, it's turned into
   // a column name. If not, an exception is raised. This allows a safer way to
@@ -52,5 +51,5 @@ module TableTools = {
           | Constraint(_, ForeignKey(cn, (tref, otherCol), _)) => Some((cn, (tref, otherCol)))
           | _ => None,
         )
-      ->M.fromArrayStringKeys(ColumnName.toString);
+      ->M.fromArray;
 };
