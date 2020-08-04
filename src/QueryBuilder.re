@@ -28,11 +28,16 @@ type row = list((columnName, expr));
 type toSelect('t) = 't => select;
 type toInsert('r, 'oc, 't) = ('t, tableName) => insert('r, 'oc);
 type toColumnName('t) = 't => columnName;
+type columnDef = CreateTable.columnDef;
+type toColumnDef('t) = 't => columnDef;
+type toColumnDefs('a) = 'a => list(columnDef);
+type toTableStatement('tr, 't) = 't => tableStatement('tr);
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
 
 let typeName = TypeName.fromString;
 let typed = (e, t) => E.Typed(e, t);
+type toTypeName('a) = 'a => typeName;
 
 let null = E.Atom(E.Null);
 let nullable = (toExpr, opt) => O.mapWithDefault(opt, null, toExpr);

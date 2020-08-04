@@ -19,6 +19,7 @@ type createTable('tr) = Sql.CreateTable.t('tr);
 type createView = Sql.CreateView.t;
 type whereClause = Sql.Select.whereClause;
 type onDelete = Sql.CreateTable.onDelete;
+type columnDef = Sql.CreateTable.columnDef;
 
 /****************************
  * Encoder types
@@ -30,6 +31,10 @@ type toInsert('r, 'oc, 't) = ('t, tableName) => insert('r, 'oc);
 type toColumnName('t) = 't => columnName;
 type toExpr('t) = 't => expr;
 type toRow('t) = 't => row;
+type toColumnDef('t) = 't => columnDef;
+type toColumnDefs('a) = 'a => list(columnDef);
+type toTableStatement('tr, 't) = 't => tableStatement('tr);
+type toTypeName('a) = 'a => typeName;
 
 /***************************
  * Expressions

@@ -297,7 +297,20 @@ module CreateTable = {
   let defType = ({type_}) => type_;
   let defConstraints = ({constraints}) => constraints;
 
-  let makeColumnDef = (~name, type_, constraints) => {name, type_, constraints};
+  let makeColumnDefWithConstraints = (~name, type_, constraints) => {name, type_, constraints};
+
+  let makeColumnDef =
+      (~primaryKey, ~notNull=false, ~unique=false, ~check=?, ~default=?, name, type_) => {
+    name,
+    type_,
+    constraints: {
+      primaryKey,
+      notNull,
+      unique,
+      check,
+      default,
+    },
+  };
 
   // TODO this is only a prototype
   type onDelete =
