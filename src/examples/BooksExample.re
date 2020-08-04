@@ -6,6 +6,12 @@ open Utils.Abbreviations;
 let (then_, then2, resolve, catch, rLog, finally, all2, rLog2) =
   P.(then_, then2, resolve, catch, rLog, finally, all2, rLog2);
 
+// It's not necessary to pre-define your column names but it can help
+// reduce the chance of typos.
+let idCol = QB.cname("id");
+let firstCol = QB.cname("first");
+let lastCol = QB.cname("last");
+
 module Author = {
   let tableName = QB.tname("author");
   type t('id) = {
@@ -14,8 +20,7 @@ module Author = {
     last: string,
   };
   let make = (first, last) => {id: (), first, last};
-  let toRow = ({first, last}) =>
-    RE.(stringRow([("first", first |> string), ("last", last |> string)]));
+  let toRow = ({first, last}) => RE.[(firstCol, first |> string), (lastCol, last |> string)];
   let toJson = author =>
     JE.(
       object_([
@@ -140,7 +145,9 @@ let run = (client, idType) => {
               QB.(select([e(all)] |> from(table(Author.tableName))))
               |> Client.select(
                    client,
-                   RowDecode.(decodeEach(columns3("id", int, "first", string, "last", string))),
+                   RowDecode.(
+                     decodeEach(columns3(idCol, int, firstCol, string, lastCol, string))
+                   ),
                  )
             )
          // Log them to console

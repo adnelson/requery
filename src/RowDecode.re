@@ -3,6 +3,7 @@ module A = ArrayUtils;
 module D = DictUtils;
 module O = OptionUtils;
 module S = StringUtils;
+module ColumnName = Sql.ColumnName;
 type dict('a) = D.t('a);
 
 type error =
@@ -90,25 +91,28 @@ let jsonRows: fromRows(array(Js.Json.t)) = decodeEach(j => j);
 let decodeReduce: (fromJson('a), 'b, ('a, 'b) => 'b) => fromRows('b) =
   (dec, start, f, rows) => A.reduce(decodeEach(dec, rows), start, f);
 
-let optColumn: (string, fromJson('t)) => fromRows(option('t)) =
-  (col, dec, rows) => O.map(A.head(rows), Row.decodeJson(field(col, dec)));
+let optColumn: (ColumnName.t, fromJson('t)) => fromRows(option('t)) =
+  (col, dec, rows) =>
+    O.map(A.head(rows), Row.decodeJson(field(col->ColumnName.toString, dec)));
 
 // Get one column, with the given name and with the given decoder.
-// Alias for `Json.Decode.field`
-let column1: (string, fromJson('t)) => fromJson('t) = field;
+// Uses `Json.Decode.field` under the hood
+let column1: (ColumnName.t, fromJson('t)) => fromJson('t) =
+  (col, fj) => field(col->ColumnName.toString, fj);
 
-let columns2: (string, fromJson('a), string, fromJson('b)) => fromJson(('a, 'b)) =
+let columns2: (ColumnName.t, fromJson('a), ColumnName.t, fromJson('b)) => fromJson(('a, 'b)) =
   (columnA, decodeA, columnB, decodeB, j) => (
-    j |> field(columnA, decodeA),
-    j |> field(columnB, decodeB),
+    j |> column1(columnA, decodeA),
+    j |> column1(columnB, decodeB),
   );
 
 let columns3:
-  (string, fromJson('a), string, fromJson('b), string, fromJson('c)) => fromJson(('a, 'b, 'c)) =
+  (ColumnName.t, fromJson('a), ColumnName.t, fromJson('b), ColumnName.t, fromJson('c)) =>
+  fromJson(('a, 'b, 'c)) =
   (columnA, decodeA, columnB, decodeB, columnC, decodeC, j) => (
-    j |> field(columnA, decodeA),
-    j |> field(columnB, decodeB),
-    j |> field(columnC, decodeC),
+    j |> column1(columnA, decodeA),
+    j |> column1(columnB, decodeB),
+    j |> column1(columnC, decodeC),
   );
 
 // Given a row where one of the fields is an ID, a decoder for
