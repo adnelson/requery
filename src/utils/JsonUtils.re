@@ -4,6 +4,9 @@ module A = ArrayUtils;
 module D = DictUtils;
 module P = PromiseUtils;
 
+type fromJson('a) = Js.Json.t => 'a;
+type toJson('a) = 'a => Js.Json.t;
+
 let parseJsonAsResult: string => result(t, string) =
   s =>
     try(Ok(parseExn(s))) {
@@ -16,6 +19,63 @@ let parseJsonAsOption: string => option(t) =
     | Error(_) => None
     | Ok(json) => Some(json)
     };
+
+[@bs.val]
+external jsonStringify: (t, Js.Nullable.t(unit), option(int)) => string = "JSON.stringify";
+
+let stringify = (~indent=?, json) => json->jsonStringify(Js.Nullable.null, indent);
+let stringifyWith = (~indent=?, toJson, obj) =>
+  obj->toJson->jsonStringify(Js.Nullable.null, indent);
+
+let logAsJson = (~indent=?, enc: toJson('a), obj: 'a) =>
+  Js.Console.log(stringify(~indent?, enc(obj)));
+
+let logJson = (~indent=?, json) => json |> logAsJson(~indent?, j => j);
+
+let logAsJson2 = (~indent=?, encA: toJson('a), encB: toJson('b), a: 'a, b: 'b) =>
+  Js.Console.log2(stringify(~indent?, encA(a)), stringify(~indent?, encB(b)));
+
+let logAsJson3 =
+    (~indent=?, encA: toJson('a), encB: toJson('b), encC: toJson('c), a: 'a, b: 'b, c: 'c) =>
+  Js.Console.log3(
+    stringify(~indent?, encA(a)),
+    stringify(~indent?, encB(b)),
+    stringify(~indent?, encC(c)),
+  );
+
+let logAsJson4 =
+    (
+      ~indent=?,
+      encA: toJson('a),
+      encB: toJson('b),
+      encC: toJson('c),
+      encD: toJson('d),
+      a: 'a,
+      b: 'b,
+      c: 'c,
+      d: 'd,
+    ) =>
+  Js.Console.log4(
+    stringify(~indent?, encA(a)),
+    stringify(~indent?, encB(b)),
+    stringify(~indent?, encC(c)),
+    stringify(~indent?, encD(d)),
+  );
+
+// Traverse a JSON structure with a function
+let rec reduce: 'a. (Js.Json.t, 'a, ('a, Js.Json.t) => 'a) => 'a =
+  (json, result, f) => {
+    let newResult = f(result, json);
+    switch (json->classify) {
+    | JSONFalse
+    | JSONTrue
+    | JSONNull
+    | JSONString(_)
+    | JSONNumber(_) => newResult
+    | JSONArray(arr) => arr->A.reduce(newResult, (r: 'a, j) => j->reduce(r, f))
+    | JSONObject(obj) => obj->D.reduce(newResult, (r: 'a, j) => j->reduce(r, f))
+    };
+  };
 
 module Decode = {
   include Json.Decode;
@@ -51,6 +111,13 @@ module Decode = {
     fromJson(('a, 'b, 'c, 'd, 'e)) =
     (f1, f2, f3, f4, f5, obj) => (obj |> f1, obj |> f2, obj |> f3, obj |> f4, obj |> f5);
 
+  // Passes the key as a first argument to the decoder, allowing you to
+  // customize decoder behavior based on key
+  let dictWithKey: (string => fromJson('a)) => fromJson(D.t('a)) =
+    (inner, obj) => dict(json, obj)->D.mapWithKey(inner);
+
+  // Passes the key as a first argument to the decoder, allowing you to
+  // customize decoder behavior based on key
   let strMapWithKey: (string => fromJson('a)) => fromJson(SMap.t('a)) =
     (inner, obj) => {
       let entries = obj |> dict(x => x) |> D.entries;
@@ -75,18 +142,3 @@ module Encode = {
   let object1: (string, toJson('a)) => toJson('a) =
     (key, encodeInner, inner) => object_([(key, encodeInner(inner))]);
 };
-
-let pretty: Js.Json.t => string = [%bs.raw {|json => JSON.stringify(json, null, 2)|}];
-let pretty_ = pretty; // alias to avoid name clash below
-let rLog = (~pretty=false, enc: Encode.toJson('a), obj: 'a) =>
-  P.rLog((pretty ? pretty_ : Json.stringify)(enc(obj)));
-let rLogReturn = (~pretty=false, enc: Encode.toJson('a)) =>
-  P.rLogReturn(obj => (pretty ? pretty_ : Json.stringify)(enc(obj)));
-let rLogJson = rLog(Encode.json);
-let rLog2 = (~pretty=false, encA: Encode.toJson('a), encB: Encode.toJson('b), a: 'a, b: 'b) => {
-  let toStr = pretty ? pretty_ : Json.stringify;
-  P.rLog2(toStr(encA(a)), toStr(encB(b)));
-};
-
-type fromJson('a) = Decode.fromJson('a);
-type toJson('a) = Encode.toJson('a);

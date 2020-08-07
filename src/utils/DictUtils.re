@@ -11,7 +11,7 @@ let map: (t('a), 'a => 'b) => t('b) =
   };
 
 // Map a function over the key/value pairs in a dict.
-let mapWithKeys: (t('a), (string, 'a) => 'b) => t('b) =
+let mapWithKey: (t('a), (string, 'a) => 'b) => t('b) =
   (dict, f) => {
     let entries = entries(dict);
     fromArray(A.map(entries, ((k, v)) => (k, f(k, v))));
@@ -40,3 +40,7 @@ let fromKeys = (ks: array(string), f: string => 'a): Js.Dict.t('a) =>
 
 // I really shouldn't have to be implementing this myself but ohhhh wellll
 let has = (dict, key) => Belt.Option.isSome(get(dict, key));
+
+// Traverse over dictionary entries with a function
+let reduce: 'a 'b. (t('a), 'b, ('b, 'a) => 'b) => 'b =
+  (dict, start, f) => dict->values->A.reduce(start, f);

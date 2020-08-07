@@ -177,3 +177,7 @@ let queryRawDecode:
   (t('h, 'r, 'q), RowDecode.fromRows('a), string) => P.t(QueryResult.t('a))
  =
   (client, fromRows, rawSql) => client->queryRawRows(rawSql)->P.map(decodeResult(fromRows));
+
+// Execute a file containing SQL.
+let execFile: 'h 'r 'q. (t('h, 'r, 'q), ~path: string) => P.t(unit) =
+  (client, ~path) => P.(readFile(path)->flatMap(contents => client->execRaw(contents)));
