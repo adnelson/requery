@@ -1,18 +1,6 @@
 include Node.Fs;
 module P = PromiseUtils;
 
-type callback('error, 'result) = (. Js.Nullable.t('error), Js.Undefined.t('result)) => unit;
-
-let resultCallback: (result('r, 'e) => unit) => callback('e, 'r) =
-  onResult =>
-    (. nullableError, possiblyUndefinedData) =>
-      switch (Js.Nullable.toOption(nullableError), Js.Undefined.toOption(possiblyUndefinedData)) {
-      | (Some(err), _) => onResult(Error(err))
-      | (None, Some(data)) => onResult(Ok(data))
-      // TODO should this return unit instead?
-      | _ => Js.Exn.raiseError("`readFile` returned no error and no data")
-      };
-
 module Error = {
   type t;
 
@@ -25,12 +13,13 @@ module Error = {
 
 type stringEncoding = [ | `utf8 | `ascii];
 
+// Read a file expecting a string back.
 [@bs.module "fs"]
-external readFile:
+external readStringFile:
   (
     ~path: string,
     ~encoding: [@bs.string] [ | `utf8 | [@bs.as "ascii"] `ascii],
-    ~cb: callback(Error.t, string)
+    ~cb: CallbackUtils.t(Error.t, string)
   ) =>
   unit =
   "readFile";
@@ -39,11 +28,11 @@ external readFile:
 let readFileAsync: (~encoding: stringEncoding=?, string) => Js.Promise.t(string) =
   (~encoding=`utf8, path) =>
     P.makeWithError((~resolve, ~reject) =>
-      readFile(
+      readStringFile(
         ~path,
         ~encoding,
         ~cb=
-          resultCallback(res =>
+          CallbackUtils.resultCallback(res =>
             switch (res) {
             | Ok(data) => resolve(. data)
             | Error(error) => reject(. error)

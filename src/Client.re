@@ -1,6 +1,7 @@
 module O = OptionUtils;
 module R = ResultUtils;
 module P = PromiseUtils;
+module Fs = FsUtils;
 let (resolve, then_, reject) = Js.Promise.(resolve, then_, reject);
 
 module QueryResult = {
@@ -179,10 +180,24 @@ let queryRawDecode:
   (client, fromRows, rawSql) => client->queryRawRows(rawSql)->P.map(decodeResult(fromRows));
 
 // Execute a file containing SQL.
-let execFile: 'h 'r 'q. (t('h, 'r, 'q), ~path: string) => P.t(unit) =
-  (client, ~path) => {
+let execFile: 'h 'r 'q. (t('h, 'r, 'q), ~encoding: Fs.stringEncoding=?, string) => P.t(unit) =
+  (client, ~encoding=?, path) => {
     // TODO implement promisify readFile
-    P.(
-      readFileUtf8(path)->flatMap(contents => client->execRaw(contents))
-    );
+    Fs.readFileAsync(~encoding?, path)
+    ->P.flatMap(contents => client->execRaw(contents));
   };
+
+// Execute a query with SQL from a file and convert the result to rows.
+let queryFileRows: 'h 'r 'q. (t('h, 'r, 'q), ~encoding: Fs.stringEncoding=?, string) => P.t(rows) =
+  (client, ~encoding=?, path) =>
+    Fs.readFileAsync(~encoding?, path)->P.flatMap(rawSql => client->queryRawRows(rawSql));
+
+/* // Execute a query with raw SQL and parse the resulting rows. */
+let queryFileDecode:
+  'a 'h 'r 'q.
+  (t('h, 'r, 'q), ~encoding: Fs.stringEncoding=?, RowDecode.fromRows('a), string) =>
+  P.t(QueryResult.t('a))
+ =
+  (client, ~encoding=?, fromRows, path) =>
+    Fs.readFileAsync(~encoding?, path)
+    ->P.flatMap(rawSql => client->queryRawDecode(fromRows, rawSql));

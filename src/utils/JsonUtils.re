@@ -63,7 +63,7 @@ let logAsJson4 =
   );
 
 // Traverse a JSON structure with a function
-let rec reduce: (Js.Json.t, 'a, ('a, Js.Json.t) => 'a) => 'a =
+let rec reduce: 'a. (Js.Json.t, 'a, ('a, Js.Json.t) => 'a) => 'a =
   (json, result, f) => {
     let newResult = f(result, json);
     switch (json->classify) {
@@ -72,8 +72,8 @@ let rec reduce: (Js.Json.t, 'a, ('a, Js.Json.t) => 'a) => 'a =
     | JSONNull
     | JSONString(_)
     | JSONNumber(_) => newResult
-    | JSONArray(arr) => arr->A.reduce(newResult, (r: 'a, j) => j->reduce(r, f))
-    | JSONObject(obj) => obj->D.reduce(newResult, (r: 'a, j) => j->reduce(r, f))
+    | JSONArray(arr) => arr->A.reduce(newResult, (r, j) => j->reduce(r, f))
+    | JSONObject(obj) => obj->D.reduce(newResult, (r, j) => j->reduce(r, f))
     };
   };
 
