@@ -180,4 +180,9 @@ let queryRawDecode:
 
 // Execute a file containing SQL.
 let execFile: 'h 'r 'q. (t('h, 'r, 'q), ~path: string) => P.t(unit) =
-  (client, ~path) => P.(readFile(path)->flatMap(contents => client->execRaw(contents)));
+  (client, ~path) => {
+    // TODO implement promisify readFile
+    P.(
+      readFileUtf8(path)->flatMap(contents => client->execRaw(contents))
+    );
+  };

@@ -4,6 +4,11 @@ include Js.Promise;
 
 [@bs.send] external map: (t('a), 'a => 'b) => t('b) = "then";
 
+// Like Js.Promise.make but doesn't require that the error is an `exn
+[@bs.new]
+external makeWithError: ((~resolve: (. 'a) => unit, ~reject: (. 'e) => unit) => unit) => t('a) =
+  "Promise";
+
 // Fire off a promise and ignore its result
 let fireOff: 'a. (unit => t(unit)) => unit = makePromise => makePromise()->ignore;
 
@@ -47,3 +52,10 @@ exception Error(error);
 [@bs.send] external catchF: (t('a), error => t('a)) => t('a) = "catch";
 
 [@bs.send] external finally: (t('a), unit => unit) => t('a) = "finally";
+
+// TODO figure out a proper binding
+let readFileUtf8 = [%raw
+  {| new Promise(resolve => require('fs').readFile(path, 'utf8', resolve)) |}
+];
+
+readFileUtf8("package.json") |> rLog;
