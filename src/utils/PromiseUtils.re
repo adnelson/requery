@@ -52,3 +52,18 @@ exception Error(error);
 [@bs.send] external catchF: (t('a), error => t('a)) => t('a) = "catch";
 
 [@bs.send] external finally: (t('a), unit => unit) => t('a) = "finally";
+
+// Run a list of promises in sequence.
+let allSequentiallyList: 'a. list(unit => t('a)) => t(list('a)) =
+  inputProms => {
+    let rec loop = (proms, results) =>
+      switch (proms) {
+      | [] => resolve(results)
+      | [prom, ...rest] => prom()->flatMap(result => loop(rest, [result, ...results]))
+      };
+    loop(inputProms, []);
+  };
+
+// Run an array of promises in sequence.
+let allSequentially: array(unit => t('a)) => t(array('a)) =
+  arr => arr->Belt.List.fromArray->allSequentiallyList->map(Belt.List.toArray);

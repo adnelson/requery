@@ -10,6 +10,8 @@ module Option = OptionUtils;
 module Promise = PromiseUtils;
 module Result = ResultUtils;
 module String = StringUtils;
+module JsSet = JsSet;
+module JsMap = JsMap;
 
 module Abbreviations = {
   module A = ArrayUtils;
