@@ -132,6 +132,14 @@ module Decode = {
 
   let numberOrString: fromJson(string) =
     oneOf([string, obj => obj |> int |> string_of_int, obj => obj |> float |> Js.Float.toString]);
+
+  // Given an optional value, fail with a DecodeError if it's None.
+  let getSome: (decoder('a), option('a)) => 'a =
+    (dec, opt) =>
+      switch (opt) {
+      | Some(inner) => inner |> dec
+      | None => raise(DecodeError("Option contained `None` when `Some` es expected"))
+      };
 };
 
 module Encode = {
