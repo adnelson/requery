@@ -52,10 +52,3 @@ exception Error(error);
 [@bs.send] external catchF: (t('a), error => t('a)) => t('a) = "catch";
 
 [@bs.send] external finally: (t('a), unit => unit) => t('a) = "finally";
-
-// TODO figure out a proper binding
-let readFileUtf8 = [%raw
-  {| new Promise(resolve => require('fs').readFile(path, 'utf8', resolve)) |}
-];
-
-readFileUtf8("package.json") |> rLog;
