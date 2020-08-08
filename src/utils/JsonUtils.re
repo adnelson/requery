@@ -140,6 +140,17 @@ module Decode = {
       | Some(inner) => inner |> dec
       | None => raise(DecodeError("Option contained `None` when `Some` es expected"))
       };
+
+  // Given a function which parses a string into a value, produce
+  // a decoder.
+  let stringWithParse: 'a. (string => option('a)) => decoder('a) =
+    (parse, j) => {
+      let s = j |> string;
+      switch (s |> parse) {
+      | None => raise(DecodeError("String '" ++ s ++ "' failed to parse"))
+      | Some(obj) => obj
+      };
+    };
 };
 
 module Encode = {
