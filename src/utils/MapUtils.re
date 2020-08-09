@@ -53,10 +53,36 @@ let setPure: (t('k, 'a), string, 'a) => t('k, 'a) =
 let singleton: (string, 'a) => t('k, 'a) =
   (k, v) => fromEntries(A.(singleton((k, v))->ArrayLike.fromArray));
 
-let getExn = (d, k) =>
-  switch (get(d, k)) {
-  | None => throw("No such key '" ++ k ++ "' in ")
-  | Some(v) => v
+// Get or throw an exception if the key is not found.
+let getOrRaise: (t('k, 'v), 'k, 'k => exn) => 'v =
+  (m, k, toExn) =>
+    switch (get(m, k)) {
+    | None => raise(k->toExn)
+    | Some(v) => v
+    };
+
+// Look up the key in the dictionary; if it's not in it, add the
+// given default to the map and then return it.
+let getOrSetDefaultMut: (t('k, 'v), 'k, 'v) => 'v =
+  (m, k, default) =>
+    switch (m->get(k)) {
+    | None =>
+      m->setMut(k, default)->ignore;
+      default;
+    | Some(v) => v
+    };
+
+// Group items in an array by a common result to a function. The key
+// type must be hashable by javascript -- the type system can't guarantee this.
+let groupBy: (array('a), 'a => 'k) => t('k, array('a)) =
+  (arr, f) => {
+    let result = empty();
+    arr->A.forEach(item => {
+      let key = item->f;
+      let group = result->getOrSetDefaultMut(key, [||]);
+      group->A.pushMut(item);
+    });
+    result;
   };
 
 // Convert string maps to/from their equivalents in Belt

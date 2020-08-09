@@ -34,5 +34,13 @@ module Map = {
       let map = fromArray([|(MyString.fromString("foo"), "bar")|]);
       expect(map->get(MyString.fromString("foo")))->toEqual(Some("bar"));
     });
+
+    test("group by", () => {
+      let strings = [|"apple", "cat", "bag", "hello", "world"|];
+      let grouped: t(int, array(string)) = strings->groupBy(Js.String.length);
+      expect(grouped->get(5))->toEqual(Some([|"apple", "hello", "world"|]));
+      expect(grouped->get(3))->toEqual(Some([|"cat", "bag"|]));
+      expect(grouped->get(8))->toEqual(None);
+    });
   });
 };

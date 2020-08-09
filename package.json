@@ -60,7 +60,7 @@
   "dependencies": {
     "bs-postgres": "^0.2.0",
     "re-opaque": "^1.1.0",
-    "reason-jest": "^1.2.0"
+    "reason-jest": "^2.2.0"
   },
   "resolutions": {
     "dot-prop": ">=5.1.1",
