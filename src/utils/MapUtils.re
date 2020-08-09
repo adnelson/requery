@@ -88,14 +88,15 @@ let groupBy: (array('a), 'a => 'k) => t('k, array('a)) =
 // Group an array of tuples. Each first element is a key in the resulting
 // map, and each second element appears in an array with other values
 // sharing the same key.
-let groupTuples: array(('k, 'v)) => t('k, array('v)) = (arr) => {
+let groupTuples: array(('k, 'v)) => t('k, array('v)) =
+  arr => {
     let result = empty();
     arr->A.forEach(((key, item)) => {
       let group = result->getOrSetDefaultMut(key, [||]);
       group->A.pushMut(item);
     });
     result;
-};
+  };
 
 // Convert string maps to/from their equivalents in Belt
 module String = {
