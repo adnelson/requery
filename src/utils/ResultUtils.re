@@ -27,3 +27,18 @@ let mapError = f =>
   fun
   | Ok(_) as result => result
   | Error(e) => Error(f(e));
+
+// Apply a function, returning Ok(result). If an exception is
+// thrown by the function, return Error(exception). This can be
+// used to build an error boundary around code which might fail.
+//
+// exception BadNumber(int)
+// let badFunction = n => n == 3 ? raise(BadNumber(n)) : n + 1
+// expect(12->catchExn(badFunction)).toEqual(Ok(13))
+// expect(3->catchExn(badFunction)).toEqual(Error(BadNumber(3)))
+//
+let catchExn: ('a, 'a => 'b) => t('b, exn) =
+  (x, f) =>
+    try(Ok(x->f)) {
+    | e => Error(e)
+    };
