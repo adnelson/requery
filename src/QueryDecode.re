@@ -3,7 +3,7 @@
 // API to running the individual query functions in `Client`: instead construct
 // query/decoder pairs and use the functions in this module to operate on them.
 module P = PromiseUtils;
-module M = MapUtils;
+module M = JsMap;
 
 module SelectDecode = {
   type t('sel, 'output) = {
@@ -32,7 +32,7 @@ module CachedSelectDecode = {
   };
 
   let make = (~toCacheKey, ~removeErrorsFromCache=true, selectDecode) => {
-    cache: M.String.empty(),
+    cache: M.empty(),
     toCacheKey,
     removeErrorsFromCache,
     selectDecode,
@@ -50,10 +50,10 @@ module CachedSelectDecode = {
             ? prom_
             : prom_
               |> P.catch(err => {
-                   cache->M.delete(key)->ignore;
+                   cache->M.deleteMut(key)->ignore;
                    P.rejectError(err);
                  });
-        cache->M.set(key, prom);
+        cache->M.setMut(key, prom)->ignore;
         prom;
       | Some(resultProm) => resultProm
       };

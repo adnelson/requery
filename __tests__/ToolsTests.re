@@ -34,7 +34,7 @@ module TableToolsTests = {
     );
     test("foreignKeyColumns", () => {
       let fkColumns = books->TableTools.foreignKeyColumns;
-      expect(fkColumns->M.keyArray)->toEqual([|"author id"->QB.cname|]);
+      expect(fkColumns->M.keysArray)->toEqual([|"author id"->QB.cname|]);
       expect(fkColumns->M.get("author id"->QB.cname))
       ->toEqual(Some(("author"->QB.tname, "id"->QB.cname)));
     });

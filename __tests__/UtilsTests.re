@@ -18,11 +18,11 @@ module Map = {
   open MapUtils;
   describe("maps", () => {
     test("string", () => {
-      let map = String.fromArray([|("foo", "bar")|]);
+      let map = fromArray([|("foo", "bar")|]);
       expect(map->get("foo"))->toEqual(Some("bar"));
     });
     test("int", () => {
-      let map = Int.fromArray([|(123, "bar")|]);
+      let map = fromArray([|(123, "bar")|]);
       expect(map->get(123))->toEqual(Some("bar"));
     });
     test("string-like", () => {
