@@ -1,3 +1,4 @@
 .merlin
 lib
 **/*.bs.js
+.bsb.lock

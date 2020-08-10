@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`boolean operator tests xor 1`] = `"((NOT TRUE) AND FALSE) OR ((NOT FALSE) AND TRUE)"`;
+
+exports[`boolean operator tests xor 2`] = `"((NOT foobar) AND FALSE) OR ((NOT FALSE) AND foobar)"`;

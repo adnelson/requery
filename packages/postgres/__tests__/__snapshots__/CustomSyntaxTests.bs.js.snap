@@ -1,7 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`rendering an insert no on conflict 1`] = `"INSERT INTO author (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen')  "`;
-
-exports[`rendering an insert with on conflict on a constraint 1`] = `"INSERT INTO author (first, last) VALUES ('Stephen', 'King'), ('Jane', 'Austen') ON CONFLICT ON CONSTRAINT scary_constraint   DO NOTHING "`;
-
-exports[`rendering an on conflict clause 1`] = `"ON CONFLICT ON CONSTRAINT scary_constraint   DO NOTHING"`;
