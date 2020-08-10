@@ -1,10 +1,10 @@
 // Tools for encoding into rows
 include QueryBuilder;
-module L = ListUtils;
-module O = OptionUtils;
+module L = Utils.List;
+module O = Utils.Option;
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
-let convertColumn = (toC, toE, (k, vs)) => (toC(k), (L.amap(vs), toE));
+let convertColumn = (toC, toE, (k, vs)) => (toC(k), (L.mapToArray(vs), toE));
 let stringRowWith = (toExpr, row) => L.map(row, convertRow(cname, toExpr));
 let stringRow = stringRowWith(Utils.id);
 let rowFromFields = (fields, obj) =>

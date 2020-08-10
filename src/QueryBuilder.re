@@ -236,8 +236,8 @@ let rec withs = defs =>
   };
 
 let orderBy = (exs, s) =>
-  Select.{...s, orderBy: Some(L.amap(exs, ((c, dir)) => (c, Some(dir))))};
-let orderBy_ = (exs, s) => Select.{...s, orderBy: Some(L.amap(exs, c => (c, None)))};
+  Select.{...s, orderBy: Some(L.mapToArray(exs, ((c, dir)) => (c, Some(dir))))};
+let orderBy_ = (exs, s) => Select.{...s, orderBy: Some(L.mapToArray(exs, c => (c, None)))};
 let orderBy1 = (ex, dir, s) => Select.{...s, orderBy: Some([|(ex, Some(dir))|])};
 let orderBy1_ = (ex, s) => Select.{...s, orderBy: Some([|(ex, None)|])};
 let orderBy2 = (ex1, dir1, ex2, dir2, s) =>
@@ -252,7 +252,7 @@ let groupBy1 = (~having=?, col, s) => Select.{...s, groupBy: Some(([|col|], havi
 let groupByColumn = (~having=?, c, s) => Select.{...s, groupBy: Some(([|col(c)|], having))};
 let groupByCol = groupByColumn;
 let groupByColumns = (~having=?, cols, s) =>
-  Select.{...s, groupBy: Some((L.amap(cols, col), having))};
+  Select.{...s, groupBy: Some((L.mapToArray(cols, col), having))};
 let groupByCols = groupByColumns;
 
 let convertRow = (toC, toE, (k, v)) => (toC(k), toE(v));
