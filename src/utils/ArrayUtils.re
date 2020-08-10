@@ -44,12 +44,6 @@ let mapJoinIfNonEmpty:
     | _ => mapJoin(arr, ~prefix, ~suffix, sep, f)
     };
 
-// like map, but argument order flipped
-let flipMap: ('a => 'b, array('a)) => array('b) = (f, a) => map(a, f);
-
-// like forEach, but reverse argument order
-let flipForEach: ('a => 'b, array('a)) => unit = (f, a) => forEach(a, f);
-
 // Find the first item in the array which matches a predicate, or return None.
 let find: (array('a), 'a => bool) => option('a) =
   (arr, test) =>
@@ -83,30 +77,34 @@ let flatten = (arr: array(array('a))): array('a) => {
   res;
 };
 
+// Get the first element of an array.
 let head = (arr: array('a)): option('a) => get(arr, 0);
+
+// Get the first element of the first array in a nested array.
 let nestedHead = (arr: array(array('a))): option('a) => O.flatMap(head(arr), a => get(a, 0));
 
-// map and then flatten
+// Map a function producing an array and then flatten the result.
 let flatMap = (arr: array('a), f: 'a => array('b)): array('b) => flatten(map(arr, f));
 
+// Add up an array of integers
 let sumInts = (arr: array(int)): int => reduce(arr, 0, (+));
+
+// Add up an array of floats
 let sumFloats = (arr: array(float)): float => reduce(arr, 0.0, (+.));
 
 // Cross-product two arrays, applying a function to each pair.
-let cross = (arr1: array('a), arr2: array('b), f: ('a, 'b) => 'c): array('c) => {
+let cross = (arr1: array('a), arr2: array('b), f: ('a, 'b) => 'c): array('c) =>
   flatMap(arr1, a => map(arr2, b => f(a, b)));
-};
 
 // Same as cross but operating on three arrays.
 let cross3 =
-    (arr1: array('a), arr2: array('b), arr3: array('c), f: ('a, 'b, 'c) => 'd): array('d) => {
+    (arr1: array('a), arr2: array('b), arr3: array('c), f: ('a, 'b, 'c) => 'd): array('d) =>
   flatMap(arr1, a => flatMap(arr2, b => map(arr3, c => f(a, b, c))));
-};
 
 // Get the values of all of the `Some()` variants in an array of options.
 let keepSome = (arr: array(option('a))): array('a) => keepMap(arr, x => x);
 
-// Create a singleton array
+// Create a singleton array.
 let singleton: 'a. 'a => array('a) = x => [|x|];
 
 // Return a new array with the given index set to the given value.
