@@ -11,19 +11,30 @@ let mapToList = (arr, f) => arr->map(f)->toList;
 
 [@bs.val] [@bs.variadic] external maxInt: array(int) => int = "Math.max";
 
-let max: array(float) => float = arr => reduce(arr, neg_infinity, max);
-let min: array(float) => float = arr => reduce(arr, infinity, min);
+[@bs.val] [@bs.variadic] external minFloat: array(float) => float = "Math.min";
 
+[@bs.val] [@bs.variadic] external minInt: array(int) => int = "Math.min";
+
+// Returns true if the given element exists in the array (using primitive equality)
 let contains: (array('a), 'a) => bool = (arr, elem) => some(arr, e => e == elem);
+
 let joinWith: (array(string), string) => string = (arr, sep) => Js.Array.joinWith(sep, arr);
+
 let joinSpaces: array(string) => string = arr => joinWith(arr, " ");
+
+// Map a function over an array, producing strings, and joining those strings
 let mapJoin: (array('a), ~prefix: string=?, ~suffix: string=?, string, 'a => string) => string =
   (arr, ~prefix="", ~suffix="", sep, f) => prefix ++ joinWith(map(arr, f), sep) ++ suffix;
+
 let mapJoinWith: (array('a), string, 'a => string) => string =
   (arr, sep, f) => joinWith(map(arr, f), sep);
+
 let mapJoinCommas = (arr, ~prefix=?, ~suffix=?, f) => mapJoin(arr, ~prefix?, ~suffix?, ", ", f);
+
 let mapJoinSpaces = (arr, ~prefix=?, ~suffix=?, f) => mapJoin(arr, ~prefix?, ~suffix?, " ", f);
+
 let mapJoinCommasParens = (arr, f) => mapJoin(arr, ~prefix="(", ~suffix=")", ", ", f);
+
 let mapJoinIfNonEmpty:
   (array('a), ~onEmpty: string=?, ~prefix: string=?, ~suffix: string=?, string, 'a => string) =>
   string =
@@ -96,16 +107,24 @@ let cross3 =
 let keepSome = (arr: array(option('a))): array('a) => keepMap(arr, x => x);
 
 // Create a singleton array
-let singleton = x => [|x|];
-// Same as `map`, but with the arguments order reversed.
-//  let map' = (f: 'a => 'b, arr: array('a)): array('b) => map(arr, f);
+let singleton: 'a. 'a => array('a) = x => [|x|];
 
 // Return a new array with the given index set to the given value.
-let setPure = (arr, i, x) => {
-  let arr' = copy(arr);
-  let _ = set(arr', i, x);
-  arr';
-};
+let setPure: 'a. (array('a), int, 'a) => array('a) =
+  (arr, i, x) => {
+    let arr' = copy(arr);
+    let _ = set(arr', i, x);
+    arr';
+  };
+
+// Modify an element at a given index, returning a new array.
+// If the index is invalid, the original array is returned.
+let updateAt: 'a. (array('a), int, 'a => 'a) => array('a) =
+  (arr, index, f) =>
+    switch (arr->get(index)) {
+    | None => arr
+    | Some(elem) => arr->setPure(index, f(elem))
+    };
 
 // Convenient alias, get first elements from a tuple array
 let firsts: array(('a, 'b)) => array('a) = arr => map(arr, fst);
@@ -132,7 +151,7 @@ let sortBy: 'a. (array('a), ('a, 'a) => int) => array('a) = Belt.SortArray.stabl
 type array_like('a) = Js.Array.array_like('a);
 
 module ArrayLike = {
-  type t('a) = Js.Array.array_like('a);
+  type t('a) = array_like('a);
 
   external fromArray: array('a) => t('a) = "%identity";
   let toArray: t('a) => array('a) = Js.Array.from;
@@ -143,9 +162,6 @@ module ArrayLike = {
 
   [@bs.send] external concat: (t('a), t('a)) => t('a) = "concat";
   [@bs.send] external concatArray: (t('a), array('a)) => t('a) = "concat";
-
-  // Treat an array as an array_like
-  // external onArray: t('a) => (array('a) => array('b)) => t('b) = (al, f) => al->toArrayLike
 
   // Run an array function on an array_like
   let onArray: 'a 'b. (t('a), array('a) => array('b)) => t('b) =
