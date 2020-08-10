@@ -55,14 +55,18 @@ let findExn: (array('a), 'a => bool) => 'a =
     | Some(m) => m
     };
 
+// Push to the end of the array, mutating the array
 let pushMut = (arr: array('a), elem: 'a): unit => Js.Array.push(elem, arr) |> ignore;
+
+// Push to the end of the array, producing a new array
+let push = (arr: array('a), elem: 'a): array('a) => arr->Belt.Array.concat([|elem|]);
 
 // Mutates arr, adding each element of arr' to it.
 let extend = (arr: array('a), arr': array('a)): unit =>
   forEach(arr', elem => Js.Array.push(elem, arr) |> ignore);
 
 // Flatten an array of arrays.
-let flat = (arr: array(array('a))): array('a) => {
+let flatten = (arr: array(array('a))): array('a) => {
   let res: array('a) = [||];
   forEach(arr, innerArr => extend(res, innerArr));
   res;
@@ -72,7 +76,7 @@ let head = (arr: array('a)): option('a) => get(arr, 0);
 let nestedHead = (arr: array(array('a))): option('a) => O.flatMap(head(arr), a => get(a, 0));
 
 // map and then flatten
-let flatMap = (arr: array('a), f: 'a => array('b)): array('b) => flat(map(arr, f));
+let flatMap = (arr: array('a), f: 'a => array('b)): array('b) => flatten(map(arr, f));
 
 let sumInts = (arr: array(int)): int => reduce(arr, 0, (+));
 let sumFloats = (arr: array(float)): float => reduce(arr, 0.0, (+.));
@@ -116,6 +120,14 @@ let mapFst: 'a1 'a2 'b. (array(('a1, 'b)), 'a1 => 'a2) => array(('a2, 'b)) =
 // Map a function over the second element of each tuple in an array.
 let mapSnd: 'a 'b1 'b2. (array(('a, 'b1)), 'b1 => 'b2) => array(('a, 'b2)) =
   (arr, f) => arr->map(((x, y)) => (x, f(y)));
+
+// Sort an array using the default comparator. Only works for types
+// which have a primitive runtime representation (string, int, etc).
+let sort: 'a. array('a) => array('a) =
+  arr => arr->Belt.SortArray.stableSortBy(Pervasives.compare);
+
+// Sort an array using a custom comparator.
+let sortBy: 'a. (array('a), ('a, 'a) => int) => array('a) = Belt.SortArray.stableSortBy;
 
 type array_like('a) = Js.Array.array_like('a);
 
