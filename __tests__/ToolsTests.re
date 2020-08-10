@@ -24,13 +24,14 @@ module TableToolsTests = {
       expect(defMap->M.has("blabla"->QB.cname))->toBe(false);
     });
     test("getCol", () => {
-      expect(authors->TableTools.getCol("id"))->toEqual("id"->QB.cname);
+      expect(authors->TableTools.getCol("id"->QB.cname))->toEqual("id"->QB.cname);
       expect(() =>
-        authors->TableTools.getCol("not a real column")
+        authors->TableTools.getCol("not a real column"->QB.cname)
       )->toThrowSomething;
     });
     test("primaryKeyColumn", () =>
-      expect(authors->TableTools.primaryKeyColumn)->toEqual(Some("id"->QB.cname))
+      expect(authors->TableTools.primaryKeyColumnDef->O.map(({name}) => name))
+      ->toEqual(Some("id"->QB.cname))
     );
     test("foreignKeyColumns", () => {
       let fkColumns = books->TableTools.foreignKeyColumns;
