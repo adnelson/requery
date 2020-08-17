@@ -45,6 +45,10 @@ type result = BsPostgres.Result.t(Js.Json.t);
 // Type alias for the abstract client paramaterized for postgres
 type client = Client.t(BsPostgres.Client.t, result, query);
 
+type onQuery = (client, query) => unit;
+
+type onResult = (client, option(query), result) => unit;
+
 let runRaw = (client, text) =>
   BsPostgres.Client.Promise.query'(BsPostgres.Query.make(~text, ()), client);
 
@@ -66,7 +70,8 @@ module Pool = {
   let makePool = ({Config.host, database, port, user, password}): BsPostgres.Pool.t =>
     BsPostgres.Pool.make(~host, ~database, ~port, ~user?, ~password?, ());
 
-  let makeClient = (~onQuery=?, ~onResult=?, pool: BsPostgres.Pool.t) =>
+  let makeClient =
+      (~onQuery: option(onQuery)=?, ~onResult: option(onResult)=?, pool: BsPostgres.Pool.t) =>
     BsPostgres.Pool.Promise.connect(pool)->P.map(h => fromPgClient(~onQuery?, ~onResult?, h));
 
   let releaseClient = ({Client.handle}) => handle->BsPostgres.Pool.Pool_Client.release;
