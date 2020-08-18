@@ -42,3 +42,27 @@ let catchExn: ('a, 'a => 'b) => t('b, exn) =
     try(Ok(x->f)) {
     | e => Error(e)
     };
+
+// Return all of the Ok values from an array of results.
+let oks: 'a 'e. array(result('a, 'e)) => array('a) =
+  arr => {
+    let out = [||];
+    arr->Belt.Array.forEach(
+      fun
+      | Ok(x) => out |> Js.Array.push(x) |> ignore
+      | _ => (),
+    );
+    out;
+  };
+
+// Return all of the Error values from an array of results.
+let errors: 'a 'e. array(result('a, 'e)) => array('e) =
+  arr => {
+    let out = [||];
+    arr->Belt.Array.forEach(
+      fun
+      | Error(e) => out |> Js.Array.push(e) |> ignore
+      | _ => (),
+    );
+    out;
+  };
