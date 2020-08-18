@@ -160,4 +160,13 @@ module Encode = {
   let strMap: toJson('t) => toJson(SMap.t('t)) = (enc, map) => dict(enc, D.fromMap(map));
   let object1: (string, toJson('a)) => toJson('a) =
     (key, encodeInner, inner) => object_([(key, encodeInner(inner))]);
+  let object2 = (fieldName1, enc1, fieldName2, enc2, (v1, v2)) =>
+    object_([(fieldName1, v1 |> enc1), (fieldName2, v2 |> enc2)]);
+
+  let object3 = (fieldName1, enc1, fieldName2, enc2, fieldName3, enc3, (v1, v2, v3)) =>
+    object_([(fieldName1, v1 |> enc1), (fieldName2, v2 |> enc2), (fieldName3, v3 |> enc3)]);
+
+  let objectOpt: list((string, option(t))) => t =
+    items =>
+      object_(items->Belt.List.keepMap(((k, optV)) => optV->Belt.Option.map(v => (k, v))));
 };
