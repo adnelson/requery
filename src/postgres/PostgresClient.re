@@ -52,6 +52,8 @@ type onResult = (client, option(query), result) => unit;
 let runRaw = (client, text) =>
   BsPostgres.Client.Promise.query'(BsPostgres.Query.make(~text, ()), client);
 
+[@bs.new] [@bs.module "pg"] external makePgClient: Config.t => BsPostgres.Client.t = "Client";
+
 // Convert a node-postgres handle to a requery client
 let fromPgClient = (~onQuery=?, ~onResult=?, client: BsPostgres.Client.t) =>
   Client.make(
@@ -65,8 +67,37 @@ let fromPgClient = (~onQuery=?, ~onResult=?, client: BsPostgres.Client.t) =>
     (),
   );
 
+let connect = ({Client.handle: pgClient}): Js.Promise.t(unit) =>
+  pgClient->BsPostgres.Client.Promise.connect;
+
+let disconnect = ({Client.handle: pgClient}): Js.Promise.t(unit) =>
+  pgClient->BsPostgres.Client.Promise.end_;
+
+// Wraps setup and teardown of a client with a config.
+let runClient:
+  (
+    ~onQuery: (client, query) => unit=?,
+    ~onResult: (client, option(query), result) => unit=?,
+    Config.t,
+    client => Js.Promise.t('a)
+  ) =>
+  Js.Promise.t('a) =
+  (~onQuery=?, ~onResult=?, config, handler) => {
+    let pgClient = makePgClient(config);
+    let rqClient = fromPgClient(pgClient);
+    rqClient
+    ->connect
+    ->P.flatMap(() =>
+        handler(rqClient)
+        ->P.flatMap((result: 'a) => rqClient->disconnect->P.flatMap(_ => P.resolve(result)))
+        ->P.catchF(err => rqClient->disconnect->P.flatMap(_ => P.rejectError(err)))
+      );
+  };
+
 // Pooled connections
 module Pool = {
+  type t = BsPostgres.Pool.t;
+
   let makePool = ({Config.host, database, port, user, password}): BsPostgres.Pool.t =>
     BsPostgres.Pool.make(~host, ~database, ~port, ~user?, ~password?, ());
 
